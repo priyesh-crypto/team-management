@@ -324,8 +324,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             <div className="space-y-6">
                                 {/* Heatmap: Active High Priority */}
                                 <div>
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <Badge variant="Urgent" className="h-2 w-2 rounded-full p-0">Critical</Badge>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="h-2.5 w-2.5 rounded-full bg-[#e83f3f] shadow-[0_0_8px_rgba(232,63,63,0.4)] flex-shrink-0" />
                                         <h4 className="text-sm font-bold text-[#1d1d1f] uppercase tracking-wider">Active Critical Focus</h4>
                                     </div>
                                     <div className="space-y-4 pr-2">
@@ -367,8 +367,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
                                 {/* Active: Standard Priority */}
                                 <div>
-                                    <div className="flex items-center gap-2 mb-4 pt-4 border-t border-[#e5e5ea]">
-                                        <Badge variant="default" className="h-2 w-2 rounded-full p-0 bg-[#0071e3]">Active</Badge>
+                                    <div className="flex items-center gap-3 mb-4 pt-4 border-t border-[#e5e5ea]">
+                                        <div className="h-2.5 w-2.5 rounded-full bg-[#0071e3] shadow-[0_0_8px_rgba(0,113,227,0.4)] flex-shrink-0" />
                                         <h4 className="text-sm font-bold text-[#1d1d1f] uppercase tracking-wider">Other Active Work</h4>
                                     </div>
                                     <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
