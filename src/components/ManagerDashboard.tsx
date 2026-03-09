@@ -358,60 +358,147 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             </div>
                         </Card>
 
-                        {/* Project Timeline (Gantt Style) */}
-                        <Card className="overflow-hidden flex flex-col">
-                            <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Project Timeline</h3>
-                            <div className="flex-1 overflow-x-auto overflow-y-auto pb-4 custom-scrollbar relative min-h-[400px]">
+                        {/* Modern Project Timeline (Calendar View) */}
+                        <Card className="overflow-hidden flex flex-col border-[#e5e5ea] shadow-sm">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold text-[#1d1d1f]">Project Timeline</h3>
+                                <div className="flex gap-4 text-xs font-semibold text-[#86868b]">
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-[#34c759]" /> Completed
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-[#0071e3]" /> In Progress
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-[#e83f3f]" /> Blocked
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-x-auto custom-scrollbar relative bg-[#fafafa] rounded-2xl border border-[#e5e5ea]">
                                 {filteredTasks.length === 0 ? (
-                                    <div className="text-[#86868b] font-medium">No tasks to timeline.</div>
+                                    <div className="p-10 text-center text-[#86868b] font-medium">No tasks logged for this profile.</div>
                                 ) : (
-                                    <div className="min-w-[700px] space-y-4 pt-4">
+                                    <div className="min-w-[1000px] p-8 pb-12 relative">
                                         {(() => {
-                                            const timestamps = filteredTasks.flatMap(t => [new Date(t.start_date).getTime(), new Date(t.deadline).getTime()]);
-                                            const minDate = Math.min(...timestamps);
-                                            const maxDate = Math.max(...timestamps);
-                                            const totalDuration = Math.max(86400000, maxDate - minDate);
+                                            const today = new Date();
+                                            today.setHours(0, 0, 0, 0);
 
-                                            return filteredTasks.map(task => {
-                                                const startOffset = ((new Date(task.start_date).getTime() - minDate) / totalDuration) * 100;
-                                                const durationPct = Math.max(5, ((new Date(task.deadline).getTime() - new Date(task.start_date).getTime()) / totalDuration) * 100);
-                                                const empName = employees.find(e => e.id === task.employee_id)?.name;
+                                            // 1. Calculate Date Range
+                                            const allDates = filteredTasks.flatMap(t => [new Date(t.start_date), new Date(t.deadline)]);
+                                            allDates.push(today);
 
-                                                return (
-                                                    <div key={task.id} className="relative h-10 group">
-                                                        <div className="absolute w-full h-full bg-[#f5f5f7] rounded-xl overflow-hidden">
+                                            const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
+                                            minDate.setDate(minDate.getDate() - 2); // 2 days padding
+
+                                            const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
+                                            maxDate.setDate(maxDate.getDate() + 5); // 5 days padding for labels
+
+                                            const totalDays = Math.max(7, Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+                                            // 2. Generate Grid Columns (Days)
+                                            const days = [];
+                                            for (let i = 0; i <= totalDays; i++) {
+                                                const current = new Date(minDate);
+                                                current.setDate(minDate.getDate() + i);
+                                                days.push(current);
+                                            }
+
+                                            const getPos = (dateStr: string) => {
+                                                const d = new Date(dateStr);
+                                                return ((d.getTime() - minDate.getTime()) / (totalDays * 86400000)) * 100;
+                                            };
+
+                                            const todayPos = ((today.getTime() - minDate.getTime()) / (totalDays * 86400000)) * 100;
+
+                                            return (
+                                                <div className="relative pt-10">
+                                                    {/* Background Grid */}
+                                                    <div className="absolute inset-0 flex pointer-events-none">
+                                                        {days.map((day, i) => (
                                                             <div
-                                                                className={`absolute h-full rounded-xl flex items-center px-4 shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-300 group-hover:brightness-95
-                                  ${task.status === 'Completed' ? 'bg-[#34c759] text-white' :
-                                                                        task.status === 'Blocked' ? 'bg-[#e83f3f] text-white' :
-                                                                            'bg-[#0071e3] text-white'}`
-                                                                }
-                                                                style={{
-                                                                    left: `${startOffset}%`,
-                                                                    width: `${durationPct}%`,
-                                                                    minWidth: '60px'
-                                                                }}
-                                                                title={`${task.name} (${task.start_date} to ${task.deadline})`}
+                                                                key={i}
+                                                                className={`flex-1 border-l border-[#e5e5ea] relative ${day.getDay() === 0 || day.getDay() === 6 ? 'bg-black/[0.02]' : ''}`}
                                                             >
-                                                                <span className="text-sm font-semibold truncate">
-                                                                    {task.name}
-                                                                </span>
+                                                                {/* Date Labels */}
+                                                                <div className="absolute -top-10 left-0 -translate-x-1/2 flex flex-col items-center">
+                                                                    <span className="text-[10px] font-bold text-[#86868b] uppercase tracking-tighter">
+                                                                        {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                                                                    </span>
+                                                                    <span className={`text-xs font-bold ${day.getTime() === today.getTime() ? 'text-[#0071e3]' : 'text-[#1d1d1f]'}`}>
+                                                                        {day.getDate()}
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div className="absolute -top-6 left-0 text-xs font-semibold text-[#86868b] opacity-0 group-hover:opacity-100 transition-opacity bg-white px-2 py-1 rounded shadow-sm border border-[#e5e5ea] z-10">
-                                                            {empName} • {task.status}
+                                                        ))}
+                                                        <div className="flex-1 border-l border-[#e5e5ea]" />
+                                                    </div>
+
+                                                    {/* Today Indicator Line */}
+                                                    <div
+                                                        className="absolute top-[-40px] bottom-[-20px] w-0.5 bg-[#ff3b30] z-20 pointer-events-none shadow-[0_0_10px_rgba(255,59,48,0.3)]"
+                                                        style={{ left: `${todayPos}%` }}
+                                                    >
+                                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-[#ff3b30] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                                            TODAY
                                                         </div>
                                                     </div>
-                                                );
-                                            });
+
+                                                    {/* Task Rows */}
+                                                    <div className="space-y-6 relative z-10">
+                                                        {filteredTasks.map(task => {
+                                                            const left = getPos(task.start_date);
+                                                            const right = getPos(task.deadline);
+                                                            const width = Math.max(2, right - left);
+                                                            const empName = employees.find(e => e.id === task.employee_id)?.name;
+                                                            const statusColor = task.status === 'Completed' ? '#34c759' :
+                                                                task.status === 'Blocked' ? '#ff3b30' : '#0071e3';
+
+                                                            return (
+                                                                <div key={task.id} className="relative h-12 group">
+                                                                    <div
+                                                                        className="absolute h-full rounded-2xl flex items-center px-4 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border border-white/20 transition-all duration-300 hover:scale-[1.02] hover:z-30 cursor-pointer overflow-hidden group/bar"
+                                                                        style={{
+                                                                            left: `${left}%`,
+                                                                            width: `${width}%`,
+                                                                            backgroundColor: statusColor,
+                                                                            minWidth: '120px'
+                                                                        }}
+                                                                    >
+                                                                        {/* Glossy Overlay */}
+                                                                        <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+
+                                                                        <div className="relative z-10 flex flex-col justify-center min-w-0">
+                                                                            <span className="text-xs font-bold text-white truncate leading-tight">{task.name}</span>
+                                                                            <span className="text-[9px] font-medium text-white/80 truncate">{empName}</span>
+                                                                        </div>
+
+                                                                        {/* Floating Tooltip Detail */}
+                                                                        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-[#1d1d1f]/90 backdrop-blur-md text-white p-3 rounded-xl text-[10px] w-48 opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none shadow-xl border border-white/10 z-50">
+                                                                            <div className="font-bold border-b border-white/10 pb-1 mb-1">{task.name}</div>
+                                                                            <div className="flex justify-between mt-1">
+                                                                                <span className="text-white/60">Duration:</span>
+                                                                                <span>{task.start_date} → {task.deadline}</span>
+                                                                            </div>
+                                                                            <div className="flex justify-between">
+                                                                                <span className="text-white/60">Assigned:</span>
+                                                                                <span>{empName}</span>
+                                                                            </div>
+                                                                            <div className="flex justify-between">
+                                                                                <span className="text-white/60">Status:</span>
+                                                                                <span className="font-bold" style={{ color: statusColor }}>{task.status}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
                                         })()}
                                     </div>
                                 )}
-
-                                <div className="absolute inset-x-0 bottom-0 h-8 border-t border-[#e5e5ea] flex justify-between text-xs font-semibold text-[#86868b] px-4 pt-2 pointer-events-none">
-                                    <span>Start</span>
-                                    <span>Horizon</span>
-                                </div>
                             </div>
                         </Card>
                     </div>

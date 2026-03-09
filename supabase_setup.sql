@@ -81,3 +81,14 @@ create policy "Managers can update any tasks." on tasks
       where id = auth.uid() and role = 'manager'
     )
   );
+
+create policy "Employees can delete their own tasks." on tasks
+  for delete using (auth.uid() = employee_id);
+
+create policy "Managers can delete any tasks." on tasks
+  for delete using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'manager'
+    )
+  );
