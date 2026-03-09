@@ -58,7 +58,7 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
     );
 }
 
-export function Badge({ children, variant = 'default' }: { children: React.ReactNode, variant?: string }) {
+export function Badge({ children, variant = 'default', className }: { children: React.ReactNode, variant?: string, className?: string }) {
     const variants: Record<string, string> = {
         Urgent: "bg-[#fee2e2] text-[#e83f3f]",
         High: "bg-[#ffedd5] text-[#ea580c]",
@@ -68,7 +68,7 @@ export function Badge({ children, variant = 'default' }: { children: React.React
     };
 
     return (
-        <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider", variants[variant] || variants.default)}>
+        <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider", variants[variant] || variants.default, className)}>
             {children}
         </span>
     );

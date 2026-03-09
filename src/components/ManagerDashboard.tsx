@@ -321,40 +321,73 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             </h3>
                             <p className="text-sm font-medium text-[#86868b] mb-6">Showing High & Urgent tasks that are active or overdue.</p>
 
-                            <div className="space-y-4 pr-2">
-                                {filteredTasks
-                                    .filter(t => ['Urgent', 'High'].includes(t.priority) && t.status !== 'Completed')
-                                    .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
-                                    .map(task => {
-                                        const overdue = isOverdue(task.deadline);
-                                        const empName = employees.find(e => e.id === task.employee_id)?.name;
+                            <div className="space-y-6">
+                                {/* Heatmap: Active High Priority */}
+                                <div>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Badge variant="Urgent" className="h-2 w-2 rounded-full p-0">Critical</Badge>
+                                        <h4 className="text-sm font-bold text-[#1d1d1f] uppercase tracking-wider">Active Critical Focus</h4>
+                                    </div>
+                                    <div className="space-y-4 pr-2">
+                                        {filteredTasks
+                                            .filter(t => ['Urgent', 'High'].includes(t.priority) && t.status !== 'Completed')
+                                            .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
+                                            .map(task => {
+                                                const overdue = isOverdue(task.deadline);
+                                                const empName = employees.find(e => e.id === task.employee_id)?.name;
 
-                                        return (
-                                            <div
-                                                key={task.id}
-                                                className={`p-4 rounded-2xl border flex flex-col gap-3 ${overdue ? 'bg-[#fff1f2] border-[#fecdd3]' :
-                                                    task.priority === 'Urgent' ? 'bg-[#fff7ed] border-[#ffedd5]' :
-                                                        'bg-[#f5f5f7] border-[#e5e5ea]'
-                                                    }`}
-                                            >
-                                                <div className="flex justify-between items-start">
-                                                    <div className="font-bold text-[#1d1d1f]">{task.name}</div>
-                                                    {overdue ? (
-                                                        <span className="text-xs bg-[#e83f3f] text-white px-2.5 py-1 rounded-full font-bold uppercase tracking-wider animate-pulse shadow-sm">Overdue</span>
-                                                    ) : (
-                                                        <Badge variant={task.priority}>{task.priority}</Badge>
-                                                    )}
+                                                return (
+                                                    <div
+                                                        key={task.id}
+                                                        className={`p-4 rounded-2xl border flex flex-col gap-3 transition-all hover:shadow-md ${overdue ? 'bg-[#fff1f2] border-[#fecdd3]' :
+                                                            task.priority === 'Urgent' ? 'bg-[#fff7ed] border-[#ffedd5]' :
+                                                                'bg-[#f5f5f7] border-[#e5e5ea]'
+                                                            }`}
+                                                    >
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="font-bold text-[#1d1d1f]">{task.name}</div>
+                                                            {overdue ? (
+                                                                <span className="text-xs bg-[#e83f3f] text-white px-2.5 py-1 rounded-full font-bold uppercase tracking-wider animate-pulse shadow-sm">Overdue</span>
+                                                            ) : (
+                                                                <Badge variant={task.priority}>{task.priority}</Badge>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-sm font-medium text-[#86868b] grid grid-cols-2">
+                                                            <div>Assignee: <span className="text-[#1d1d1f] font-semibold">{empName}</span></div>
+                                                            <div className={overdue ? 'text-[#e83f3f] font-bold' : ''}>Deadline: {task.deadline}</div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        {filteredTasks.filter(t => ['Urgent', 'High'].includes(t.priority) && t.status !== 'Completed').length === 0 && (
+                                            <div className="text-[#86868b] font-medium py-8 text-center bg-[#fafafa] rounded-2xl border border-dashed border-[#d2d2d7]">No active high-priority tasks.</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Active: Standard Priority */}
+                                <div>
+                                    <div className="flex items-center gap-2 mb-4 pt-4 border-t border-[#e5e5ea]">
+                                        <Badge variant="default" className="h-2 w-2 rounded-full p-0 bg-[#0071e3]">Active</Badge>
+                                        <h4 className="text-sm font-bold text-[#1d1d1f] uppercase tracking-wider">Other Active Work</h4>
+                                    </div>
+                                    <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                                        {filteredTasks
+                                            .filter(t => !['Urgent', 'High'].includes(t.priority) && t.status !== 'Completed')
+                                            .map(task => (
+                                                <div key={task.id} className="p-3 bg-[#f5f5f7] rounded-xl flex justify-between items-center border border-[#e5e5ea]">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-[#1d1d1f] text-sm">{task.name}</span>
+                                                        <span className="text-[10px] text-[#86868b]">{employees.find(e => e.id === task.employee_id)?.name} • {task.status}</span>
+                                                    </div>
+                                                    <Badge variant={task.priority} className="text-[10px] px-2 py-0">{task.priority}</Badge>
                                                 </div>
-                                                <div className="text-sm font-medium text-[#86868b] grid grid-cols-2">
-                                                    <div>Assignee: <span className="text-[#1d1d1f]">{empName}</span></div>
-                                                    <div className={overdue ? 'text-[#e83f3f] font-bold' : ''}>Deadline: {task.deadline}</div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                {filteredTasks.filter(t => ['Urgent', 'High'].includes(t.priority) && t.status !== 'Completed').length === 0 && (
-                                    <div className="text-[#86868b] font-medium py-4 text-center">No active high-priority tasks.</div>
-                                )}
+                                            ))}
+                                        {filteredTasks.filter(t => !['Urgent', 'High'].includes(t.priority) && t.status !== 'Completed').length === 0 && (
+                                            <div className="text-[11px] text-[#86868b] py-2 text-center italic">No other active tasks.</div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </Card>
 
@@ -548,71 +581,130 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             </div>
 
                             {/* Detailed Task List */}
-                            <Card>
-                                <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Detailed Task History</h3>
-                                <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2">
-                                    {progressTasks.length === 0 ? (
-                                        <div className="text-center py-10 text-[#86868b] font-medium">This employee currently has no tasks logged.</div>
-                                    ) : (
-                                        progressTasks.map(task => (
-                                            <div key={task.id} className="p-5 border border-[#e5e5ea] rounded-2xl bg-[#fafafa] hover:bg-white transition-colors">
-                                                <div className="flex justify-between items-start mb-3">
-                                                    <h4 className="font-bold text-lg text-[#1d1d1f]">{task.name}</h4>
-                                                    <div className="flex gap-2 items-center">
-                                                        <Badge variant={task.priority}>{task.priority}</Badge>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Active Work */}
+                                <Card className="border-[#0071e3]/20">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="text-xl font-bold text-[#1d1d1f]">Active Work</h3>
+                                        <Badge variant="default" className="bg-[#0071e3]/10 text-[#0071e3] border-none">
+                                            {progressTasks.filter(t => t.status !== 'Completed').length} Pending
+                                        </Badge>
+                                    </div>
+                                    <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2">
+                                        {progressTasks.filter(t => t.status !== 'Completed').length === 0 ? (
+                                            <div className="text-center py-20 text-[#86868b] font-medium bg-[#f5f5f7] rounded-3xl border-2 border-dashed border-[#e5e5ea]">No pending tasks for this employee.</div>
+                                        ) : (
+                                            progressTasks.filter(t => t.status !== 'Completed').map(task => (
+                                                <div key={task.id} className="p-5 border border-[#e5e5ea] rounded-2xl bg-[#fafafa] hover:bg-white transition-all hover:shadow-md group">
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <h4 className="font-bold text-lg text-[#1d1d1f]">{task.name}</h4>
                                                         <div className="flex gap-2 items-center">
-                                                            <Select
-                                                                value={task.status}
-                                                                onChange={async (e) => {
-                                                                    try {
-                                                                        await updateTaskStatus(task.id, e.target.value as Status);
-                                                                        refreshData();
-                                                                    } catch (err) {
-                                                                        alert("Failed to update status.");
-                                                                    }
-                                                                }}
-                                                                className="text-xs py-1 px-2 h-auto"
-                                                            >
-                                                                <option>To Do</option>
-                                                                <option>In Progress</option>
-                                                                <option>Blocked</option>
-                                                                <option>Completed</option>
-                                                            </Select>
-                                                            <button
-                                                                onClick={async () => {
-                                                                    if (confirm("Are you sure you want to delete this task?")) {
+                                                            <Badge variant={task.priority}>{task.priority}</Badge>
+                                                            <div className="flex gap-2 items-center">
+                                                                <Select
+                                                                    value={task.status}
+                                                                    onChange={async (e) => {
                                                                         try {
-                                                                            await deleteTask(task.id);
+                                                                            await updateTaskStatus(task.id, e.target.value as Status);
                                                                             refreshData();
                                                                         } catch (err) {
-                                                                            alert("Failed to delete task.");
+                                                                            alert("Failed to update status.");
                                                                         }
-                                                                    }
-                                                                }}
-                                                                className="text-[#86868b] hover:text-[#e83f3f] transition-colors p-1"
-                                                                title="Delete Task"
-                                                            >
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
-                                                            </button>
+                                                                    }}
+                                                                    className="text-xs py-1 px-2 h-auto"
+                                                                >
+                                                                    <option>To Do</option>
+                                                                    <option>In Progress</option>
+                                                                    <option>Blocked</option>
+                                                                    <option>Completed</option>
+                                                                </Select>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (confirm("Are you sure you want to delete this task?")) {
+                                                                            try {
+                                                                                await deleteTask(task.id);
+                                                                                refreshData();
+                                                                            } catch (err) {
+                                                                                alert("Failed to delete task.");
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    className="text-[#86868b] hover:text-[#e83f3f] transition-colors p-1"
+                                                                    title="Delete Task"
+                                                                >
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-[#86868b] font-medium mb-4">
-                                                    <div>Timeline: <span className="text-[#1d1d1f]">{task.start_date} <br />to {task.deadline}</span></div>
-                                                    <div>Hours Logged: <span className="text-[#0071e3] font-bold text-lg block">{task.hours_spent}h</span></div>
-                                                    <div>Created On: <span className="text-[#1d1d1f] block">{new Date(task.created_at).toLocaleDateString()}</span></div>
-                                                </div>
-                                                {task.notes && (
-                                                    <div className="mt-2 text-sm bg-white text-[#1d1d1f] p-3 rounded-lg border border-[#e5e5ea] shadow-sm">
-                                                        <span className="text-xs font-bold text-[#86868b] uppercase tracking-wider mb-1 block">Employee Notes:</span>
-                                                        {task.notes}
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-[#86868b] font-medium mb-4">
+                                                        <div>Start: <span className="text-[#1d1d1f]">{task.start_date}</span></div>
+                                                        <div>Ends: <span className={`font-bold ${isOverdue(task.deadline) ? 'text-[#e83f3f]' : 'text-[#1d1d1f]'}`}>{task.deadline}</span></div>
                                                     </div>
-                                                )}
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </Card>
+                                                    {task.notes && (
+                                                        <div className="text-xs bg-white text-[#1d1d1f] p-3 rounded-xl border border-[#e5e5ea] mt-2 group-hover:border-[#0071e3]/30 transition-colors italic">
+                                                            "{task.notes}"
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </Card>
+
+                                {/* Completion History */}
+                                <Card className="bg-[#fafafa] border-[#e5e5ea]">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="text-xl font-bold text-[#86868b]">Completion History</h3>
+                                        <Badge variant="Low">
+                                            {progressTasks.filter(t => t.status === 'Completed').length} Completed
+                                        </Badge>
+                                    </div>
+                                    <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2 grayscale-[0.3] opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+                                        {progressTasks.filter(t => t.status === 'Completed').length === 0 ? (
+                                            <div className="text-center py-20 text-[#86868b] font-medium bg-white rounded-3xl border border-[#e5e5ea]">History is empty.</div>
+                                        ) : (
+                                            progressTasks.filter(t => t.status === 'Completed').map(task => (
+                                                <div key={task.id} className="p-4 border border-[#e5e5ea] rounded-xl bg-white flex justify-between items-center group">
+                                                    <div>
+                                                        <h4 className="font-bold text-[#1d1d1f]">{task.name}</h4>
+                                                        <p className="text-[10px] text-[#86868b] font-medium mt-1">Finished on {task.deadline} • {task.hours_spent}h invested</p>
+                                                    </div>
+                                                    <div className="flex gap-2 items-center">
+                                                        <Select
+                                                            value={task.status}
+                                                            onChange={async (e) => {
+                                                                try {
+                                                                    await updateTaskStatus(task.id, e.target.value as Status);
+                                                                    refreshData();
+                                                                } catch (err) {
+                                                                    alert("Failed to update status.");
+                                                                }
+                                                            }}
+                                                            className="text-[10px] py-0 px-2 h-7"
+                                                        >
+                                                            <option>Completed</option>
+                                                            <option>To Do</option>
+                                                            <option>In Progress</option>
+                                                        </Select>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (confirm("Are you sure you want to delete this task?")) {
+                                                                    await deleteTask(task.id);
+                                                                    refreshData();
+                                                                }
+                                                            }}
+                                                            className="text-[#86868b] hover:text-[#e83f3f] p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /></svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </Card>
+                            </div>
                         </div>
                     ) : (
                         <div className="text-center py-20 fade-in">
@@ -625,265 +717,271 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             )}
 
             {/* --- TEAM MANAGEMENT TAB --- */}
-            {activeTab === 'team' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
-                    <Card>
-                        <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Add New Employee</h3>
-                        <form onSubmit={handleCreateEmployee} className="space-y-5">
-                            <div>
-                                <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Full Name</label>
-                                <Input
-                                    required
-                                    value={newEmpForm.name}
-                                    onChange={e => setNewEmpForm({ ...newEmpForm, name: e.target.value })}
-                                    placeholder="e.g. Jane Doe"
-                                    className="w-full"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Email Address</label>
-                                <Input
-                                    type="email"
-                                    required
-                                    value={newEmpForm.email}
-                                    onChange={e => setNewEmpForm({ ...newEmpForm, email: e.target.value })}
-                                    placeholder="jane@company.com"
-                                    className="w-full"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Temporary Password</label>
-                                <Input
-                                    type="text"
-                                    required
-                                    value={newEmpForm.password}
-                                    onChange={e => setNewEmpForm({ ...newEmpForm, password: e.target.value })}
-                                    placeholder="Set an initial password"
-                                    className="w-full"
-                                />
-                            </div>
-
-                            {empError && (
-                                <div className="p-4 bg-[#fef2f2] border border-[#fca5a5] rounded-xl text-[#b91c1c] text-sm font-bold">
-                                    {empError}
+            {
+                activeTab === 'team' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
+                        <Card>
+                            <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Add New Employee</h3>
+                            <form onSubmit={handleCreateEmployee} className="space-y-5">
+                                <div>
+                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Full Name</label>
+                                    <Input
+                                        required
+                                        value={newEmpForm.name}
+                                        onChange={e => setNewEmpForm({ ...newEmpForm, name: e.target.value })}
+                                        placeholder="e.g. Jane Doe"
+                                        className="w-full"
+                                    />
                                 </div>
-                            )}
 
-                            <Button type="submit" className="w-full mt-2">Create Account</Button>
-                        </form>
-                    </Card>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Email Address</label>
+                                    <Input
+                                        type="email"
+                                        required
+                                        value={newEmpForm.email}
+                                        onChange={e => setNewEmpForm({ ...newEmpForm, email: e.target.value })}
+                                        placeholder="jane@company.com"
+                                        className="w-full"
+                                    />
+                                </div>
 
-                    <Card>
-                        <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Active Organization Members</h3>
-                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                            {employees.length === 0 ? (
-                                <div className="text-[#86868b] text-center py-8 font-medium">No employees found.</div>
-                            ) : (
-                                employees.map(emp => (
-                                    <div key={emp.id} className="p-4 border border-[#e5e5ea] rounded-2xl bg-[#f5f5f7]">
-                                        {editingEmpId === emp.id ? (
-                                            <div className="space-y-3">
-                                                <Input
-                                                    value={editEmpForm.name}
-                                                    onChange={(e) => setEditEmpForm({ ...editEmpForm, name: e.target.value })}
-                                                    className="w-full text-sm py-1.5"
-                                                    placeholder="Display Name"
-                                                />
-                                                <Select
-                                                    value={editEmpForm.role}
-                                                    onChange={(e) => setEditEmpForm({ ...editEmpForm, role: e.target.value })}
-                                                    className="w-full text-sm py-1.5"
-                                                >
-                                                    <option value="employee">Employee</option>
-                                                    <option value="manager">Manager</option>
-                                                </Select>
-                                                <Input
-                                                    type="text"
-                                                    value={editEmpForm.password}
-                                                    onChange={(e) => setEditEmpForm({ ...editEmpForm, password: e.target.value })}
-                                                    className="w-full text-sm py-1.5"
-                                                    placeholder="Reset password (leave blank to keep current)"
-                                                />
-                                                <div className="flex justify-end gap-2 pt-2">
-                                                    <Button variant="secondary" onClick={handleCancelEdit} className="text-xs px-3 py-1.5">Cancel</Button>
-                                                    <Button onClick={() => handleSaveEdit(emp.id)} className="text-xs px-3 py-1.5">Save Changes</Button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="flex justify-between items-center">
-                                                <div>
-                                                    <div className="font-bold text-[#1d1d1f] flex items-center gap-2">
-                                                        {emp.name}
-                                                        {emp.role === 'manager' && <span className="text-[10px] bg-[#0071e3] text-white px-1.5 py-0.5 rounded-full uppercase font-bold">Admin</span>}
-                                                    </div>
-                                                    <div className="text-xs text-[#86868b] font-mono mt-0.5">ID: {emp.id.substring(0, 8)}...</div>
-                                                </div>
-                                                <Button
-                                                    variant="secondary"
-                                                    onClick={() => handleStartEdit(emp)}
-                                                    className="text-xs px-3 py-1.5"
-                                                >
-                                                    Edit Profile
-                                                </Button>
-                                            </div>
-                                        )}
+                                <div>
+                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Temporary Password</label>
+                                    <Input
+                                        type="text"
+                                        required
+                                        value={newEmpForm.password}
+                                        onChange={e => setNewEmpForm({ ...newEmpForm, password: e.target.value })}
+                                        placeholder="Set an initial password"
+                                        className="w-full"
+                                    />
+                                </div>
+
+                                {empError && (
+                                    <div className="p-4 bg-[#fef2f2] border border-[#fca5a5] rounded-xl text-[#b91c1c] text-sm font-bold">
+                                        {empError}
                                     </div>
-                                ))
-                            )}
-                        </div>
-                    </Card>
-                </div>
-            )}
+                                )}
 
-            {/* --- ASSIGN TASKS TAB --- */}
-            {activeTab === 'assign' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
-                    <Card>
-                        <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Assign a Task</h3>
-                        <form onSubmit={handleAssignTask} className="space-y-5">
-                            <div>
-                                <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Assign To</label>
-                                <Select
-                                    required
-                                    value={assignForm.employee_id}
-                                    onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })}
-                                    className="w-full"
-                                >
-                                    <option value="" disabled>Select Employee</option>
-                                    {employees.filter(e => e.role === 'employee').map(emp => (
-                                        <option key={emp.id} value={emp.id}>{emp.name}</option>
-                                    ))}
-                                </Select>
+                                <Button type="submit" className="w-full mt-2">Create Account</Button>
+                            </form>
+                        </Card>
+
+                        <Card>
+                            <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Active Organization Members</h3>
+                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                                {employees.length === 0 ? (
+                                    <div className="text-[#86868b] text-center py-8 font-medium">No employees found.</div>
+                                ) : (
+                                    employees.map(emp => (
+                                        <div key={emp.id} className="p-4 border border-[#e5e5ea] rounded-2xl bg-[#f5f5f7]">
+                                            {editingEmpId === emp.id ? (
+                                                <div className="space-y-3">
+                                                    <Input
+                                                        value={editEmpForm.name}
+                                                        onChange={(e) => setEditEmpForm({ ...editEmpForm, name: e.target.value })}
+                                                        className="w-full text-sm py-1.5"
+                                                        placeholder="Display Name"
+                                                    />
+                                                    <Select
+                                                        value={editEmpForm.role}
+                                                        onChange={(e) => setEditEmpForm({ ...editEmpForm, role: e.target.value })}
+                                                        className="w-full text-sm py-1.5"
+                                                    >
+                                                        <option value="employee">Employee</option>
+                                                        <option value="manager">Manager</option>
+                                                    </Select>
+                                                    <Input
+                                                        type="text"
+                                                        value={editEmpForm.password}
+                                                        onChange={(e) => setEditEmpForm({ ...editEmpForm, password: e.target.value })}
+                                                        className="w-full text-sm py-1.5"
+                                                        placeholder="Reset password (leave blank to keep current)"
+                                                    />
+                                                    <div className="flex justify-end gap-2 pt-2">
+                                                        <Button variant="secondary" onClick={handleCancelEdit} className="text-xs px-3 py-1.5">Cancel</Button>
+                                                        <Button onClick={() => handleSaveEdit(emp.id)} className="text-xs px-3 py-1.5">Save Changes</Button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <div className="font-bold text-[#1d1d1f] flex items-center gap-2">
+                                                            {emp.name}
+                                                            {emp.role === 'manager' && <span className="text-[10px] bg-[#0071e3] text-white px-1.5 py-0.5 rounded-full uppercase font-bold">Admin</span>}
+                                                        </div>
+                                                        <div className="text-xs text-[#86868b] font-mono mt-0.5">ID: {emp.id.substring(0, 8)}...</div>
+                                                    </div>
+                                                    <Button
+                                                        variant="secondary"
+                                                        onClick={() => handleStartEdit(emp)}
+                                                        className="text-xs px-3 py-1.5"
+                                                    >
+                                                        Edit Profile
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
                             </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Task Name</label>
-                                <Input
-                                    required
-                                    value={assignForm.name}
-                                    onChange={e => setAssignForm({ ...assignForm, name: e.target.value })}
-                                    placeholder="Task title"
-                                    className="w-full"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Start Date</label>
-                                    <Input
-                                        type="date"
-                                        required
-                                        value={assignForm.start_date}
-                                        onChange={e => setAssignForm({ ...assignForm, start_date: e.target.value })}
-                                        className="w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Deadline</label>
-                                    <Input
-                                        type="date"
-                                        required
-                                        value={assignForm.deadline}
-                                        onChange={e => setAssignForm({ ...assignForm, deadline: e.target.value })}
-                                        className="w-full"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Priority</label>
-                                    <Select
-                                        value={assignForm.priority}
-                                        onChange={e => setAssignForm({ ...assignForm, priority: e.target.value as Priority })}
-                                        className="w-full"
-                                    >
-                                        <option>Low</option>
-                                        <option>Medium</option>
-                                        <option>High</option>
-                                        <option>Urgent</option>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Initial Status</label>
-                                    <Select
-                                        value={assignForm.status}
-                                        onChange={e => setAssignForm({ ...assignForm, status: e.target.value as Status })}
-                                        className="w-full"
-                                    >
-                                        <option>To Do</option>
-                                        <option>In Progress</option>
-                                        <option>Blocked</option>
-                                        <option>Completed</option>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Manager Notes / Instructions</label>
-                                <textarea
-                                    className="w-full bg-white border border-[#d2d2d7] text-[#1d1d1f] rounded-xl px-4 py-3 outline-none transition-all duration-200 focus:border-[#0071e3] focus:ring-1 focus:ring-[#0071e3] placeholder-[#86868b] min-h-[100px]"
-                                    value={assignForm.notes}
-                                    onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })}
-                                    placeholder="Instructions for the employee..."
-                                />
-                            </div>
-
-                            {assignSuccess && (
-                                <div className="p-4 bg-[#dcfce7] border border-[#4ade80] rounded-xl text-[#16a34a] text-sm font-medium">
-                                    Task successfully assigned to database!
-                                </div>
-                            )}
-
-                            <Button type="submit" className="w-full mt-2">Send Assignment</Button>
-                        </form>
-                    </Card>
-
-                    <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-[#1d1d1f] px-2">Manager Instructions</h3>
-                        <Card className="bg-[#f5f5f7] border-0">
-                            <p className="text-[#86868b] text-sm leading-relaxed">
-                                Use this form to assign new trackable objectives to your team members. Tasks assigned here will immediately appear in the employee's "My Tasks" view and on the broader "Team View" board and persist in our live database.
-                                <br /><br />
-                                Employees will be responsible for logging their daily hours on these tasks to keep the capacity tracker up to date.
-                            </p>
                         </Card>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            {/* --- ASSIGN TASKS TAB --- */}
+            {
+                activeTab === 'assign' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
+                        <Card>
+                            <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Assign a Task</h3>
+                            <form onSubmit={handleAssignTask} className="space-y-5">
+                                <div>
+                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Assign To</label>
+                                    <Select
+                                        required
+                                        value={assignForm.employee_id}
+                                        onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })}
+                                        className="w-full"
+                                    >
+                                        <option value="" disabled>Select Employee</option>
+                                        {employees.filter(e => e.role === 'employee').map(emp => (
+                                            <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                        ))}
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Task Name</label>
+                                    <Input
+                                        required
+                                        value={assignForm.name}
+                                        onChange={e => setAssignForm({ ...assignForm, name: e.target.value })}
+                                        placeholder="Task title"
+                                        className="w-full"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Start Date</label>
+                                        <Input
+                                            type="date"
+                                            required
+                                            value={assignForm.start_date}
+                                            onChange={e => setAssignForm({ ...assignForm, start_date: e.target.value })}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Deadline</label>
+                                        <Input
+                                            type="date"
+                                            required
+                                            value={assignForm.deadline}
+                                            onChange={e => setAssignForm({ ...assignForm, deadline: e.target.value })}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Priority</label>
+                                        <Select
+                                            value={assignForm.priority}
+                                            onChange={e => setAssignForm({ ...assignForm, priority: e.target.value as Priority })}
+                                            className="w-full"
+                                        >
+                                            <option>Low</option>
+                                            <option>Medium</option>
+                                            <option>High</option>
+                                            <option>Urgent</option>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Initial Status</label>
+                                        <Select
+                                            value={assignForm.status}
+                                            onChange={e => setAssignForm({ ...assignForm, status: e.target.value as Status })}
+                                            className="w-full"
+                                        >
+                                            <option>To Do</option>
+                                            <option>In Progress</option>
+                                            <option>Blocked</option>
+                                            <option>Completed</option>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Manager Notes / Instructions</label>
+                                    <textarea
+                                        className="w-full bg-white border border-[#d2d2d7] text-[#1d1d1f] rounded-xl px-4 py-3 outline-none transition-all duration-200 focus:border-[#0071e3] focus:ring-1 focus:ring-[#0071e3] placeholder-[#86868b] min-h-[100px]"
+                                        value={assignForm.notes}
+                                        onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })}
+                                        placeholder="Instructions for the employee..."
+                                    />
+                                </div>
+
+                                {assignSuccess && (
+                                    <div className="p-4 bg-[#dcfce7] border border-[#4ade80] rounded-xl text-[#16a34a] text-sm font-medium">
+                                        Task successfully assigned to database!
+                                    </div>
+                                )}
+
+                                <Button type="submit" className="w-full mt-2">Send Assignment</Button>
+                            </form>
+                        </Card>
+
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-bold text-[#1d1d1f] px-2">Manager Instructions</h3>
+                            <Card className="bg-[#f5f5f7] border-0">
+                                <p className="text-[#86868b] text-sm leading-relaxed">
+                                    Use this form to assign new trackable objectives to your team members. Tasks assigned here will immediately appear in the employee's "My Tasks" view and on the broader "Team View" board and persist in our live database.
+                                    <br /><br />
+                                    Employees will be responsible for logging their daily hours on these tasks to keep the capacity tracker up to date.
+                                </p>
+                            </Card>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* --- MY SETTINGS TAB --- */}
-            {activeTab === 'settings' && (
-                <div className="max-w-2xl fade-in">
-                    <Card>
-                        <h3 className="text-xl font-bold mb-2 text-[#1d1d1f]">Account Security</h3>
-                        <p className="text-[#86868b] text-sm mb-6">Update the password for your Manager account ({userName}).</p>
-                        <form onSubmit={handleSelfPasswordUpdate} className="space-y-5">
-                            <div>
-                                <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">New Password</label>
-                                <Input
-                                    type="password"
-                                    required
-                                    value={selfPasswordForm}
-                                    onChange={e => setSelfPasswordForm(e.target.value)}
-                                    placeholder="Enter a new secure password"
-                                    className="w-full"
-                                />
-                            </div>
-
-                            {settingsSuccess && (
-                                <div className="p-4 bg-[#dcfce7] border border-[#4ade80] rounded-xl text-[#16a34a] text-sm font-medium">
-                                    Your password has been securely updated!
+            {
+                activeTab === 'settings' && (
+                    <div className="max-w-2xl fade-in">
+                        <Card>
+                            <h3 className="text-xl font-bold mb-2 text-[#1d1d1f]">Account Security</h3>
+                            <p className="text-[#86868b] text-sm mb-6">Update the password for your Manager account ({userName}).</p>
+                            <form onSubmit={handleSelfPasswordUpdate} className="space-y-5">
+                                <div>
+                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">New Password</label>
+                                    <Input
+                                        type="password"
+                                        required
+                                        value={selfPasswordForm}
+                                        onChange={e => setSelfPasswordForm(e.target.value)}
+                                        placeholder="Enter a new secure password"
+                                        className="w-full"
+                                    />
                                 </div>
-                            )}
 
-                            <Button type="submit">Update My Password</Button>
-                        </form>
-                    </Card>
-                </div>
-            )}
-        </div>
+                                {settingsSuccess && (
+                                    <div className="p-4 bg-[#dcfce7] border border-[#4ade80] rounded-xl text-[#16a34a] text-sm font-medium">
+                                        Your password has been securely updated!
+                                    </div>
+                                )}
+
+                                <Button type="submit">Update My Password</Button>
+                            </form>
+                        </Card>
+                    </div>
+                )
+            }
+        </div >
     );
 }

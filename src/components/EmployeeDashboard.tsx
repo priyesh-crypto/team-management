@@ -309,10 +309,33 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                         </form>
                     </Card>
 
-                    {/* Task List */}
-                    <div className="lg:col-span-2 space-y-4">
-                        <h3 className="text-2xl font-bold mb-6 text-[#1d1d1f] px-2">Your Tracked Tasks</h3>
-                        {renderTaskList(myTasks, false)}
+                    {/* Task List Section */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Active Tasks */}
+                        <div>
+                            <div className="flex items-center gap-3 mb-6 px-2">
+                                <h3 className="text-2xl font-bold text-[#1d1d1f]">Active Workspace</h3>
+                                <Badge variant="default" className="bg-[#0071e3]/10 text-[#0071e3] border-none">
+                                    {myTasks.filter(t => t.status !== 'Completed').length} Pending
+                                </Badge>
+                            </div>
+                            {renderTaskList(myTasks.filter(t => t.status !== 'Completed'), false)}
+                        </div>
+
+                        {/* Completed Tasks */}
+                        {myTasks.some(t => t.status === 'Completed') && (
+                            <div className="pt-8 border-t border-[#e5e5ea]">
+                                <div className="flex items-center gap-3 mb-6 px-2">
+                                    <h3 className="text-2xl font-bold text-[#86868b]">Completion History</h3>
+                                    <Badge variant="Low">
+                                        {myTasks.filter(t => t.status === 'Completed').length} Done
+                                    </Badge>
+                                </div>
+                                <div className="opacity-75 grayscale-[0.5] hover:opacity-100 hover:grayscale-0 transition-all duration-300">
+                                    {renderTaskList(myTasks.filter(t => t.status === 'Completed'), false)}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             ) : (
