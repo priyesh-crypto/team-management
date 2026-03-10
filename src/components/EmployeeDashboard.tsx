@@ -966,8 +966,8 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                             <div>
                                 <div className="flex items-center gap-3 mb-6 px-2">
                                     <h3 className="text-2xl font-bold text-[#1d1d1f]">Active Workspace</h3>
-                                    <Badge variant="default" className="bg-[#0071e3]/10 text-[#0071e3] border-none">
-                                        {myTasks.filter(t => t.status !== 'Completed').length} Pending
+                                    <Badge variant="default" className="bg-[#0071e3]/10 text-[#0071e3] border-none font-black uppercase tracking-widest text-[10px]">
+                                        {myTasks.filter(t => t.status !== 'Completed').length} ACTIVE
                                     </Badge>
                                 </div>
                                 {renderTaskList(myTasks.filter(t => t.status !== 'Completed' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()))), false)}
@@ -978,8 +978,8 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                 <div className="pt-8 border-t border-[#e5e5ea]">
                                     <div className="flex items-center gap-3 mb-6 px-2">
                                         <h3 className="text-2xl font-bold text-[#86868b]">Completion History</h3>
-                                        <Badge variant="Low">
-                                            {myTasks.filter(t => t.status === 'Completed').length} Done
+                                        <Badge variant="Low" className="font-black uppercase tracking-widest text-[10px]">
+                                            {myTasks.filter(t => t.status === 'Completed').length} COMPLETED
                                         </Badge>
                                     </div>
                                     <div className="opacity-75 grayscale-[0.5] hover:opacity-100 hover:grayscale-0 transition-all duration-300">

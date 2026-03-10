@@ -393,10 +393,10 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             {/* Board View */}
                             <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
                                 <div className="grid grid-cols-4 gap-6 min-w-[1200px]">
-                                    <BoardColumn title="DRAFT" tasks={tasks.filter(t => t.status === 'To Do' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
+                                    <BoardColumn title="TO DO" tasks={tasks.filter(t => t.status === 'To Do' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
                                     <BoardColumn title="IN PROGRESS" tasks={tasks.filter(t => t.status === 'In Progress' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
-                                    <BoardColumn title="EDITING" tasks={tasks.filter(t => t.status === 'Blocked' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
-                                    <BoardColumn title="DONE" tasks={tasks.filter(t => t.status === 'Completed' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
+                                    <BoardColumn title="BLOCKED" tasks={tasks.filter(t => t.status === 'Blocked' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
+                                    <BoardColumn title="COMPLETED" tasks={tasks.filter(t => t.status === 'Completed' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
                                 </div>
                             </div>
 
