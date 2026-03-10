@@ -1,43 +1,50 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Task, Profile, Priority, Status, getTasks, getProfiles, saveTask, createEmployeeAccount, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, createEmployeeAccount, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification } from '@/app/actions/actions';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
+import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
 
 export default function ManagerDashboard({ userId, userName }: { userId: string, userName: string }) {
-    const [activeTab, setActiveTab] = useState<'overview' | 'progress' | 'team' | 'assign' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'board' | 'planning' | 'team' | 'settings'>('board');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedTask, setSelectedTask] = useState<{ task: Task, subtasks: Subtask[] } | null>(null);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
 
     // Data State
-    const [tasks, setTasks] = useState<Task[]>([]);
+    const [tasks, setTasks] = useState<Task[]>([]); // This will hold all tasks
     const [employees, setEmployees] = useState<Profile[]>([]);
-    const [selectedEmployeeFilter, setSelectedEmployeeFilter] = useState<string>('all');
-    const [selectedProgressUser, setSelectedProgressUser] = useState<string>('');
     const [loading, setLoading] = useState(true);
+    const [subtasksMap, setSubtasksMap] = useState<Record<string, Subtask[]>>({});
 
-    // New Employee Form State
+    // Profile State
+    const [profileName, setProfileName] = useState(userName);
+    const [passwords, setPasswords] = useState({ new: '', confirm: '' });
+    const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+    // Team Management Form State
     const [newEmpForm, setNewEmpForm] = useState({ name: '', email: '', password: '' });
     const [empError, setEmpError] = useState('');
-
-    // Edit Employee State
     const [editingEmpId, setEditingEmpId] = useState<string | null>(null);
     const [editEmpForm, setEditEmpForm] = useState({ name: '', role: 'employee', password: '' });
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
-    // Self Settings Form State
-    const [selfPasswordForm, setSelfPasswordForm] = useState('');
-    const [settingsSuccess, setSettingsSuccess] = useState(false);
-
-    // Assign Task Form State
+    // Assign Task State (used in a modal or side panel later maybe, but for now in board)
+    const [showAssignModal, setShowAssignModal] = useState(false);
     const [assignForm, setAssignForm] = useState<Partial<Task>>({
         name: '',
         employee_id: '',
         start_date: new Date().toISOString().split('T')[0],
         deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         priority: 'Medium',
-        hours_spent: 0,
         status: 'To Do',
-        notes: 'Assigned by Manager.'
+        notes: ''
     });
-    const [assignSuccess, setAssignSuccess] = useState(false);
 
     useEffect(() => {
         refreshData();
@@ -47,941 +54,833 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         setLoading(true);
         const [fetchedTasks, fetchedProfiles] = await Promise.all([getTasks(), getProfiles()]);
         setTasks(fetchedTasks);
-        // Managers can see everyone.
         setEmployees(fetchedProfiles);
+        
+        // Fetch all subtasks
+        const subtasksPromises = fetchedTasks.map(t => getSubtasks(t.id));
+        const subtasksResults = await Promise.all(subtasksPromises);
+        const newMap: Record<string, Subtask[]> = {};
+        fetchedTasks.forEach((t, i) => {
+            newMap[t.id] = subtasksResults[i];
+        });
+        setSubtasksMap(newMap);
+        // Fetch notifications
+        const notifs = await getNotifications(userId);
+        setNotifications(notifs);
+        setUnreadCount(notifs.filter(n => !n.is_read).length);
+        
         setLoading(false);
     };
 
-    // ---- Overview Logic ----
-    const filteredTasks = useMemo(() => {
-        if (selectedEmployeeFilter === 'all') return tasks;
-        return tasks.filter(t => t.employee_id === selectedEmployeeFilter);
-    }, [tasks, selectedEmployeeFilter]);
+    // --- Timeline Logic ---
+    const timelineData = useMemo(() => {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
 
-    const capacityData = useMemo(() => {
-        const data: Record<string, number> = {};
-        filteredTasks.forEach(task => {
-            const empName = employees.find(e => e.id === task.employee_id)?.name || 'Unknown';
-            data[empName] = (data[empName] || 0) + Number(task.hours_spent);
+        if (viewMode === 'day') {
+            start.setDate(start.getDate() - 1);
+            end.setDate(end.getDate() + 2);
+        } else if (viewMode === 'month') {
+            start.setDate(start.getDate() - 5);
+            end.setDate(end.getDate() + 25);
+        } else {
+            // Default: Week (approx 2 weeks)
+            start.setDate(start.getDate() - 2);
+            end.setDate(end.getDate() + 12);
+        }
+
+        const days = [];
+        let curr = new Date(start);
+        while (curr <= end) {
+            days.push(new Date(curr));
+            curr.setDate(curr.getDate() + 1);
+        }
+
+        // Group tasks by employee
+        const employeeTasks: Record<string, Task[]> = {};
+        employees.filter(e => e.role === 'employee').forEach(emp => {
+            employeeTasks[emp.id] = tasks.filter(t => t.employee_id === emp.id);
         });
-        return Object.entries(data).map(([name, hours]) => ({ name, hours }));
-    }, [filteredTasks, employees]);
 
-    const summaryStats = useMemo(() => {
-        const total = filteredTasks.length;
-        if (total === 0) return { completed: 0, inProgress: 0, blocked: 0 };
+        return { days, employeeTasks, startDate: start, endDate: end };
+    }, [tasks, employees, viewMode]);
 
-        const completed = filteredTasks.filter(t => t.status === 'Completed').length;
-        const blocked = filteredTasks.filter(t => t.status === 'Blocked').length;
 
-        return {
-            completed: Math.round((completed / total) * 100),
-            blocked: Math.round((blocked / total) * 100),
-            inProgress: Math.round(((total - completed - blocked) / total) * 100)
-        };
-    }, [filteredTasks]);
-
-    const isOverdue = (deadline: string) => {
-        return new Date(deadline) < new Date(new Date().toISOString().split('T')[0]);
+    const handleTaskClick = async (task: Task) => {
+        const subtasks = await getSubtasks(task.id);
+        setSelectedTask({ task, subtasks });
     };
 
-    // ---- Individual Progress Logic ----
-    const progressTasks = useMemo(() => {
-        return tasks.filter(t => t.employee_id === selectedProgressUser).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    }, [tasks, selectedProgressUser]);
+    const handleUpdateStatusFromModal = async (taskId: string, status: Status) => {
+        setIsUpdatingStatus(true);
+        try {
+            await updateTaskStatus(taskId, status);
+            await refreshData(); // Refresh all data to get updated tasks and subtasks
+            
+            // Update selected task in modal if it's the same one
+            if (selectedTask && selectedTask.task.id === taskId) {
+                const updatedTask = tasks.find(t => t.id === taskId); // Find from the refreshed tasks
+                if (updatedTask) {
+                    const subtasks = await getSubtasks(taskId); // Re-fetch subtasks for the updated task
+                    setSelectedTask({ task: updatedTask, subtasks: subtasks });
+                }
+            }
+        } finally {
+            setIsUpdatingStatus(false);
+        }
+    };
 
-    const progressStats = useMemo(() => {
-        const total = progressTasks.length;
-        const completed = progressTasks.filter(t => t.status === 'Completed').length;
-        const totalHours = progressTasks.reduce((sum, t) => sum + Number(t.hours_spent), 0);
-        const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100);
-        return { total, completed, totalHours, completionRate };
-    }, [progressTasks]);
+    // --- Board Stats ---
+    const boardStats = useMemo(() => {
+        const filteredTasks = tasks.filter(t => 
+            t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
 
-    // ---- Team Management Handlers ----
+        const groupTasksByStatus = (status: Status) => filteredTasks.filter(t => t.status === status);
+
+        const total = filteredTasks.length;
+        const completed = groupTasksByStatus('Completed').length;
+        const inProgress = groupTasksByStatus('In Progress').length;
+        const draft = groupTasksByStatus('To Do').length;
+
+        return { total, completed, inProgress, draft };
+    }, [tasks, searchQuery, employees]);
+
+    const heatmapData = useMemo(() => {
+        const highUrgent = tasks.filter(t => t.priority === 'High' || t.priority === 'Urgent');
+        const active = highUrgent.filter(t => t.status !== 'Completed' && new Date(t.deadline) >= new Date());
+        const overdue = highUrgent.filter(t => t.status !== 'Completed' && new Date(t.deadline) < new Date());
+        
+        return { 
+            active: active.map(t => ({ ...t, employee: employees.find(e => e.id === t.employee_id)?.name })), 
+            overdue: overdue.map(t => ({ ...t, employee: employees.find(e => e.id === t.employee_id)?.name })) 
+        };
+    }, [tasks, employees]);
+
+    // --- Handlers ---
+    const handleUpdateProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsUpdatingProfile(true);
+        setProfileMsg(null);
+        try {
+            await updateProfile(userId, { name: profileName });
+            setProfileMsg({ type: 'success', text: 'Profile updated successfully!' });
+        } catch (err: any) {
+            setProfileMsg({ type: 'error', text: err.message || 'Failed to update profile.' });
+        } finally {
+            setIsUpdatingProfile(false);
+        }
+    };
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (passwords.new !== passwords.confirm) {
+            setProfileMsg({ type: 'error', text: 'Passwords do not match.' });
+            return;
+        }
+        setIsUpdatingPassword(true);
+        try {
+            await changePassword(passwords.new);
+            setProfileMsg({ type: 'success', text: 'Password changed successfully!' });
+            setPasswords({ new: '', confirm: '' });
+        } catch (err: any) {
+            setProfileMsg({ type: 'error', text: err.message || 'Failed to change password.' });
+        } finally {
+            setIsUpdatingPassword(false);
+        }
+    };
+
     const handleCreateEmployee = async (e: React.FormEvent) => {
         e.preventDefault();
         setEmpError('');
-
         try {
             await createEmployeeAccount(newEmpForm.name, newEmpForm.email, newEmpForm.password);
             setNewEmpForm({ name: '', email: '', password: '' });
             refreshData();
         } catch (err: any) {
-            setEmpError(err.message || 'Failed to create employee profile.');
+            setEmpError(err.message || 'Failed to create employee.');
         }
-    };
-
-    const handleStartEdit = (emp: Profile) => {
-        setEditingEmpId(emp.id);
-        setEditEmpForm({ name: emp.name, role: emp.role, password: '' });
-    };
-
-    const handleCancelEdit = () => {
-        setEditingEmpId(null);
-        setEditEmpForm({ name: '', role: 'employee', password: '' });
     };
 
     const handleSaveEdit = async (empId: string) => {
         try {
             await updateEmployeeProfile(empId, editEmpForm.name, editEmpForm.role);
-
-            if (editEmpForm.password.trim() !== '') {
-                await updateUserPassword(empId, editEmpForm.password);
-            }
-
+            if (editEmpForm.password) await updateUserPassword(empId, editEmpForm.password);
             setEditingEmpId(null);
             refreshData();
         } catch (err: any) {
-            alert(err.message || "Failed to update profile.");
+            alert(err.message);
         }
     };
 
-    const handleSelfPasswordUpdate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSettingsSuccess(false);
-
-        try {
-            await updateOwnPassword(selfPasswordForm);
-            setSelfPasswordForm('');
-            setSettingsSuccess(true);
-            setTimeout(() => setSettingsSuccess(false), 3000);
-        } catch (err: any) {
-            alert(err.message || "Failed to update password.");
-        }
-    };
-
-    // ---- Assign Task Handler ----
     const handleAssignTask = async (e: React.FormEvent) => {
         e.preventDefault();
-        setAssignSuccess(false);
-
-        if (!assignForm.employee_id) {
-            alert("Please select an employee.");
-            return;
-        }
-
-        const newTaskData = {
-            ...assignForm,
-            hours_spent: 0,
-            name: assignForm.name!,
-            employee_id: assignForm.employee_id!,
-            start_date: assignForm.start_date!,
-            deadline: assignForm.deadline!,
-            priority: assignForm.priority as Priority,
-            status: assignForm.status as Status,
-            notes: assignForm.notes || ''
-        };
-
+        if (!assignForm.employee_id || !assignForm.name) return;
         try {
-            await saveTask(newTaskData);
-            setAssignSuccess(true);
+            await saveTask(assignForm as any);
+            setShowAssignModal(false);
+            setAssignForm({ name: '', employee_id: '', start_date: new Date().toISOString().split('T')[0], deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0], priority: 'Medium', status: 'To Do', notes: '' });
             refreshData();
-
-            setAssignForm({
-                ...assignForm,
-                name: '',
-                notes: 'Assigned by Manager.'
-            });
-
-            setTimeout(() => setAssignSuccess(false), 3000);
         } catch (err) {
-            alert("Error assigning task.");
+            alert("Error assigning task");
         }
     };
 
     if (loading) {
-        return <div className="text-center py-20 font-bold text-[#86868b] animate-pulse">Loading Manager Access...</div>;
+        return (
+            <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
+                <div className="w-12 h-12 border-4 border-[#0071e3] border-t-transparent rounded-full animate-spin mb-4"></div>
+                <div className="text-xl font-bold text-[#1d1d1f] animate-pulse">Initializing Management System...</div>
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-8">
-            {/* Header and Tabs */}
-            <div className="flex flex-col gap-6 px-2">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-[#1d1d1f]">Master View</h2>
-                    <div className="text-xs font-bold text-[#86868b] uppercase tracking-widest mt-1">Team Management ({userName || 'Admin'})</div>
+        <div className="flex h-screen bg-[#f5f5f7] overflow-hidden">
+            {/* --- SIDEBAR --- */}
+            <div className="w-72 bg-white border-r border-[#e5e5ea] flex flex-col p-6 hidden lg:flex">
+                <div className="flex items-center gap-3 mb-10 px-2">
+                    <div className="w-10 h-10 bg-[#0071e3] rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-[#0071e3]/20">M</div>
+                    <span className="text-xl font-black tracking-tight text-[#1d1d1f]">Manager Hub</span>
                 </div>
 
-                <div className="flex gap-2 p-1 bg-[#e5e5ea]/50 rounded-xl inline-flex w-fit max-w-full overflow-x-auto">
-                    <button
-                        onClick={() => setActiveTab('overview')}
-                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'overview' ? 'bg-white shadow-sm text-[#1d1d1f]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
-                    >
-                        Analytics Overview
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('progress')}
-                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'progress' ? 'bg-white shadow-sm text-[#1d1d1f]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
-                    >
-                        Employee Progress
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('team')}
-                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'team' ? 'bg-white shadow-sm text-[#1d1d1f]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
-                    >
-                        Team Management
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('assign')}
-                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'assign' ? 'bg-white shadow-sm text-[#1d1d1f]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
-                    >
-                        Assign Tasks
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('settings')}
-                        className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${activeTab === 'settings' ? 'bg-white shadow-sm text-[#1d1d1f]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
-                    >
-                        My Settings
-                    </button>
+                <nav className="flex-1 space-y-2">
+                    <NavItem icon="📊" label="DASHBOARD" active={activeTab === 'board'} onClick={() => setActiveTab('board')} />
+                    <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => setActiveTab('planning')} />
+                    <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
+                    <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+                </nav>
+
+                <div className="mt-auto p-4 bg-[#f5f5f7] rounded-[24px] border border-[#e5e5ea]">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] flex items-center justify-center text-xs text-white font-bold">
+                            {userName.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black truncate">{userName}</p>
+                            <p className="text-[10px] text-[#86868b] font-bold">Admin Privileges</p>
+                        </div>
+                    </div>
+                    <Button variant="secondary" className="w-full text-[10px] font-black tracking-widest py-2 rounded-xl h-auto" onClick={() => window.location.href = '/'}>LOGOUT</Button>
                 </div>
             </div>
 
-            {/* --- OVERVIEW TAB --- */}
-            {activeTab === 'overview' && (
-                <div className="space-y-8 fade-in">
-                    <div className="flex justify-end px-2">
-                        <div className="w-full md:w-64">
-                            <label className="block text-xs font-semibold mb-1 text-[#86868b] uppercase tracking-wider">Filter Employee</label>
-                            <Select
-                                value={selectedEmployeeFilter}
-                                onChange={e => setSelectedEmployeeFilter(e.target.value)}
-                                className="w-full py-2"
-                            >
-                                <option value="all">All Employees</option>
-                                {employees.map(emp => (
-                                    <option key={emp.id} value={emp.id}>{emp.name}</option>
-                                ))}
-                            </Select>
+            {/* --- MAIN CONTENT --- */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Header */}
+                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-[#e5e5ea] flex items-center justify-between px-8 sticky top-0 z-10">
+                    <div>
+                        <div className="flex items-center gap-2 text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-1">
+                            <span>Pages</span>
+                            <span>/</span>
+                            <span className="text-[#1d1d1f]">{activeTab.toUpperCase()}</span>
                         </div>
+                        <h1 className="text-xl font-black text-[#1d1d1f] tracking-tight capitalize">
+                            {activeTab === 'board' ? 'Organization Overview' : activeTab === 'planning' ? 'Project Timeline' : activeTab === 'team' ? 'Team Management' : 'My Account'}
+                        </h1>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {/* Weekly Summary Widget */}
-                        <Card className="col-span-1 md:col-span-2 lg:col-span-2 bg-[#f0f9ff] border-[#bae6fd]">
-                            <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Weekly Summary</h3>
-                            <div className="flex gap-6 items-center">
-                                <div className="w-28 h-28 rounded-full border-8 border-white bg-white shadow-sm relative flex items-center justify-center">
-                                    <span className="text-3xl font-bold text-[#0071e3]">{summaryStats.completed}%</span>
-                                </div>
-                                <div className="space-y-3 flex-1 font-medium">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-[#16a34a]">Completed</span>
-                                        <span className="text-[#1d1d1f]">{summaryStats.completed}%</span>
-                                    </div>
-                                    <div className="w-full bg-[#e0f2fe] h-2.5 rounded-full overflow-hidden">
-                                        <div className="bg-[#34c759] h-full rounded-full" style={{ width: `${summaryStats.completed}%` }}></div>
-                                    </div>
-
-                                    <div className="flex justify-between text-sm mt-3">
-                                        <span className="text-[#0071e3]">In Progress / To Do</span>
-                                        <span className="text-[#1d1d1f]">{summaryStats.inProgress}%</span>
-                                    </div>
-                                    <div className="w-full bg-[#e0f2fe] h-2.5 rounded-full overflow-hidden">
-                                        <div className="bg-[#0071e3] h-full rounded-full" style={{ width: `${summaryStats.inProgress}%` }}></div>
-                                    </div>
-
-                                    {summaryStats.blocked > 0 && (
-                                        <>
-                                            <div className="flex justify-between text-sm mt-3">
-                                                <span className="text-[#e83f3f]">Blocked</span>
-                                                <span className="text-[#1d1d1f]">{summaryStats.blocked}%</span>
-                                            </div>
-                                            <div className="w-full bg-[#e0f2fe] h-2.5 rounded-full overflow-hidden">
-                                                <div className="bg-[#e83f3f] h-full rounded-full" style={{ width: `${summaryStats.blocked}%` }}></div>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </Card>
-
-                        {/* Total Capacity Tracker */}
-                        <Card className="col-span-1 md:col-span-2 lg:col-span-2">
-                            <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Total Capacity Tracker</h3>
-                            <div className="space-y-3 max-h-[140px] overflow-y-auto pr-2">
-                                {capacityData.length === 0 ? <span className="text-[#86868b] font-medium">No data</span> : null}
-                                {capacityData.map((data, idx) => (
-                                    <div key={idx} className="flex justify-between items-center p-3 rounded-xl bg-[#f5f5f7] border border-[#e5e5ea]">
-                                        <span className="font-semibold text-[#1d1d1f]">{data.name}</span>
-                                        <span className="px-3 py-1 bg-white text-[#0071e3] shadow-sm rounded-lg font-bold text-sm">
-                                            {data.hours} hrs
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Priority Heatmap */}
-                        <Card className="max-h-[500px] overflow-y-auto">
-                            <h3 className="text-xl font-bold mb-2 text-[#1d1d1f] flex items-center gap-2">
-                                <span className="text-[#e83f3f]">●</span> Priority Heatmap
-                            </h3>
-                            <p className="text-sm font-medium text-[#86868b] mb-6">Showing High & Urgent tasks that are active or overdue.</p>
-
-                            <div className="space-y-6">
-                                {/* Heatmap: Active High Priority */}
-                                <div>
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="h-2.5 w-2.5 rounded-full bg-[#e83f3f] shadow-[0_0_8px_rgba(232,63,63,0.4)] flex-shrink-0" />
-                                        <h4 className="text-sm font-bold text-[#1d1d1f] uppercase tracking-wider">Active Critical Focus</h4>
-                                    </div>
-                                    <div className="space-y-4 pr-2">
-                                        {filteredTasks
-                                            .filter(t => ['Urgent', 'High'].includes(t.priority) && t.status !== 'Completed')
-                                            .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
-                                            .map(task => {
-                                                const overdue = isOverdue(task.deadline);
-                                                const empName = employees.find(e => e.id === task.employee_id)?.name;
-
-                                                return (
-                                                    <div
-                                                        key={task.id}
-                                                        className={`p-4 rounded-2xl border flex flex-col gap-3 transition-all hover:shadow-md ${overdue ? 'bg-[#fff1f2] border-[#fecdd3]' :
-                                                            task.priority === 'Urgent' ? 'bg-[#fff7ed] border-[#ffedd5]' :
-                                                                'bg-[#f5f5f7] border-[#e5e5ea]'
-                                                            }`}
-                                                    >
-                                                        <div className="flex justify-between items-start">
-                                                            <div className="font-bold text-[#1d1d1f]">{task.name}</div>
-                                                            {overdue ? (
-                                                                <span className="text-xs bg-[#e83f3f] text-white px-2.5 py-1 rounded-full font-bold uppercase tracking-wider animate-pulse shadow-sm">Overdue</span>
-                                                            ) : (
-                                                                <Badge variant={task.priority}>{task.priority}</Badge>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-sm font-medium text-[#86868b] grid grid-cols-2">
-                                                            <div>Assignee: <span className="text-[#1d1d1f] font-semibold">{empName}</span></div>
-                                                            <div className={overdue ? 'text-[#e83f3f] font-bold' : ''}>Deadline: {task.deadline}</div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        {filteredTasks.filter(t => ['Urgent', 'High'].includes(t.priority) && t.status !== 'Completed').length === 0 && (
-                                            <div className="text-[#86868b] font-medium py-8 text-center bg-[#fafafa] rounded-2xl border border-dashed border-[#d2d2d7]">No active high-priority tasks.</div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Active: Standard Priority */}
-                                <div>
-                                    <div className="flex items-center gap-3 mb-4 pt-4 border-t border-[#e5e5ea]">
-                                        <div className="h-2.5 w-2.5 rounded-full bg-[#0071e3] shadow-[0_0_8px_rgba(0,113,227,0.4)] flex-shrink-0" />
-                                        <h4 className="text-sm font-bold text-[#1d1d1f] uppercase tracking-wider">Other Active Work</h4>
-                                    </div>
-                                    <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                                        {filteredTasks
-                                            .filter(t => !['Urgent', 'High'].includes(t.priority) && t.status !== 'Completed')
-                                            .map(task => (
-                                                <div key={task.id} className="p-3 bg-[#f5f5f7] rounded-xl flex justify-between items-center border border-[#e5e5ea]">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold text-[#1d1d1f] text-sm">{task.name}</span>
-                                                        <span className="text-[10px] text-[#86868b]">{employees.find(e => e.id === task.employee_id)?.name} • {task.status}</span>
-                                                    </div>
-                                                    <Badge variant={task.priority} className="text-[10px] px-2 py-0">{task.priority}</Badge>
-                                                </div>
-                                            ))}
-                                        {filteredTasks.filter(t => !['Urgent', 'High'].includes(t.priority) && t.status !== 'Completed').length === 0 && (
-                                            <div className="text-[11px] text-[#86868b] py-2 text-center italic">No other active tasks.</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-
-                        {/* Modern Project Timeline (Calendar View) */}
-                        <Card className="overflow-hidden flex flex-col border-[#e5e5ea] shadow-sm">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-xl font-bold text-[#1d1d1f]">Project Timeline</h3>
-                                <div className="flex gap-4 text-xs font-semibold text-[#86868b]">
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-[#34c759]" /> Completed
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-[#0071e3]" /> In Progress
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-[#e83f3f]" /> Blocked
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex-1 overflow-x-auto custom-scrollbar relative bg-[#fafafa] rounded-2xl border border-[#e5e5ea]">
-                                {filteredTasks.length === 0 ? (
-                                    <div className="p-10 text-center text-[#86868b] font-medium">No tasks logged for this profile.</div>
-                                ) : (
-                                    <div className="min-w-[1000px] p-8 pb-12 relative">
-                                        {(() => {
-                                            const today = new Date();
-                                            today.setHours(0, 0, 0, 0);
-
-                                            // 1. Calculate Date Range
-                                            const allDates = filteredTasks.flatMap(t => [new Date(t.start_date), new Date(t.deadline)]);
-                                            allDates.push(today);
-
-                                            const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
-                                            minDate.setDate(minDate.getDate() - 2); // 2 days padding
-
-                                            const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
-                                            maxDate.setDate(maxDate.getDate() + 5); // 5 days padding for labels
-
-                                            const totalDays = Math.max(7, Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)));
-
-                                            // 2. Generate Grid Columns (Days)
-                                            const days = [];
-                                            for (let i = 0; i <= totalDays; i++) {
-                                                const current = new Date(minDate);
-                                                current.setDate(minDate.getDate() + i);
-                                                days.push(current);
-                                            }
-
-                                            const getPos = (dateStr: string) => {
-                                                const d = new Date(dateStr);
-                                                return ((d.getTime() - minDate.getTime()) / (totalDays * 86400000)) * 100;
-                                            };
-
-                                            const todayPos = ((today.getTime() - minDate.getTime()) / (totalDays * 86400000)) * 100;
-
-                                            return (
-                                                <div className="relative pt-10">
-                                                    {/* Background Grid */}
-                                                    <div className="absolute inset-0 flex pointer-events-none">
-                                                        {days.map((day, i) => (
-                                                            <div
-                                                                key={i}
-                                                                className={`flex-1 border-l border-[#e5e5ea] relative ${day.getDay() === 0 || day.getDay() === 6 ? 'bg-black/[0.02]' : ''}`}
-                                                            >
-                                                                {/* Date Labels */}
-                                                                <div className="absolute -top-10 left-0 -translate-x-1/2 flex flex-col items-center">
-                                                                    <span className="text-[10px] font-bold text-[#86868b] uppercase tracking-tighter">
-                                                                        {day.toLocaleDateString('en-US', { weekday: 'short' })}
-                                                                    </span>
-                                                                    <span className={`text-xs font-bold ${day.getTime() === today.getTime() ? 'text-[#0071e3]' : 'text-[#1d1d1f]'}`}>
-                                                                        {day.getDate()}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                        <div className="flex-1 border-l border-[#e5e5ea]" />
-                                                    </div>
-
-                                                    {/* Today Indicator Line */}
-                                                    <div
-                                                        className="absolute top-[-40px] bottom-[-20px] w-0.5 bg-[#ff3b30] z-20 pointer-events-none shadow-[0_0_10px_rgba(255,59,48,0.3)]"
-                                                        style={{ left: `${todayPos}%` }}
-                                                    >
-                                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-[#ff3b30] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                                                            TODAY
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Task Rows */}
-                                                    <div className="space-y-6 relative z-10">
-                                                        {filteredTasks.map(task => {
-                                                            const left = getPos(task.start_date);
-                                                            const right = getPos(task.deadline);
-                                                            const width = Math.max(2, right - left);
-                                                            const empName = employees.find(e => e.id === task.employee_id)?.name;
-                                                            const statusColor = task.status === 'Completed' ? '#34c759' :
-                                                                task.status === 'Blocked' ? '#ff3b30' : '#0071e3';
-
-                                                            return (
-                                                                <div key={task.id} className="relative h-12 group">
-                                                                    <div
-                                                                        className="absolute h-full rounded-2xl flex items-center px-4 shadow-[0_4px_12px_rgba(0,0,0,0.08)] border border-white/20 transition-all duration-300 hover:scale-[1.02] hover:z-30 cursor-pointer overflow-hidden group/bar"
-                                                                        style={{
-                                                                            left: `${left}%`,
-                                                                            width: `${width}%`,
-                                                                            backgroundColor: statusColor,
-                                                                            minWidth: '120px'
-                                                                        }}
-                                                                    >
-                                                                        {/* Glossy Overlay */}
-                                                                        <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
-
-                                                                        <div className="relative z-10 flex flex-col justify-center min-w-0">
-                                                                            <span className="text-xs font-bold text-white truncate leading-tight">{task.name}</span>
-                                                                            <span className="text-[9px] font-medium text-white/80 truncate">{empName}</span>
-                                                                        </div>
-
-                                                                        {/* Floating Tooltip Detail */}
-                                                                        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-[#1d1d1f]/90 backdrop-blur-md text-white p-3 rounded-xl text-[10px] w-48 opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none shadow-xl border border-white/10 z-50">
-                                                                            <div className="font-bold border-b border-white/10 pb-1 mb-1">{task.name}</div>
-                                                                            <div className="flex justify-between mt-1">
-                                                                                <span className="text-white/60">Duration:</span>
-                                                                                <span>{task.start_date} → {task.deadline}</span>
-                                                                            </div>
-                                                                            <div className="flex justify-between">
-                                                                                <span className="text-white/60">Assigned:</span>
-                                                                                <span>{empName}</span>
-                                                                            </div>
-                                                                            <div className="flex justify-between">
-                                                                                <span className="text-white/60">Status:</span>
-                                                                                <span className="font-bold" style={{ color: statusColor }}>{task.status}</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-                                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="relative group">
+                            <Input 
+                                placeholder="Search tasks..." 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-64 bg-[#f5f5f7] border-none rounded-2xl h-10 px-10 text-xs font-medium" 
+                            />
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
+                        </div>
+                        <Button className="rounded-2xl h-10 px-6 font-black text-[10px] tracking-widest shadow-lg shadow-[#0071e3]/20" onClick={() => setShowAssignModal(true)}>+ NEW TASK</Button>
+                        <div className="relative">
+                            <div 
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg cursor-pointer transition-colors relative ${showNotifications ? 'bg-[#0071e3] text-white' : 'bg-[#f5f5f7] hover:bg-[#e5e5ea]'}`}
+                            >
+                                🔔
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ff3b30] text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">
+                                        {unreadCount}
+                                    </span>
                                 )}
                             </div>
-                        </Card>
-                    </div>
-                </div>
-            )}
 
-            {/* --- EMPLOYEE PROGRESS TAB --- */}
-            {activeTab === 'progress' && (
-                <div className="space-y-6 fade-in max-w-5xl mx-auto">
-                    <Card className="bg-[#f5f5f7] border-[#e5e5ea]">
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div>
-                                <h3 className="text-xl font-bold text-[#1d1d1f]">Individual Performance Review</h3>
-                                <p className="text-[#86868b] text-sm mt-1">Select an employee to deeply review their logged tasks, hours, and daily notes.</p>
-                            </div>
-                            <div className="w-full md:w-72">
-                                <Select
-                                    value={selectedProgressUser}
-                                    onChange={e => setSelectedProgressUser(e.target.value)}
-                                    className="w-full py-2 border-[#d2d2d7]"
-                                >
-                                    <option value="" disabled>Select Employee</option>
-                                    {employees.filter(e => e.role === 'employee').map(emp => (
-                                        <option key={emp.id} value={emp.id}>{emp.name}</option>
-                                    ))}
-                                </Select>
-                            </div>
-                        </div>
-                    </Card>
-
-                    {selectedProgressUser ? (
-                        <div className="space-y-6 fade-in">
-                            {/* Individual Stats Row */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <Card className="text-center py-6">
-                                    <div className="text-sm font-semibold text-[#86868b] uppercase tracking-wider mb-2">Completion Rate</div>
-                                    <div className="text-4xl font-bold text-[#0071e3]">{progressStats.completionRate}%</div>
-                                </Card>
-                                <Card className="text-center py-6">
-                                    <div className="text-sm font-semibold text-[#86868b] uppercase tracking-wider mb-2">Total Tasks Assigned</div>
-                                    <div className="text-4xl font-bold text-[#1d1d1f]">{progressStats.total}</div>
-                                </Card>
-                                <Card className="text-center py-6">
-                                    <div className="text-sm font-semibold text-[#86868b] uppercase tracking-wider mb-2">Total Hours Logged</div>
-                                    <div className="text-4xl font-bold text-[#16a34a]">{progressStats.totalHours}h</div>
-                                </Card>
-                            </div>
-
-                            {/* Detailed Task List */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                {/* Active Work */}
-                                <Card className="border-[#0071e3]/20">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-xl font-bold text-[#1d1d1f]">Active Work</h3>
-                                        <Badge variant="default" className="bg-[#0071e3]/10 text-[#0071e3] border-none">
-                                            {progressTasks.filter(t => t.status !== 'Completed').length} Pending
-                                        </Badge>
+                            {showNotifications && (
+                                <Card className="absolute right-0 mt-4 w-96 p-0 rounded-[32px] shadow-2xl bg-white border-[#eceef0] overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="p-6 border-b border-[#f0f0f2] flex justify-between items-center bg-[#f5f5f7]/50">
+                                        <div className="flex flex-col">
+                                            <h3 className="text-sm font-black text-[#1d1d1f] tracking-tight uppercase">Notifications</h3>
+                                            <button 
+                                                onClick={async () => {
+                                                    await markAllNotificationsAsRead(userId);
+                                                    refreshData();
+                                                }}
+                                                className="text-[9px] font-black text-[#0071e3] uppercase tracking-widest text-left hover:text-[#005bb7] transition-colors"
+                                            >
+                                                Mark all as read
+                                            </button>
+                                        </div>
+                                        {unreadCount > 0 && (
+                                            <Badge className="bg-[#0071e3] text-white text-[9px] font-black border-none px-2 rounded-lg">
+                                                {unreadCount} NEW
+                                            </Badge>
+                                        )}
                                     </div>
-                                    <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2">
-                                        {progressTasks.filter(t => t.status !== 'Completed').length === 0 ? (
-                                            <div className="text-center py-20 text-[#86868b] font-medium bg-[#f5f5f7] rounded-3xl border-2 border-dashed border-[#e5e5ea]">No pending tasks for this employee.</div>
+                                    <div className="max-h-[480px] overflow-y-auto custom-scrollbar">
+                                        {notifications.length === 0 ? (
+                                            <div className="p-12 text-center">
+                                                <div className="text-3xl mb-4 opacity-20">📭</div>
+                                                <p className="text-[10px] font-black text-[#86868b] uppercase tracking-widest leading-loose">All caught up!<br/>No new notifications</p>
+                                            </div>
                                         ) : (
-                                            progressTasks.filter(t => t.status !== 'Completed').map(task => (
-                                                <div key={task.id} className="p-5 border border-[#e5e5ea] rounded-2xl bg-[#fafafa] hover:bg-white transition-all hover:shadow-md group">
-                                                    <div className="flex justify-between items-start mb-3">
-                                                        <h4 className="font-bold text-lg text-[#1d1d1f]">{task.name}</h4>
-                                                        <div className="flex gap-2 items-center">
-                                                            <Badge variant={task.priority}>{task.priority}</Badge>
-                                                            <div className="flex gap-2 items-center">
-                                                                <Select
-                                                                    value={task.status}
-                                                                    onChange={async (e) => {
-                                                                        try {
-                                                                            await updateTaskStatus(task.id, e.target.value as Status);
-                                                                            refreshData();
-                                                                        } catch (err) {
-                                                                            alert("Failed to update status.");
-                                                                        }
-                                                                    }}
-                                                                    className="text-xs py-1 px-2 h-auto"
-                                                                >
-                                                                    <option>To Do</option>
-                                                                    <option>In Progress</option>
-                                                                    <option>Blocked</option>
-                                                                    <option>Completed</option>
-                                                                </Select>
-                                                                <button
-                                                                    onClick={async () => {
-                                                                        if (confirm("Are you sure you want to delete this task?")) {
-                                                                            try {
-                                                                                await deleteTask(task.id);
-                                                                                refreshData();
-                                                                            } catch (err) {
-                                                                                alert("Failed to delete task.");
-                                                                            }
-                                                                        }
-                                                                    }}
-                                                                    className="text-[#86868b] hover:text-[#e83f3f] transition-colors p-1"
-                                                                    title="Delete Task"
-                                                                >
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
-                                                                </button>
+                                            <div className="divide-y divide-[#f0f0f2]">
+                                                {notifications.map((n) => (
+                                                    <div 
+                                                        key={n.id} 
+                                                        onClick={async () => {
+                                                            if (!n.is_read) {
+                                                                await markNotificationAsRead(n.id);
+                                                                refreshData();
+                                                            }
+                                                        }}
+                                                        className={`p-6 hover:bg-[#f5f5f7] transition-all cursor-pointer group ${!n.is_read ? 'bg-[#0071e3]/[0.03]' : ''}`}
+                                                    >
+                                                        <div className="flex gap-3">
+                                                            <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+                                                                n.type === 'urgent' ? 'bg-[#ff3b30]' : 
+                                                                n.type === 'overdue' ? 'bg-[#ff9500]' : 'bg-[#0071e3]'
+                                                            }`} />
+                                                            <div className="flex-1">
+                                                                <div className="flex justify-between items-start mb-1">
+                                                                    <span className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-wider">{n.type}</span>
+                                                                    <span className="text-[9px] font-bold text-[#86868b] tabular-nums">{new Date(n.created_at).toLocaleDateString()}</span>
+                                                                </div>
+                                                                <p className="text-xs font-bold text-[#424245] leading-relaxed group-hover:text-[#1d1d1f] transition-colors">{n.message}</p>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-[#86868b] font-medium mb-4">
-                                                        <div>Start: <span className="text-[#1d1d1f]">{task.start_date}</span></div>
-                                                        <div>Ends: <span className={`font-bold ${isOverdue(task.deadline) ? 'text-[#e83f3f]' : 'text-[#1d1d1f]'}`}>{task.deadline}</span></div>
-                                                    </div>
-                                                    {task.notes && (
-                                                        <div className="text-xs bg-white text-[#1d1d1f] p-3 rounded-xl border border-[#e5e5ea] mt-2 group-hover:border-[#0071e3]/30 transition-colors italic">
-                                                            "{task.notes}"
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))
+                                                ))}
+                                            </div>
                                         )}
+                                    </div>
+                                    {notifications.length > 0 && (
+                                        <div className="p-4 bg-[#f5f5f7]/30 border-t border-[#f0f0f2]">
+                                            <button 
+                                                onClick={async () => {
+                                                    if (confirm("Clear all notifications?")) {
+                                                        await clearNotifications(userId);
+                                                        refreshData();
+                                                    }
+                                                }}
+                                                className="w-full py-2 text-[9px] font-black text-[#0071e3] uppercase tracking-widest hover:text-[#005bb7] transition-colors"
+                                            >
+                                                Clear all notifications
+                                            </button>
+                                        </div>
+                                    )}
+                                </Card>
+                            )}
+                        </div>
+                    </div>
+                </header>
+
+                <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    {activeTab === 'board' && (
+                        <div className="flex gap-8">
+                            {/* Board View */}
+                            <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
+                                <div className="grid grid-cols-4 gap-6 min-w-[1200px]">
+                                    <BoardColumn title="DRAFT" tasks={tasks.filter(t => t.status === 'To Do' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
+                                    <BoardColumn title="IN PROGRESS" tasks={tasks.filter(t => t.status === 'In Progress' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
+                                    <BoardColumn title="EDITING" tasks={tasks.filter(t => t.status === 'Blocked' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
+                                    <BoardColumn title="DONE" tasks={tasks.filter(t => t.status === 'Completed' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
+                                </div>
+                            </div>
+
+                            {/* Right Stats Panel */}
+                            <div className="w-80 space-y-8 flex-shrink-0">
+                                <Card className="p-8 pb-10 rounded-[32px] bg-white border-[#eceef0] shadow-sm">
+                                    <div className="flex justify-between items-center mb-10">
+                                        <h3 className="text-sm font-black text-[#1d1d1f] tracking-widest uppercase">Efficiency</h3>
+                                        <Badge variant="secondary" className="bg-[#f0f0f2] text-[#1d1d1f] font-black text-[9px]">2026</Badge>
+                                    </div>
+                                    
+                                    <div className="flex flex-col items-center gap-10">
+                                        <div className="relative w-40 h-40">
+                                            <svg className="w-full h-full transform -rotate-90">
+                                                <circle cx="80" cy="80" r="70" className="stroke-[#f0f0f2] stroke-[12] fill-none" />
+                                                <circle 
+                                                    cx="80" cy="80" r="70" 
+                                                    className="stroke-[#0071e3] stroke-[12] fill-none transition-all duration-1000 ease-out"
+                                                    style={{ 
+                                                        strokeDasharray: '440',
+                                                        strokeDashoffset: 440 - (440 * (boardStats.completed / (boardStats.total || 1)))
+                                                    }}
+                                                />
+                                            </svg>
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                                <span className="text-3xl font-black text-[#1d1d1f]">{Math.round((boardStats.completed / (boardStats.total || 1)) * 100)}%</span>
+                                                <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest">Completed</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4 w-full">
+                                            <div className="p-4 bg-[#f5f5f7] rounded-[24px]">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-[#0071e3]"></div>
+                                                    <span className="text-[9px] font-black text-[#86868b] tracking-widest">TOTAL</span>
+                                                </div>
+                                                <p className="text-xl font-black">{boardStats.total}</p>
+                                            </div>
+                                            <div className="p-4 bg-[#f5f5f7] rounded-[24px]">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-[#34c759]"></div>
+                                                    <span className="text-[9px] font-black text-[#86868b] tracking-widest">DONE</span>
+                                                </div>
+                                                <p className="text-xl font-black">{boardStats.completed}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </Card>
 
-                                {/* Completion History */}
-                                <Card className="bg-[#fafafa] border-[#e5e5ea]">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-xl font-bold text-[#86868b]">Completion History</h3>
-                                        <Badge variant="Low">
-                                            {progressTasks.filter(t => t.status === 'Completed').length} Completed
-                                        </Badge>
+                                <Card className="p-8 pb-10 rounded-[32px] bg-white border-[#eceef0] shadow-sm">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-sm font-black text-[#1d1d1f] tracking-widest uppercase">Priority Heatmap</h3>
+                                        <div className="w-2 h-2 rounded-full bg-[#ff3b30] animate-pulse"></div>
                                     </div>
-                                    <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2 grayscale-[0.3] opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-                                        {progressTasks.filter(t => t.status === 'Completed').length === 0 ? (
-                                            <div className="text-center py-20 text-[#86868b] font-medium bg-white rounded-3xl border border-[#e5e5ea]">History is empty.</div>
-                                        ) : (
-                                            progressTasks.filter(t => t.status === 'Completed').map(task => (
-                                                <div key={task.id} className="p-4 border border-[#e5e5ea] rounded-xl bg-white flex justify-between items-center group">
-                                                    <div>
-                                                        <h4 className="font-bold text-[#1d1d1f]">{task.name}</h4>
-                                                        <p className="text-[10px] text-[#86868b] font-medium mt-1">Finished on {task.deadline} • {task.hours_spent}h invested</p>
+                                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-6">Critical Active & Overdue</p>
+                                    
+                                    <div className="space-y-6">
+                                        <div className="p-4 bg-[#fff2f2] rounded-2xl border border-[#ff3b30]/10">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-[10px] font-black text-[#ff3b30] uppercase tracking-widest">Overdue</span>
+                                                <span className="text-lg font-black text-[#ff3b30]">{heatmapData.overdue.length}</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-[#ff3b30]/10 rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full bg-[#ff3b30] rounded-full transition-all duration-1000"
+                                                    style={{ width: `${Math.min(100, (heatmapData.overdue.length / (heatmapData.active.length + heatmapData.overdue.length || 1)) * 100)}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-4 bg-[#f5f5f7] rounded-2xl border border-[#e5e5ea]">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-widest">Active High/Urgent</span>
+                                                <span className="text-lg font-black text-[#1d1d1f]">{heatmapData.active.length}</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-[#e5e5ea] rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full bg-[#1d1d1f] rounded-full transition-all duration-1000"
+                                                    style={{ width: `${Math.min(100, (heatmapData.active.length / (heatmapData.active.length + heatmapData.overdue.length || 1)) * 100)}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2">
+                                            <div className="flex flex-col gap-3">
+                                                {heatmapData.overdue.slice(0, 5).map(t => (
+                                                    <div 
+                                                        key={t.id} 
+                                                        onClick={() => handleTaskClick(t)}
+                                                        className="group cursor-pointer p-3 bg-[#fff2f2]/50 hover:bg-[#fff2f2] rounded-xl border border-[#ff3b30]/10 transition-all"
+                                                    >
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <span className="text-[10px] font-black text-[#ff3b30] uppercase tracking-wider line-clamp-1 flex-1">{t.name}</span>
+                                                            <Badge className="bg-[#ff3b30] text-white text-[7px] font-black px-1 rounded ml-2">OVERDUE</Badge>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-4 h-4 rounded-full bg-[#ff3b30]/10 flex items-center justify-center text-[7px] font-bold text-[#ff3b30] uppercase">
+                                                                {t.employee?.charAt(0)}
+                                                            </div>
+                                                            <span className="text-[9px] font-bold text-[#86868b]">{t.employee}</span>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex gap-2 items-center">
-                                                        <Select
-                                                            value={task.status}
-                                                            onChange={async (e) => {
-                                                                try {
-                                                                    await updateTaskStatus(task.id, e.target.value as Status);
-                                                                    refreshData();
-                                                                } catch (err) {
-                                                                    alert("Failed to update status.");
-                                                                }
-                                                            }}
-                                                            className="text-[10px] py-0 px-2 h-7"
-                                                        >
-                                                            <option>Completed</option>
-                                                            <option>To Do</option>
-                                                            <option>In Progress</option>
-                                                        </Select>
-                                                        <button
-                                                            onClick={async () => {
-                                                                if (confirm("Are you sure you want to delete this task?")) {
-                                                                    await deleteTask(task.id);
-                                                                    refreshData();
-                                                                }
-                                                            }}
-                                                            className="text-[#86868b] hover:text-[#e83f3f] p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /></svg>
-                                                        </button>
+                                                ))}
+                                                {heatmapData.active.slice(0, 5).map(t => (
+                                                    <div 
+                                                        key={t.id} 
+                                                        onClick={() => handleTaskClick(t)}
+                                                        className="group cursor-pointer p-3 bg-[#f5f5f7]/50 hover:bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] transition-all"
+                                                    >
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <span className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-wider line-clamp-1 flex-1">{t.name}</span>
+                                                            <Badge className="bg-[#1d1d1f] text-white text-[7px] font-black px-1 rounded ml-2">{t.priority}</Badge>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-4 h-4 rounded-full bg-[#1d1d1f]/10 flex items-center justify-center text-[7px] font-bold text-[#1d1d1f] uppercase">
+                                                                {t.employee?.charAt(0)}
+                                                            </div>
+                                                            <span className="text-[9px] font-bold text-[#86868b]">{t.employee}</span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))
-                                        )}
+                                                ))}
+                                                {(heatmapData.overdue.length > 5 || heatmapData.active.length > 5) && (
+                                                    <p className="text-[9px] font-bold text-center text-[#86868b] mt-2 tracking-widest uppercase">+{heatmapData.overdue.length + heatmapData.active.length - 10} More Critical Tasks</p>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </Card>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="text-center py-20 fade-in">
-                            <div className="text-6xl mb-4">👀</div>
-                            <h3 className="text-xl font-bold text-[#1d1d1f] mb-2">No Employee Selected</h3>
-                            <p className="text-[#86868b]">Please use the dropdown above to select a team member to review their progress.</p>
                         </div>
                     )}
-                </div>
-            )}
 
-            {/* --- TEAM MANAGEMENT TAB --- */}
-            {
-                activeTab === 'team' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
-                        <Card>
-                            <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Add New Employee</h3>
-                            <form onSubmit={handleCreateEmployee} className="space-y-5">
+                    {activeTab === 'planning' && (
+                        <div className="space-y-8 bg-white rounded-[40px] p-10 shadow-sm border border-[#eceef0]">
+                            <div className="flex justify-between items-center mb-8">
                                 <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Full Name</label>
-                                    <Input
-                                        required
-                                        value={newEmpForm.name}
-                                        onChange={e => setNewEmpForm({ ...newEmpForm, name: e.target.value })}
-                                        placeholder="e.g. Jane Doe"
-                                        className="w-full"
-                                    />
+                                    <h2 className="text-3xl font-black text-[#1d1d1f] tracking-tight">Timeline</h2>
+                                    <p className="text-[#86868b] font-bold text-sm">March 2026 - Sprint Planning</p>
                                 </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Email Address</label>
-                                    <Input
-                                        type="email"
-                                        required
-                                        value={newEmpForm.email}
-                                        onChange={e => setNewEmpForm({ ...newEmpForm, email: e.target.value })}
-                                        placeholder="jane@company.com"
-                                        className="w-full"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Temporary Password</label>
-                                    <Input
-                                        type="text"
-                                        required
-                                        value={newEmpForm.password}
-                                        onChange={e => setNewEmpForm({ ...newEmpForm, password: e.target.value })}
-                                        placeholder="Set an initial password"
-                                        className="w-full"
-                                    />
-                                </div>
-
-                                {empError && (
-                                    <div className="p-4 bg-[#fef2f2] border border-[#fca5a5] rounded-xl text-[#b91c1c] text-sm font-bold">
-                                        {empError}
-                                    </div>
-                                )}
-
-                                <Button type="submit" className="w-full mt-2">Create Account</Button>
-                            </form>
-                        </Card>
-
-                        <Card>
-                            <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Active Organization Members</h3>
-                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                                {employees.length === 0 ? (
-                                    <div className="text-[#86868b] text-center py-8 font-medium">No employees found.</div>
-                                ) : (
-                                    employees.map(emp => (
-                                        <div key={emp.id} className="p-4 border border-[#e5e5ea] rounded-2xl bg-[#f5f5f7]">
-                                            {editingEmpId === emp.id ? (
-                                                <div className="space-y-3">
-                                                    <Input
-                                                        value={editEmpForm.name}
-                                                        onChange={(e) => setEditEmpForm({ ...editEmpForm, name: e.target.value })}
-                                                        className="w-full text-sm py-1.5"
-                                                        placeholder="Display Name"
-                                                    />
-                                                    <Select
-                                                        value={editEmpForm.role}
-                                                        onChange={(e) => setEditEmpForm({ ...editEmpForm, role: e.target.value })}
-                                                        className="w-full text-sm py-1.5"
-                                                    >
-                                                        <option value="employee">Employee</option>
-                                                        <option value="manager">Manager</option>
-                                                    </Select>
-                                                    <Input
-                                                        type="text"
-                                                        value={editEmpForm.password}
-                                                        onChange={(e) => setEditEmpForm({ ...editEmpForm, password: e.target.value })}
-                                                        className="w-full text-sm py-1.5"
-                                                        placeholder="Reset password (leave blank to keep current)"
-                                                    />
-                                                    <div className="flex justify-end gap-2 pt-2">
-                                                        <Button variant="secondary" onClick={handleCancelEdit} className="text-xs px-3 py-1.5">Cancel</Button>
-                                                        <Button onClick={() => handleSaveEdit(emp.id)} className="text-xs px-3 py-1.5">Save Changes</Button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex justify-between items-center">
-                                                    <div>
-                                                        <div className="font-bold text-[#1d1d1f] flex items-center gap-2">
-                                                            {emp.name}
-                                                            {emp.role === 'manager' && <span className="text-[10px] bg-[#0071e3] text-white px-1.5 py-0.5 rounded-full uppercase font-bold">Admin</span>}
-                                                        </div>
-                                                        <div className="text-xs text-[#86868b] font-mono mt-0.5">ID: {emp.id.substring(0, 8)}...</div>
-                                                    </div>
-                                                    <Button
-                                                        variant="secondary"
-                                                        onClick={() => handleStartEdit(emp)}
-                                                        className="text-xs px-3 py-1.5"
-                                                    >
-                                                        Edit Profile
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </Card>
-                    </div>
-                )
-            }
-
-            {/* --- ASSIGN TASKS TAB --- */}
-            {
-                activeTab === 'assign' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
-                        <Card>
-                            <h3 className="text-xl font-bold mb-6 text-[#1d1d1f]">Assign a Task</h3>
-                            <form onSubmit={handleAssignTask} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Assign To</label>
-                                    <Select
-                                        required
-                                        value={assignForm.employee_id}
-                                        onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })}
-                                        className="w-full"
+                                <div className="flex gap-3">
+                                    <Button 
+                                        variant="secondary" 
+                                        onClick={() => setViewMode('day')}
+                                        className={`rounded-2xl border-[#eceef0] font-black text-[10px] tracking-widest transition-all ${viewMode === 'day' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
                                     >
-                                        <option value="" disabled>Select Employee</option>
+                                        DAY
+                                    </Button>
+                                    <Button 
+                                        variant="secondary" 
+                                        onClick={() => setViewMode('week')}
+                                        className={`rounded-2xl border-[#eceef0] font-black text-[10px] tracking-widest transition-all ${viewMode === 'week' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
+                                    >
+                                        WEEK
+                                    </Button>
+                                    <Button 
+                                        variant="secondary" 
+                                        onClick={() => setViewMode('month')}
+                                        className={`rounded-2xl border-[#eceef0] font-black text-[10px] tracking-widest transition-all ${viewMode === 'month' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
+                                    >
+                                        MONTH
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div className="overflow-x-auto pb-6 relative min-h-[500px]">
+                                {/* Timeline Grid */}
+                                <div className="min-w-[1200px]">
+                                    {/* Date Header */}
+                                    <div className="flex mb-10 pl-48">
+                                        {timelineData.days.map((date, i) => (
+                                            <div key={i} className="flex-1 text-center group">
+                                                <div className={`text-[10px] font-black mb-2 transition-colors ${date.toDateString() === new Date().toDateString() ? 'text-[#0071e3]' : 'text-[#86868b]'}`}>
+                                                    {date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()}
+                                                </div>
+                                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mx-auto transition-all ${date.toDateString() === new Date().toDateString() ? 'bg-[#0071e3] text-white shadow-lg' : 'group-hover:bg-[#f5f5f7] text-[#1d1d1f] font-bold'}`}>
+                                                    {date.getDate()}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Employee Rows */}
+                                    <div className="space-y-6">
+                                        {employees.filter(e => e.role === 'employee' && (e.name.toLowerCase().includes(searchQuery.toLowerCase()))).map(emp => (
+                                            <div key={emp.id} className="flex group/row">
+                                                {/* Employee Info Sticky Column */}
+                                                <div className="w-48 pr-8 flex items-center gap-3 sticky left-0 z-[5] bg-white/90 backdrop-blur-sm py-2">
+                                                    <div className="w-10 h-10 rounded-2xl bg-[#f5f5f7] flex items-center justify-center text-sm font-black border border-[#e5e5ea] group-hover/row:border-[#0071e3] transition-colors">
+                                                        {emp.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[11px] font-black text-[#1d1d1f] leading-none mb-1">{emp.name}</p>
+                                                        <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-widest">{tasks.filter(t => t.employee_id === emp.id).length} TASKS</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Tasks Container */}
+                                                <div className="flex-1 border-b border-[#f0f0f2] pb-6 relative">
+                                                    <div className="absolute inset-0 flex">
+                                                        {timelineData.days.map((_, i) => (
+                                                            <div key={i} className="flex-1 border-l border-[#f0f0f2]/50 last:border-r"></div>
+                                                        ))}
+                                                    </div>
+                                                    
+                                                    <div className="relative pt-4 flex flex-col gap-3 min-h-[40px]">
+                                                        {/* Processed tasks for this employee */}
+                                                        {(() => {
+                                                            const empTasks = tasks.filter(t => t.employee_id === emp.id && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())));
+                                                            // Logic for row packing could go here, but let's just render them for now
+                                                            return empTasks.map(task => {
+                                                                const dayWidth = 100 / timelineData.days.length;
+                                                                const start = new Date(task.start_date);
+                                                                const end = new Date(task.deadline);
+                                                                
+                                                                const startIndex = Math.max(0, Math.floor((start.getTime() - timelineData.startDate.getTime()) / (1000 * 60 * 60 * 24)));
+                                                                const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                                                                const duration = Math.min(timelineData.days.length - startIndex, totalDays);
+
+                                                                if (startIndex >= timelineData.days.length || duration <= 0) return null;
+
+                                                                return (
+                                                                    <div 
+                                                                        key={task.id}
+                                                                        onClick={() => handleTaskClick(task)}
+                                                                        className="h-10 rounded-2xl bg-[#f5f5f7] border border-[#e5e5ea] shadow-sm flex items-center px-4 gap-3 group transition-all hover:bg-[#1d1d1f] hover:text-white hover:z-10 cursor-pointer overflow-hidden"
+                                                                        style={{
+                                                                            marginLeft: `${startIndex * dayWidth}%`,
+                                                                            width: `${duration * dayWidth}%`
+                                                                        }}
+                                                                    >
+                                                                        <div className={`w-2 h-2 rounded-full shrink-0 ${task.status === 'Completed' ? 'bg-[#34c759]' : task.priority === 'Urgent' ? 'bg-[#ff3b30]' : 'bg-[#0071e3]'}`}></div>
+                                                                        <span className="text-[10px] font-black truncate">{task.name}</span>
+                                                                        <span className="text-[8px] font-bold opacity-0 group-hover:opacity-60 ml-auto whitespace-nowrap">{task.hours_spent} HRS</span>
+                                                                    </div>
+                                                                );
+                                                            });
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'team' && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                            <Card className="p-10 rounded-[40px]">
+                                <h3 className="text-2xl font-black mb-8 text-[#1d1d1f] tracking-tight">Add New Member</h3>
+                                <form onSubmit={handleCreateEmployee} className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
+                                        <Input required value={newEmpForm.name} onChange={e => setNewEmpForm({ ...newEmpForm, name: e.target.value })} placeholder="Jane Cooper" className="h-14 rounded-3xl bg-[#f5f5f7] border-none px-6 text-sm font-bold" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
+                                        <Input type="email" required value={newEmpForm.email} onChange={e => setNewEmpForm({ ...newEmpForm, email: e.target.value })} placeholder="jane@apple.com" className="h-14 rounded-3xl bg-[#f5f5f7] border-none px-6 text-sm font-bold" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Password</label>
+                                        <Input required value={newEmpForm.password} onChange={e => setNewEmpForm({ ...newEmpForm, password: e.target.value })} placeholder="••••••••" className="h-14 rounded-3xl bg-[#f5f5f7] border-none px-6 text-sm font-bold" />
+                                    </div>
+                                    {empError && <p className="text-[#ff3b30] text-xs font-bold px-4">{empError}</p>}
+                                    <Button type="submit" className="w-full h-14 rounded-3xl font-black tracking-widest text-xs mt-4 shadow-xl shadow-[#0071e3]/20">CREATE MEMBER</Button>
+                                </form>
+                            </Card>
+
+                            <Card className="p-10 rounded-[40px]">
+                                <h3 className="text-2xl font-black mb-8 text-[#1d1d1f] tracking-tight">Active Members</h3>
+                                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
+                                    {employees.filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map(emp => (
+                                        <div key={emp.id} className="p-6 bg-[#f5f5f7] rounded-[32px] border border-[#e5e5ea] flex items-center justify-between group hover:border-[#0071e3] transition-colors">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-lg font-black shadow-sm group-hover:bg-[#0071e3] group-hover:text-white transition-all">
+                                                    {emp.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-black text-[#1d1d1f]">{emp.name}</p>
+                                                        {emp.role === 'manager' && <Badge className="bg-[#0071e3] text-white border-none text-[8px] px-2">ADMIN</Badge>}
+                                                    </div>
+                                                    <p className="text-[10px] font-mono text-[#86868b]">{emp.id.slice(0, 8)}</p>
+                                                </div>
+                                            </div>
+                                            <Button variant="secondary" onClick={() => setEditingEmpId(emp.id)} className="rounded-[20px] h-10 px-6 font-black text-[9px] tracking-widest border-none bg-white hover:bg-white shadow-sm">EDIT</Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        </div>
+                    )}
+
+                    {activeTab === 'settings' && (
+                        <div className="max-w-4xl mx-auto space-y-10">
+                            <div className="flex items-center gap-8 mb-16">
+                                <div className="w-32 h-32 bg-gradient-to-br from-[#0071e3] to-[#00c6ff] rounded-[48px] flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-[#0071e3]/30">
+                                    {userName.charAt(0)}
+                                </div>
+                                <div>
+                                    <h2 className="text-5xl font-black text-[#1d1d1f] tracking-tighter mb-2">{userName}</h2>
+                                    <p className="text-xl font-bold text-[#86868b] tracking-tight">Executive Management Account</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <Card className="p-10 rounded-[40px]">
+                                    <h3 className="text-xl font-black mb-10 text-[#1d1d1f] flex items-center gap-3">
+                                        <span className="w-8 h-8 rounded-xl bg-[#f5f5f7] flex items-center justify-center text-sm">👤</span>
+                                        Profile Details
+                                    </h3>
+                                    <form onSubmit={handleUpdateProfile} className="space-y-8">
+                                        <div className="space-y-4">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
+                                            <Input value={profileName} onChange={e => setProfileName(e.target.value)} className="h-16 rounded-[24px] bg-[#f5f5f7] border-none px-8 text-lg font-bold" />
+                                        </div>
+                                        <Button type="submit" disabled={isUpdatingProfile} className="w-full h-16 rounded-[24px] font-black tracking-widest shadow-xl shadow-[#0071e3]/20">
+                                            {isUpdatingProfile ? 'UPDATING...' : 'SAVE CHANGES'}
+                                        </Button>
+                                    </form>
+                                </Card>
+
+                                <Card className="p-10 rounded-[40px]">
+                                    <h3 className="text-xl font-black mb-10 text-[#1d1d1f] flex items-center gap-3">
+                                        <span className="w-8 h-8 rounded-xl bg-[#f5f5f7] flex items-center justify-center text-sm">🔒</span>
+                                        Security
+                                    </h3>
+                                    <form onSubmit={handleChangePassword} className="space-y-6">
+                                        <div className="space-y-4">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">New Password</label>
+                                            <Input type="password" value={passwords.new} onChange={e => setPasswords({ ...passwords, new: e.target.value })} className="h-16 rounded-[24px] bg-[#f5f5f7] border-none px-8 text-lg font-bold" placeholder="••••••••" />
+                                        </div>
+                                        <div className="space-y-4">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">Confirm Password</label>
+                                            <Input type="password" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} className="h-16 rounded-[24px] bg-[#f5f5f7] border-none px-8 text-lg font-bold" placeholder="••••••••" />
+                                        </div>
+                                        <Button type="submit" disabled={isUpdatingPassword} variant="secondary" className="w-full h-16 rounded-[24px] font-black tracking-widest border-[#e5e5ea] hover:bg-[#f5f5f7]">
+                                            {isUpdatingPassword ? 'UPDATING...' : 'CHANGE PASSWORD'}
+                                        </Button>
+                                    </form>
+                                </Card>
+                            </div>
+                        </div>
+                    )}
+                </main>
+            </div>
+
+            {/* --- ASSIGN TASK MODAL --- */}
+            {showAssignModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+                    <Card className="w-full max-w-xl p-10 rounded-[48px] bg-white shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-10">
+                            <h2 className="text-3xl font-black text-[#1d1d1f] tracking-tight">Create New Task</h2>
+                            <button onClick={() => setShowAssignModal(false)} className="w-10 h-10 rounded-full bg-[#f5f5f7] flex items-center justify-center font-bold hover:bg-[#e5e5ea]">✕</button>
+                        </div>
+
+                        <form onSubmit={handleAssignTask} className="space-y-8">
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Assign To</label>
+                                    <Select required value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
+                                        <option value="">Select teammate</option>
                                         {employees.filter(e => e.role === 'employee').map(emp => (
                                             <option key={emp.id} value={emp.id}>{emp.name}</option>
                                         ))}
                                     </Select>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Task Name</label>
-                                    <Input
-                                        required
-                                        value={assignForm.name}
-                                        onChange={e => setAssignForm({ ...assignForm, name: e.target.value })}
-                                        placeholder="Task title"
-                                        className="w-full"
-                                    />
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Task Objective</label>
+                                    <Input required value={assignForm.name} onChange={e => setAssignForm({ ...assignForm, name: e.target.value })} placeholder="What needs to be done?" className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Start Date</label>
-                                        <Input
-                                            type="date"
-                                            required
-                                            value={assignForm.start_date}
-                                            onChange={e => setAssignForm({ ...assignForm, start_date: e.target.value })}
-                                            className="w-full"
-                                        />
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Deadline</label>
+                                        <Input type="date" required value={assignForm.deadline} onChange={e => setAssignForm({ ...assignForm, deadline: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Deadline</label>
-                                        <Input
-                                            type="date"
-                                            required
-                                            value={assignForm.deadline}
-                                            onChange={e => setAssignForm({ ...assignForm, deadline: e.target.value })}
-                                            className="w-full"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Priority</label>
-                                        <Select
-                                            value={assignForm.priority}
-                                            onChange={e => setAssignForm({ ...assignForm, priority: e.target.value as Priority })}
-                                            className="w-full"
-                                        >
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Priority</label>
+                                        <Select value={assignForm.priority} onChange={e => setAssignForm({ ...assignForm, priority: e.target.value as any })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
                                             <option>Low</option>
                                             <option>Medium</option>
                                             <option>High</option>
                                             <option>Urgent</option>
                                         </Select>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Initial Status</label>
-                                        <Select
-                                            value={assignForm.status}
-                                            onChange={e => setAssignForm({ ...assignForm, status: e.target.value as Status })}
-                                            className="w-full"
-                                        >
-                                            <option>To Do</option>
-                                            <option>In Progress</option>
-                                            <option>Blocked</option>
-                                            <option>Completed</option>
-                                        </Select>
+                                </div>
+                            </div>
+
+                            <Button type="submit" className="w-full h-16 rounded-[28px] font-black tracking-widest shadow-2xl shadow-[#0071e3]/30 mt-4">DISPATCH TASK</Button>
+                        </form>
+                    </Card>
+                </div>
+            )}
+
+            {/* --- TASK DETAILS MODAL --- */}
+            {selectedTask && (
+                <TaskDetailsModal 
+                    task={selectedTask.task}
+                    subtasks={selectedTask.subtasks}
+                    onClose={() => setSelectedTask(null)}
+                    onUpdateStatus={handleUpdateStatusFromModal}
+                    isEditable={true}
+                    currentUserId={userId}
+                    refreshData={refreshData}
+                />
+            )}
+
+            <style jsx global>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 6px;
+                    height: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #e5e5ea;
+                    border-radius: 10px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #d2d2d7;
+                }
+            `}</style>
+        </div>
+    );
+}
+
+// --- Helper Components ---
+
+function NavItem({ icon, label, active = false, onClick }: { icon: string, label: string, active?: boolean, onClick?: () => void }) {
+    return (
+        <button 
+            onClick={onClick}
+            className={`w-full flex items-center gap-4 px-4 py-4 rounded-3xl transition-all duration-300 group ${active ? 'bg-[#0071e3] shadow-xl shadow-[#0071e3]/20 text-white' : 'hover:bg-[#f5f5f7] text-[#86868b]'}`}
+        >
+            <span className={`text-xl ${active ? '' : 'filter grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100'}`}>{icon}</span>
+            <span className={`text-[10px] font-black tracking-[0.2em] ${active ? 'text-white' : 'group-hover:text-[#1d1d1f]'}`}>{label}</span>
+        </button>
+    );
+}
+
+function BoardColumn({ title, tasks, employees, onTaskClick }: { title: string, tasks: Task[], employees: Profile[], onTaskClick: (task: Task) => void }) {
+    return (
+        <div className="space-y-8 flex flex-col h-full">
+            <div className="flex items-center justify-between px-2">
+                <h3 className="text-[10px] font-black text-[#1d1d1f] tracking-[0.2em] uppercase">{title}</h3>
+                <span className="w-5 h-5 rounded-full bg-[#f0f0f2] flex items-center justify-center text-[10px] font-black text-[#86868b]">{tasks.length}</span>
+            </div>
+            <div className="space-y-4 flex-1">
+                {tasks.length === 0 ? (
+                    <div className="h-32 border-2 border-dashed border-[#e5e5ea] rounded-[32px] flex items-center justify-center">
+                        <span className="text-[8px] font-black text-[#d2d2d7] uppercase tracking-widest">No Items</span>
+                    </div>
+                ) : (
+                    tasks.map(task => (
+                        <div 
+                            key={task.id} 
+                            onClick={() => onTaskClick(task)}
+                            className="bg-white p-6 rounded-[32px] shadow-sm border border-[#eceef0] hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 group cursor-pointer relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 left-0 w-1 h-full bg-[#f0f0f2] group-hover:bg-[#0071e3] transition-colors"></div>
+                            <div className="flex justify-between items-start mb-6">
+                                <h4 className="text-xs font-black text-[#1d1d1f] leading-relaxed pr-4">{task.name || 'Main Project'}</h4>
+                                <div className={`w-2 h-2 rounded-full shrink-0 ${task.priority === 'Urgent' ? 'bg-[#ff3b30]' : task.priority === 'High' ? 'bg-[#ff9500]' : 'bg-[#0071e3]'}`}></div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between mt-auto pt-6 border-t border-[#f0f0f2]">
+                                <div className="flex -space-x-2">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] border-2 border-white flex items-center justify-center text-[10px] font-black text-white shadow-sm">
+                                        {employees.find(e => e.id === task.employee_id)?.name?.charAt(0) || '?'}
                                     </div>
                                 </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">Manager Notes / Instructions</label>
-                                    <textarea
-                                        className="w-full bg-white border border-[#d2d2d7] text-[#1d1d1f] rounded-xl px-4 py-3 outline-none transition-all duration-200 focus:border-[#0071e3] focus:ring-1 focus:ring-[#0071e3] placeholder-[#86868b] min-h-[100px]"
-                                        value={assignForm.notes}
-                                        onChange={e => setAssignForm({ ...assignForm, notes: e.target.value })}
-                                        placeholder="Instructions for the employee..."
-                                    />
+                                <div className="flex items-center gap-3 text-[9px] font-black text-[#d2d2d7]">
+                                    <span className="group-hover:text-[#1d1d1f] transition-colors">💬 0</span>
+                                    <span className="group-hover:text-[#1d1d1f] transition-colors">📎 0</span>
                                 </div>
-
-                                {assignSuccess && (
-                                    <div className="p-4 bg-[#dcfce7] border border-[#4ade80] rounded-xl text-[#16a34a] text-sm font-medium">
-                                        Task successfully assigned to database!
-                                    </div>
-                                )}
-
-                                <Button type="submit" className="w-full mt-2">Send Assignment</Button>
-                            </form>
-                        </Card>
-
-                        <div className="space-y-4">
-                            <h3 className="text-xl font-bold text-[#1d1d1f] px-2">Manager Instructions</h3>
-                            <Card className="bg-[#f5f5f7] border-0">
-                                <p className="text-[#86868b] text-sm leading-relaxed">
-                                    Use this form to assign new trackable objectives to your team members. Tasks assigned here will immediately appear in the employee's "My Tasks" view and on the broader "Team View" board and persist in our live database.
-                                    <br /><br />
-                                    Employees will be responsible for logging their daily hours on these tasks to keep the capacity tracker up to date.
-                                </p>
-                            </Card>
+                            </div>
                         </div>
-                    </div>
-                )
-            }
-
-            {/* --- MY SETTINGS TAB --- */}
-            {
-                activeTab === 'settings' && (
-                    <div className="max-w-2xl fade-in">
-                        <Card>
-                            <h3 className="text-xl font-bold mb-2 text-[#1d1d1f]">Account Security</h3>
-                            <p className="text-[#86868b] text-sm mb-6">Update the password for your Manager account ({userName}).</p>
-                            <form onSubmit={handleSelfPasswordUpdate} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm font-semibold mb-1.5 text-[#1d1d1f]">New Password</label>
-                                    <Input
-                                        type="password"
-                                        required
-                                        value={selfPasswordForm}
-                                        onChange={e => setSelfPasswordForm(e.target.value)}
-                                        placeholder="Enter a new secure password"
-                                        className="w-full"
-                                    />
-                                </div>
-
-                                {settingsSuccess && (
-                                    <div className="p-4 bg-[#dcfce7] border border-[#4ade80] rounded-xl text-[#16a34a] text-sm font-medium">
-                                        Your password has been securely updated!
-                                    </div>
-                                )}
-
-                                <Button type="submit">Update My Password</Button>
-                            </form>
-                        </Card>
-                    </div>
-                )
-            }
-        </div >
+                    ))
+                )}
+            </div>
+        </div>
     );
 }

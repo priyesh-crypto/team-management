@@ -92,3 +92,69 @@ create policy "Managers can delete any tasks." on tasks
       where id = auth.uid() and role = 'manager'
     )
   );
+
+-- 4. Create the `subtasks` table
+create table public.subtasks (
+  id uuid default gen_random_uuid() primary key,
+  task_id uuid references public.tasks(id) on delete cascade not null,
+  name text not null,
+  hours_spent numeric default 0,
+  is_completed boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Turn on Row Level Security
+alter table public.subtasks enable row level security;
+
+-- Policies for Subtasks
+create policy "Subtasks are viewable by everyone." on subtasks
+  for select using (true);
+
+create policy "Employees can insert subtasks for their own tasks." on subtasks
+  for insert with check (
+    exists (
+      select 1 from public.tasks
+      where id = task_id and employee_id = auth.uid()
+    )
+  );
+
+create policy "Employees can update subtasks for their own tasks." on subtasks
+  for update using (
+    exists (
+      select 1 from public.tasks
+      where id = task_id and employee_id = auth.uid()
+    )
+  );
+
+create policy "Employees can delete subtasks for their own tasks." on subtasks
+  for delete using (
+    exists (
+      select 1 from public.tasks
+      where id = task_id and employee_id = auth.uid()
+    )
+  );
+
+-- Manager Policies for Subtasks
+create policy "Managers can insert any subtasks." on subtasks
+  for insert with check (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'manager'
+    )
+  );
+
+create policy "Managers can update any subtasks." on subtasks
+  for update using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'manager'
+    )
+  );
+
+create policy "Managers can delete any subtasks." on subtasks
+  for delete using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'manager'
+    )
+  );
