@@ -2,6 +2,9 @@
 
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
+import { Resend } from 'resend'
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export type Profile = {
     id: string
@@ -80,13 +83,24 @@ export async function getTasks(): Promise<Task[]> {
 export async function saveTask(taskData: Omit<Task, 'id' | 'created_at'>) {
     const supabase = await createClient()
 
-    const { error } = await supabase
+    const { data: task, error } = await supabase
         .from('tasks')
         .insert([taskData])
+        .select()
+        .single()
 
     if (error) {
         console.error("Error saving task:", error)
         throw new Error(error.message)
+    }
+
+    if (task) {
+        await createNotification({
+            user_id: task.employee_id,
+            type: 'system',
+            message: `New task assigned: ${task.name}`,
+            task_id: task.id
+        });
     }
 
     revalidatePath('/')
@@ -95,14 +109,25 @@ export async function saveTask(taskData: Omit<Task, 'id' | 'created_at'>) {
 export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'id' | 'created_at'>>) {
     const supabase = await createClient()
 
-    const { error } = await supabase
+    const { data: task, error } = await supabase
         .from('tasks')
         .update(taskData)
         .eq('id', taskId)
+        .select()
+        .single()
 
     if (error) {
         console.error("Error updating task:", error)
         throw new Error(error.message)
+    }
+
+    if (task && taskData.employee_id) {
+        await createNotification({
+            user_id: task.employee_id,
+            type: 'system',
+            message: `Task assignment updated: ${task.name}`,
+            task_id: task.id
+        });
     }
 
     revalidatePath('/')
@@ -203,14 +228,26 @@ export async function updateOwnPassword(newPassword: string) {
 
 export async function updateTaskStatus(taskId: string, status: Status) {
     const supabase = await createClient();
-    const { error } = await supabase
+    const { data: task, error } = await supabase
         .from('tasks')
         .update({ status })
-        .eq('id', taskId);
+        .eq('id', taskId)
+        .select()
+        .single();
 
     if (error) {
         throw new Error(error.message);
     }
+
+    if (task) {
+        await createNotification({
+            user_id: task.employee_id,
+            type: status === 'Blocked' ? 'urgent' : 'system',
+            message: `Task status updated to ${status}: ${task.name}`,
+            task_id: task.id
+        });
+    }
+
     revalidatePath('/');
 }
 
@@ -469,6 +506,22 @@ export async function saveComment(commentData: Omit<Comment, 'id' | 'created_at'
         throw new Error(error.message)
     }
 
+    // Notify the task assignee
+    const { data: task } = await supabase
+        .from('tasks')
+        .select('employee_id, name')
+        .eq('id', commentData.task_id)
+        .single();
+
+    if (task && task.employee_id !== commentData.author_id) {
+        await createNotification({
+            user_id: task.employee_id,
+            type: 'comment',
+            message: `New comment on task: ${task.name}`,
+            task_id: commentData.task_id
+        });
+    }
+
     revalidatePath('/')
 }
 
@@ -483,6 +536,105 @@ export async function deleteComment(commentId: string) {
     if (error) {
         console.error("Error deleting comment:", error)
         throw new Error(error.message)
+    }
+
+    revalidatePath('/')
+}
+
+export async function deleteEmployee(userId: string) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error("Missing Supabase Service Role Key.");
+    }
+
+    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+    const supabaseAdmin = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    // 1. Delete from Auth (this will also delete from profiles if RLS/Triggers allow, 
+    // but we explicitly delete from profiles to be sure and handle task reassignments if needed)
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (authError) throw new Error(authError.message);
+
+    // 2. Delete from Profiles (should be handled by cascade if configured, but let's be explicit)
+    const { error: profileError } = await supabaseAdmin.from('profiles').delete().eq('id', userId);
+    if (profileError) throw new Error(profileError.message);
+
+    revalidatePath('/')
+}
+
+export async function sendAlert(userId: string | 'all', message: string, type: 'urgent' | 'system' | 'overdue') {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error("Missing Supabase Service Role Key.");
+    }
+
+    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+    const supabaseAdmin = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    let targets: { id: string, email: string }[] = [];
+
+    if (userId === 'all') {
+        const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        if (listError) throw new Error(listError.message);
+        
+        // Fetch profiles to filter only employees
+        const { data: profiles } = await supabaseAdmin.from('profiles').select('id').eq('role', 'employee');
+        const employeeIds = new Set(profiles?.map(p => p.id) || []);
+        
+        targets = users.users
+            .filter(u => employeeIds.has(u.id))
+            .map(u => ({ id: u.id, email: u.email || '' }))
+            .filter(t => t.email);
+    } else {
+        const { data: user, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        if (userError) throw new Error(userError.message);
+        if (user.user?.email) {
+            targets = [{ id: user.user.id, email: user.user.email }];
+        }
+    }
+
+    if (targets.length === 0) return;
+
+    // 1. Insert In-App Notifications
+    const notificationData = targets.map(t => ({
+        user_id: t.id,
+        message: message,
+        type: type,
+        is_read: false
+    }));
+
+    const { error: notifError } = await supabaseAdmin.from('notifications').insert(notificationData);
+    if (notifError) console.error("Error creating notifications:", notifError);
+
+    // 2. Send Emails via Resend
+    if (resend) {
+        try {
+            const subject = type === 'urgent' ? `URGENT: Task Management Alert` : `Notification: Task Management System`;
+            
+            await resend.emails.send({
+                from: 'TaskHub <alerts@resend.dev>', // Note: This is an example, usually needs a verified domain
+                to: targets.map(t => t.email),
+                subject: subject,
+                html: `
+                    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                        <h2 style="color: #1d1d1f;">System Alert</h2>
+                        <p style="font-size: 16px; color: #424245; line-height: 1.6;">${message}</p>
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                        <p style="font-size: 12px; color: #86868b;">This is an automated message from your Task Management Dashboard.</p>
+                    </div>
+                `
+            });
+        } catch (emailError) {
+            console.error("Error sending emails:", emailError);
+        }
+    } else {
+        console.warn("Resend API Key not found. Email not sent.");
     }
 
     revalidatePath('/')

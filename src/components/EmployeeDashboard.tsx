@@ -330,11 +330,21 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         }
     };
 
-    const handleMarkAsRead = async (id: string) => {
-        await markNotificationAsRead(id);
-        const updated = notifications.map(n => n.id === id ? { ...n, is_read: true } : n);
-        setNotifications(updated);
-        setUnreadCount(updated.filter(n => !n.is_read).length);
+    const handleMarkAsRead = async (notification: any) => {
+        if (!notification.is_read) {
+            await markNotificationAsRead(notification.id);
+            const updated = notifications.map(n => n.id === notification.id ? { ...n, is_read: true } : n);
+            setNotifications(updated);
+            setUnreadCount(updated.filter(n => !n.is_read).length);
+        }
+
+        if (notification.task_id) {
+            const task = allTasks.find(t => t.id === notification.task_id);
+            if (task) {
+                handleTaskClick(task);
+                setShowNotifications(false);
+            }
+        }
     };
 
     const getEmployeeName = (id: string) => {
@@ -832,7 +842,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                             notifications.map(n => (
                                                 <div
                                                     key={n.id}
-                                                    onClick={() => handleMarkAsRead(n.id)}
+                                                    onClick={() => handleMarkAsRead(n)}
                                                     className={`p-4 border-b border-[#f5f5f7] hover:bg-[#f5f5f7] cursor-pointer transition-colors ${!n.is_read ? 'bg-[#0071e3]/5' : ''}`}
                                                 >
                                                     <div className="flex gap-3">

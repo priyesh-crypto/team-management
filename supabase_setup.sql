@@ -158,3 +158,61 @@ create policy "Managers can delete any subtasks." on subtasks
       where id = auth.uid() and role = 'manager'
     )
   );
+-- 5. Create the `notifications` table
+create table public.notifications (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  type text check (type in ('urgent', 'overdue', 'comment', 'system')) default 'system',
+  message text not null,
+  is_read boolean default false,
+  task_id uuid references public.tasks(id) on delete set null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Turn on Row Level Security
+alter table public.notifications enable row level security;
+
+-- Policies for Notifications
+create policy "Users can view their own notifications." on notifications
+  for select using (auth.uid() = user_id);
+
+create policy "Users can update their own notifications (mark as read)." on notifications
+  for update using (auth.uid() = user_id);
+
+create policy "Users can delete their own notifications." on notifications
+  for delete using (auth.uid() = user_id);
+
+create policy "Managers can insert notifications for anyone." on notifications
+  for insert with check (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'manager'
+    )
+  );
+
+-- 6. Create the `comments` table
+create table public.comments (
+  id uuid default gen_random_uuid() primary key,
+  task_id uuid references public.tasks(id) on delete cascade not null,
+  author_id uuid references public.profiles(id) on delete cascade not null,
+  content text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Turn on Row Level Security
+alter table public.comments enable row level security;
+
+-- Policies for Comments
+create policy "Comments are viewable by everyone." on comments
+  for select using (true);
+
+create policy "Anyone with access to the task can insert a comment." on comments
+  for insert with check (
+     exists (
+      select 1 from public.profiles
+      where id = auth.uid()
+    )
+  );
+
+create policy "Authors can delete their own comments." on comments
+  for delete using (auth.uid() = author_id);

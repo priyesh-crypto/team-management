@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, createEmployeeAccount, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, createEmployeeAccount, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert } from '@/app/actions/actions';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
+import { Pencil, Trash2 } from 'lucide-react';
 
 export default function ManagerDashboard({ userId, userName }: { userId: string, userName: string }) {
     const [activeTab, setActiveTab] = useState<'board' | 'planning' | 'team' | 'settings'>('board');
@@ -33,6 +34,9 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+    const [broadcastForm, setBroadcastForm] = useState({ message: '', type: 'system' as 'urgent' | 'system' });
+    const [isBroadcasting, setIsBroadcasting] = useState(false);
 
     // Assign Task State (used in a modal or side panel later maybe, but for now in board)
     const [showAssignModal, setShowAssignModal] = useState(false);
@@ -209,11 +213,25 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const handleSaveEdit = async (empId: string) => {
         try {
             await updateEmployeeProfile(empId, editEmpForm.name, editEmpForm.role);
-            if (editEmpForm.password) await updateUserPassword(empId, editEmpForm.password);
+            if (editEmpForm.password) {
+                await updateUserPassword(empId, editEmpForm.password);
+            }
             setEditingEmpId(null);
+            setEditEmpForm({ name: '', role: 'employee', password: '' });
             refreshData();
         } catch (err: any) {
             alert(err.message);
+        }
+    };
+
+    const handleDeleteEmployee = async (empId: string) => {
+        if (confirm("Are you sure you want to PERMANENTLY delete this employee? This will also remove their access to the system.")) {
+            try {
+                await deleteEmployee(empId);
+                refreshData();
+            } catch (err: any) {
+                alert(err.message);
+            }
         }
     };
 
@@ -227,6 +245,22 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             refreshData();
         } catch (err) {
             alert("Error assigning task");
+        }
+    };
+
+    const handleBroadcastAlert = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!broadcastForm.message) return;
+        setIsBroadcasting(true);
+        try {
+            await sendAlert('all', broadcastForm.message, broadcastForm.type as any);
+            setShowBroadcastModal(false);
+            setBroadcastForm({ message: '', type: 'system' });
+            alert("Broadcast alert sent successfully!");
+        } catch (err: any) {
+            alert("Failed to send broadcast: " + err.message);
+        } finally {
+            setIsBroadcasting(false);
         }
     };
 
@@ -344,6 +378,13 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                                             if (!n.is_read) {
                                                                 await markNotificationAsRead(n.id);
                                                                 refreshData();
+                                                            }
+                                                            if (n.task_id) {
+                                                                const task = tasks.find(t => t.id === n.task_id);
+                                                                if (task) {
+                                                                    handleTaskClick(task);
+                                                                    setShowNotifications(false);
+                                                                }
                                                             }
                                                         }}
                                                         className={`p-6 hover:bg-[#f5f5f7] transition-all cursor-pointer group ${!n.is_read ? 'bg-[#0071e3]/[0.03]' : ''}`}
@@ -645,7 +686,16 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     )}
 
                     {activeTab === 'team' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div className="space-y-10">
+                            <div className="flex justify-between items-center bg-white p-8 rounded-[40px] shadow-sm border border-[#eceef0]">
+                                <div>
+                                    <h3 className="text-xl font-black text-[#1d1d1f] tracking-tight">Communication Center</h3>
+                                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">Broadcast messages to all employees</p>
+                                </div>
+                                <Button onClick={() => setShowBroadcastModal(true)} className="rounded-2xl h-12 px-8 font-black text-[10px] tracking-widest shadow-lg shadow-[#ff9500]/20 bg-[#ff9500] hover:bg-[#ff8c00]">📢 BROADCAST ALERT</Button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                             <Card className="p-10 rounded-[40px]">
                                 <h3 className="text-2xl font-black mb-8 text-[#1d1d1f] tracking-tight">Add New Member</h3>
                                 <form onSubmit={handleCreateEmployee} className="space-y-6">
@@ -670,24 +720,35 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                 <h3 className="text-2xl font-black mb-8 text-[#1d1d1f] tracking-tight">Active Members</h3>
                                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
                                     {employees.filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map(emp => (
-                                        <div key={emp.id} className="p-6 bg-[#f5f5f7] rounded-[32px] border border-[#e5e5ea] flex items-center justify-between group hover:border-[#0071e3] transition-colors">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-lg font-black shadow-sm group-hover:bg-[#0071e3] group-hover:text-white transition-all">
+                                        <div key={emp.id} className="p-6 bg-[#f5f5f7] rounded-[32px] border border-[#e5e5ea] flex items-center justify-between group hover:border-[#0071e3] transition-colors min-w-0">
+                                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-lg font-black shadow-sm group-hover:bg-[#0071e3] group-hover:text-white transition-all flex-shrink-0">
                                                     {emp.name.charAt(0)}
                                                 </div>
-                                                <div>
+                                                <div className="min-w-0">
                                                     <div className="flex items-center gap-2">
-                                                        <p className="font-black text-[#1d1d1f]">{emp.name}</p>
-                                                        {emp.role === 'manager' && <Badge className="bg-[#0071e3] text-white border-none text-[8px] px-2">ADMIN</Badge>}
+                                                        <p className="font-black text-[#1d1d1f] truncate">{emp.name}</p>
+                                                        {emp.role === 'manager' && <Badge className="bg-[#0071e3] text-white border-none text-[8px] px-2 flex-shrink-0">ADMIN</Badge>}
                                                     </div>
-                                                    <p className="text-[10px] font-mono text-[#86868b]">{emp.id.slice(0, 8)}</p>
+                                                    <p className="text-[10px] font-mono text-[#86868b] truncate">{emp.id.slice(0, 8)}</p>
                                                 </div>
                                             </div>
-                                            <Button variant="secondary" onClick={() => setEditingEmpId(emp.id)} className="rounded-[20px] h-10 px-6 font-black text-[9px] tracking-widest border-none bg-white hover:bg-white shadow-sm">EDIT</Button>
+                                            <div className="flex gap-2 ml-4 flex-shrink-0">
+                                                <Button variant="secondary" onClick={() => {
+                                                    setEditingEmpId(emp.id);
+                                                    setEditEmpForm({ name: emp.name, role: emp.role, password: '' });
+                                                }} title="Edit Employee" className="rounded-xl w-10 h-10 p-0 flex items-center justify-center border-none bg-white hover:bg-white shadow-sm">
+                                                    <Pencil className="w-4 h-4 text-[#1d1d1f]" />
+                                                </Button>
+                                                <Button variant="secondary" onClick={() => handleDeleteEmployee(emp.id)} title="Delete Employee" className="rounded-xl w-10 h-10 p-0 flex items-center justify-center border-none bg-white hover:bg-[#fff2f2] shadow-sm">
+                                                    <Trash2 className="w-4 h-4 text-[#ff3b30]" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             </Card>
+                            </div>
                         </div>
                     )}
 
@@ -744,6 +805,40 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     )}
                 </main>
             </div>
+
+            {/* --- EDIT EMPLOYEE MODAL --- */}
+            {editingEmpId && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-6">
+                    <Card className="w-full max-w-xl p-10 rounded-[48px] bg-white shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-10">
+                            <h2 className="text-3xl font-black text-[#1d1d1f] tracking-tight">Edit Member</h2>
+                            <button onClick={() => {
+                                setEditingEmpId(null);
+                                setEditEmpForm({ name: '', role: 'employee', password: '' });
+                            }} className="w-10 h-10 rounded-full bg-[#f5f5f7] flex items-center justify-center font-bold hover:bg-[#e5e5ea]">✕</button>
+                        </div>
+
+                        <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(editingEmpId); }} className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
+                                <Input required value={editEmpForm.name} onChange={e => setEditEmpForm({ ...editEmpForm, name: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>
+                                <Select value={editEmpForm.role} onChange={e => setEditEmpForm({ ...editEmpForm, role: e.target.value as any })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
+                                    <option value="employee">Employee</option>
+                                    <option value="manager">Manager</option>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">New Password (leave blank to keep current)</label>
+                                <Input type="password" value={editEmpForm.password} onChange={e => setEditEmpForm({ ...editEmpForm, password: e.target.value })} placeholder="••••••••" className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
+                            </div>
+                            <Button type="submit" className="w-full h-16 rounded-[28px] font-black tracking-widest shadow-2xl shadow-[#0071e3]/30 mt-4">SAVE CHANGES</Button>
+                        </form>
+                    </Card>
+                </div>
+            )}
 
             {/* --- ASSIGN TASK MODAL --- */}
             {showAssignModal && (
@@ -805,6 +900,41 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     currentUserId={userId}
                     refreshData={refreshData}
                 />
+            )}
+
+            {/* --- BROADCAST ALERT MODAL --- */}
+            {showBroadcastModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-6">
+                    <Card className="w-full max-w-xl p-10 rounded-[48px] bg-white shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-10">
+                            <h2 className="text-3xl font-black text-[#1d1d1f] tracking-tight">Broadcast Alert</h2>
+                            <button onClick={() => setShowBroadcastModal(false)} className="w-10 h-10 rounded-full bg-[#f5f5f7] flex items-center justify-center font-bold hover:bg-[#e5e5ea]">✕</button>
+                        </div>
+
+                        <form onSubmit={handleBroadcastAlert} className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Alert Type</label>
+                                <Select value={broadcastForm.type} onChange={e => setBroadcastForm({ ...broadcastForm, type: e.target.value as any })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
+                                    <option value="system">Standard System Notification</option>
+                                    <option value="urgent">Urgent Priority Alert</option>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Message</label>
+                                <textarea 
+                                    required 
+                                    value={broadcastForm.message} 
+                                    onChange={e => setBroadcastForm({ ...broadcastForm, message: e.target.value })} 
+                                    placeholder="Type your message to all employees..."
+                                    className="w-full h-40 rounded-3xl bg-[#f5f5f7] border-none p-6 text-sm font-bold resize-none outline-none ring-2 ring-transparent focus:ring-[#0071e3]/20"
+                                />
+                            </div>
+                            <Button type="submit" disabled={isBroadcasting} className="w-full h-16 rounded-[28px] font-black tracking-widest shadow-2xl shadow-[#ff9500]/30 mt-4 bg-[#ff9500] hover:bg-[#ff8c00]">
+                                {isBroadcasting ? 'SENDING BROADCAST...' : 'SEND TO ALL EMPLOYEES'}
+                            </Button>
+                        </form>
+                    </Card>
+                </div>
             )}
 
             <style jsx global>{`
