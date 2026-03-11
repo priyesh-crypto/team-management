@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, createEmployeeAccount, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert } from '@/app/actions/actions';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Menu, X } from 'lucide-react';
 
 export default function ManagerDashboard({ userId, userName }: { userId: string, userName: string }) {
     const [activeTab, setActiveTab] = useState<'board' | 'planning' | 'team' | 'settings'>('board');
@@ -12,6 +12,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const [selectedTask, setSelectedTask] = useState<{ task: Task, subtasks: Subtask[] } | null>(null);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Data State
     const [tasks, setTasks] = useState<Task[]>([]); // This will hold all tasks
@@ -275,7 +276,45 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
     return (
         <div className="flex h-screen bg-[#f5f5f7] overflow-hidden">
-            {/* --- SIDEBAR --- */}
+            {/* --- MOBILE SIDEBAR (DRAWER) --- */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-[100] lg:hidden">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+                    <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-6 shadow-2xl animate-in slide-in-from-left duration-300">
+                        <div className="flex items-center justify-between mb-10 px-2">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-[#0071e3] rounded-xl flex items-center justify-center text-white font-black text-xl">M</div>
+                                <span className="text-xl font-black tracking-tight text-[#1d1d1f]">Manager Hub</span>
+                            </div>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <nav className="flex-1 space-y-2">
+                            <NavItem icon="📊" label="DASHBOARD" active={activeTab === 'board'} onClick={() => { setActiveTab('board'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => { setActiveTab('planning'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
+                        </nav>
+
+                        <div className="mt-10 p-4 bg-[#f5f5f7] rounded-[24px] border border-[#e5e5ea]">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] flex items-center justify-center text-xs text-white font-bold">
+                                    {userName.charAt(0)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-black truncate">{userName}</p>
+                                    <p className="text-[10px] text-[#86868b] font-bold">Admin Privileges</p>
+                                </div>
+                            </div>
+                            <Button variant="secondary" className="w-full text-[10px] font-black tracking-widest py-2 rounded-xl h-auto" onClick={() => window.location.href = '/'}>LOGOUT</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- DESKTOP SIDEBAR --- */}
             <div className="w-72 bg-white border-r border-[#e5e5ea] flex flex-col p-6 hidden lg:flex">
                 <div className="flex items-center gap-3 mb-10 px-2">
                     <div className="w-10 h-10 bg-[#0071e3] rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-[#0071e3]/20">M</div>
@@ -306,29 +345,40 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             {/* --- MAIN CONTENT --- */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
-                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-[#e5e5ea] flex items-center justify-between px-8 sticky top-0 z-10">
-                    <div>
-                        <div className="flex items-center gap-2 text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-1">
-                            <span>Pages</span>
-                            <span>/</span>
-                            <span className="text-[#1d1d1f]">{activeTab.toUpperCase()}</span>
+                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-[#e5e5ea] flex items-center justify-between px-4 lg:px-8 sticky top-0 z-[40]">
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            className="lg:hidden p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <div>
+                            <div className="flex items-center gap-2 text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-1">
+                                <span className="hidden sm:inline">Pages</span>
+                                <span className="hidden sm:inline">/</span>
+                                <span className="text-[#1d1d1f]">{activeTab.toUpperCase()}</span>
+                            </div>
+                            <h1 className="text-lg lg:text-xl font-black text-[#1d1d1f] tracking-tight capitalize truncate max-w-[150px] sm:max-w-none">
+                                {activeTab === 'board' ? 'Organization Overview' : activeTab === 'planning' ? 'Project Timeline' : activeTab === 'team' ? 'Team Management' : 'My Account'}
+                            </h1>
                         </div>
-                        <h1 className="text-xl font-black text-[#1d1d1f] tracking-tight capitalize">
-                            {activeTab === 'board' ? 'Organization Overview' : activeTab === 'planning' ? 'Project Timeline' : activeTab === 'team' ? 'Team Management' : 'My Account'}
-                        </h1>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <div className="relative group">
+                        <div className="relative group hidden sm:block">
                             <Input 
                                 placeholder="Search tasks..." 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-64 bg-[#f5f5f7] border-none rounded-2xl h-10 px-10 text-xs font-medium" 
+                                className="w-48 lg:w-64 bg-[#f5f5f7] border-none rounded-2xl h-10 px-10 text-xs font-medium" 
                             />
                             <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
                         </div>
-                        <Button className="rounded-2xl h-10 px-6 font-black text-[10px] tracking-widest shadow-lg shadow-[#0071e3]/20" onClick={() => setShowAssignModal(true)}>+ NEW TASK</Button>
+                        <Button className="rounded-2xl h-10 px-4 lg:px-6 font-black text-[10px] tracking-widest shadow-lg shadow-[#0071e3]/20" onClick={() => setShowAssignModal(true)}>
+                            <span className="hidden sm:inline">+ NEW TASK</span>
+                            <span className="sm:hidden">+</span>
+                        </Button>
                         <div className="relative">
                             <div 
                                 onClick={() => setShowNotifications(!showNotifications)}
@@ -428,12 +478,12 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <main className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
                     {activeTab === 'board' && (
-                        <div className="flex gap-8">
+                        <div className="flex flex-col lg:flex-row gap-8">
                             {/* Board View */}
-                            <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
-                                <div className="grid grid-cols-4 gap-6 min-w-[1200px]">
+                            <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 min-w-full sm:min-w-[800px] xl:min-w-none">
                                     <BoardColumn title="TO DO" tasks={tasks.filter(t => t.status === 'To Do' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
                                     <BoardColumn title="IN PROGRESS" tasks={tasks.filter(t => t.status === 'In Progress' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
                                     <BoardColumn title="BLOCKED" tasks={tasks.filter(t => t.status === 'Blocked' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
@@ -442,7 +492,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             </div>
 
                             {/* Right Stats Panel */}
-                            <div className="w-80 space-y-8 flex-shrink-0">
+                            <div className="w-full lg:w-80 space-y-8 flex-shrink-0">
                                 <Card className="p-8 pb-10 rounded-[32px] bg-white border-[#eceef0] shadow-sm">
                                     <div className="flex justify-between items-center mb-10">
                                         <h3 className="text-sm font-black text-[#1d1d1f] tracking-widest uppercase">Efficiency</h3>
@@ -571,31 +621,31 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     )}
 
                     {activeTab === 'planning' && (
-                        <div className="space-y-8 bg-white rounded-[40px] p-10 shadow-sm border border-[#eceef0]">
-                            <div className="flex justify-between items-center mb-8">
+                        <div className="space-y-6 lg:space-y-8 bg-white rounded-[32px] lg:rounded-[40px] p-4 sm:p-6 lg:p-10 shadow-sm border border-[#eceef0]">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
                                 <div>
-                                    <h2 className="text-3xl font-black text-[#1d1d1f] tracking-tight">Timeline</h2>
-                                    <p className="text-[#86868b] font-bold text-sm">March 2026 - Sprint Planning</p>
+                                    <h2 className="text-2xl lg:text-3xl font-black text-[#1d1d1f] tracking-tight">Timeline</h2>
+                                    <p className="text-[#86868b] font-bold text-xs lg:text-sm">March 2026 - Sprint Planning</p>
                                 </div>
-                                <div className="flex gap-3">
+                                <div className="flex gap-2 lg:gap-3">
                                     <Button 
                                         variant="secondary" 
                                         onClick={() => setViewMode('day')}
-                                        className={`rounded-2xl border-[#eceef0] font-black text-[10px] tracking-widest transition-all ${viewMode === 'day' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
+                                        className={`h-9 lg:h-11 px-4 rounded-2xl border-[#eceef0] font-black text-[9px] lg:text-[10px] tracking-widest transition-all ${viewMode === 'day' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
                                     >
                                         DAY
                                     </Button>
                                     <Button 
                                         variant="secondary" 
                                         onClick={() => setViewMode('week')}
-                                        className={`rounded-2xl border-[#eceef0] font-black text-[10px] tracking-widest transition-all ${viewMode === 'week' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
+                                        className={`h-9 lg:h-11 px-4 rounded-2xl border-[#eceef0] font-black text-[9px] lg:text-[10px] tracking-widest transition-all ${viewMode === 'week' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
                                     >
                                         WEEK
                                     </Button>
                                     <Button 
                                         variant="secondary" 
                                         onClick={() => setViewMode('month')}
-                                        className={`rounded-2xl border-[#eceef0] font-black text-[10px] tracking-widest transition-all ${viewMode === 'month' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
+                                        className={`h-9 lg:h-11 px-4 rounded-2xl border-[#eceef0] font-black text-[9px] lg:text-[10px] tracking-widest transition-all ${viewMode === 'month' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
                                     >
                                         MONTH
                                     </Button>
@@ -604,9 +654,9 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
                             <div className="overflow-x-auto pb-6 relative min-h-[500px]">
                                 {/* Timeline Grid */}
-                                <div className="min-w-[1200px]">
+                                <div className="min-w-[800px] lg:min-w-[1200px]">
                                     {/* Date Header */}
-                                    <div className="flex mb-10 pl-48">
+                                    <div className="flex mb-10 pl-32 lg:pl-48">
                                         {timelineData.days.map((date, i) => (
                                             <div key={i} className="flex-1 text-center group">
                                                 <div className={`text-[10px] font-black mb-2 transition-colors ${date.toDateString() === new Date().toDateString() ? 'text-[#0071e3]' : 'text-[#86868b]'}`}>
@@ -624,13 +674,13 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                         {employees.filter(e => e.role === 'employee' && (e.name.toLowerCase().includes(searchQuery.toLowerCase()))).map(emp => (
                                             <div key={emp.id} className="flex group/row">
                                                 {/* Employee Info Sticky Column */}
-                                                <div className="w-48 pr-8 flex items-center gap-3 sticky left-0 z-[5] bg-white/90 backdrop-blur-sm py-2">
-                                                    <div className="w-10 h-10 rounded-2xl bg-[#f5f5f7] flex items-center justify-center text-sm font-black border border-[#e5e5ea] group-hover/row:border-[#0071e3] transition-colors">
+                                                <div className="w-32 lg:w-48 pr-4 lg:pr-8 flex items-center gap-2 lg:gap-3 sticky left-0 z-[5] bg-white/90 backdrop-blur-sm py-2">
+                                                    <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl lg:rounded-2xl bg-[#f5f5f7] flex items-center justify-center text-xs lg:text-sm font-black border border-[#e5e5ea] group-hover/row:border-[#0071e3] transition-colors">
                                                         {emp.name.charAt(0)}
                                                     </div>
-                                                    <div>
-                                                        <p className="text-[11px] font-black text-[#1d1d1f] leading-none mb-1">{emp.name}</p>
-                                                        <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-widest">{tasks.filter(t => t.employee_id === emp.id).length} TASKS</p>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[10px] lg:text-[11px] font-black text-[#1d1d1f] leading-none mb-1 truncate">{emp.name}</p>
+                                                        <p className="text-[8px] lg:text-[9px] font-bold text-[#86868b] uppercase tracking-widest">{tasks.filter(t => t.employee_id === emp.id).length} TASKS</p>
                                                     </div>
                                                 </div>
 
@@ -687,17 +737,17 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
                     {activeTab === 'team' && (
                         <div className="space-y-10">
-                            <div className="flex justify-between items-center bg-white p-8 rounded-[40px] shadow-sm border border-[#eceef0]">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white p-6 lg:p-8 rounded-[32px] lg:rounded-[40px] shadow-sm border border-[#eceef0]">
                                 <div>
-                                    <h3 className="text-xl font-black text-[#1d1d1f] tracking-tight">Communication Center</h3>
+                                    <h3 className="text-lg lg:text-xl font-black text-[#1d1d1f] tracking-tight">Communication Center</h3>
                                     <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">Broadcast messages to all employees</p>
                                 </div>
-                                <Button onClick={() => setShowBroadcastModal(true)} className="rounded-2xl h-12 px-8 font-black text-[10px] tracking-widest shadow-lg shadow-[#ff9500]/20 bg-[#ff9500] hover:bg-[#ff8c00]">📢 BROADCAST ALERT</Button>
+                                <Button onClick={() => setShowBroadcastModal(true)} className="w-full sm:w-auto rounded-2xl h-12 px-8 font-black text-[10px] tracking-widest shadow-lg shadow-[#ff9500]/20 bg-[#ff9500] hover:bg-[#ff8c00]">📢 BROADCAST ALERT</Button>
                             </div>
                             
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                            <Card className="p-10 rounded-[40px]">
-                                <h3 className="text-2xl font-black mb-8 text-[#1d1d1f] tracking-tight">Add New Member</h3>
+                            <Card className="p-6 lg:p-10 rounded-[32px] lg:rounded-[40px]">
+                                <h3 className="text-xl lg:text-2xl font-black mb-6 lg:mb-8 text-[#1d1d1f] tracking-tight">Add New Member</h3>
                                 <form onSubmit={handleCreateEmployee} className="space-y-6">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
@@ -716,8 +766,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                 </form>
                             </Card>
 
-                            <Card className="p-10 rounded-[40px]">
-                                <h3 className="text-2xl font-black mb-8 text-[#1d1d1f] tracking-tight">Active Members</h3>
+                            <Card className="p-6 lg:p-10 rounded-[32px] lg:rounded-[40px]">
+                                <h3 className="text-xl lg:text-2xl font-black mb-6 lg:mb-8 text-[#1d1d1f] tracking-tight">Active Members</h3>
                                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
                                     {employees.filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map(emp => (
                                         <div key={emp.id} className="p-6 bg-[#f5f5f7] rounded-[32px] border border-[#e5e5ea] flex items-center justify-between group hover:border-[#0071e3] transition-colors min-w-0">
@@ -754,48 +804,48 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
                     {activeTab === 'settings' && (
                         <div className="max-w-4xl mx-auto space-y-10">
-                            <div className="flex items-center gap-8 mb-16">
-                                <div className="w-32 h-32 bg-gradient-to-br from-[#0071e3] to-[#00c6ff] rounded-[48px] flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-[#0071e3]/30">
+                            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8 mb-10 sm:mb-16 text-center sm:text-left">
+                                <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-[#0071e3] to-[#00c6ff] rounded-[32px] sm:rounded-[48px] flex items-center justify-center text-white text-3xl sm:text-5xl font-black shadow-2xl shadow-[#0071e3]/30">
                                     {userName.charAt(0)}
                                 </div>
                                 <div>
-                                    <h2 className="text-5xl font-black text-[#1d1d1f] tracking-tighter mb-2">{userName}</h2>
-                                    <p className="text-xl font-bold text-[#86868b] tracking-tight">Executive Management Account</p>
+                                    <h2 className="text-3xl sm:text-5xl font-black text-[#1d1d1f] tracking-tighter mb-2">{userName}</h2>
+                                    <p className="text-base sm:text-xl font-bold text-[#86868b] tracking-tight">Executive Management Account</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                <Card className="p-10 rounded-[40px]">
-                                    <h3 className="text-xl font-black mb-10 text-[#1d1d1f] flex items-center gap-3">
+                                <Card className="p-6 lg:p-10 rounded-3xl lg:rounded-[40px]">
+                                    <h3 className="text-lg lg:text-xl font-black mb-6 lg:mb-10 text-[#1d1d1f] flex items-center gap-3">
                                         <span className="w-8 h-8 rounded-xl bg-[#f5f5f7] flex items-center justify-center text-sm">👤</span>
                                         Profile Details
                                     </h3>
-                                    <form onSubmit={handleUpdateProfile} className="space-y-8">
-                                        <div className="space-y-4">
-                                            <label className="text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
-                                            <Input value={profileName} onChange={e => setProfileName(e.target.value)} className="h-16 rounded-[24px] bg-[#f5f5f7] border-none px-8 text-lg font-bold" />
+                                    <form onSubmit={handleUpdateProfile} className="space-y-6 lg:space-y-8">
+                                        <div className="space-y-3 lg:space-y-4">
+                                            <label className="text-[10px] lg:text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
+                                            <Input value={profileName} onChange={e => setProfileName(e.target.value)} className="h-14 lg:h-16 rounded-2xl lg:rounded-[24px] bg-[#f5f5f7] border-none px-6 lg:px-8 text-base lg:text-lg font-bold" />
                                         </div>
-                                        <Button type="submit" disabled={isUpdatingProfile} className="w-full h-16 rounded-[24px] font-black tracking-widest shadow-xl shadow-[#0071e3]/20">
+                                        <Button type="submit" disabled={isUpdatingProfile} className="w-full h-14 lg:h-16 rounded-2xl lg:rounded-[24px] font-black tracking-widest shadow-xl shadow-[#0071e3]/20">
                                             {isUpdatingProfile ? 'UPDATING...' : 'SAVE CHANGES'}
                                         </Button>
                                     </form>
                                 </Card>
 
-                                <Card className="p-10 rounded-[40px]">
-                                    <h3 className="text-xl font-black mb-10 text-[#1d1d1f] flex items-center gap-3">
+                                <Card className="p-6 lg:p-10 rounded-3xl lg:rounded-[40px]">
+                                    <h3 className="text-lg lg:text-xl font-black mb-6 lg:mb-10 text-[#1d1d1f] flex items-center gap-3">
                                         <span className="w-8 h-8 rounded-xl bg-[#f5f5f7] flex items-center justify-center text-sm">🔒</span>
                                         Security
                                     </h3>
                                     <form onSubmit={handleChangePassword} className="space-y-6">
-                                        <div className="space-y-4">
-                                            <label className="text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">New Password</label>
-                                            <Input type="password" value={passwords.new} onChange={e => setPasswords({ ...passwords, new: e.target.value })} className="h-16 rounded-[24px] bg-[#f5f5f7] border-none px-8 text-lg font-bold" placeholder="••••••••" />
+                                        <div className="space-y-3 lg:space-y-4">
+                                            <label className="text-[10px] lg:text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">New Password</label>
+                                            <Input type="password" value={passwords.new} onChange={e => setPasswords({ ...passwords, new: e.target.value })} className="h-14 lg:h-16 rounded-2xl lg:rounded-[24px] bg-[#f5f5f7] border-none px-6 lg:px-8 text-base lg:text-lg font-bold" placeholder="••••••••" />
                                         </div>
-                                        <div className="space-y-4">
-                                            <label className="text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">Confirm Password</label>
-                                            <Input type="password" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} className="h-16 rounded-[24px] bg-[#f5f5f7] border-none px-8 text-lg font-bold" placeholder="••••••••" />
+                                        <div className="space-y-3 lg:space-y-4">
+                                            <label className="text-[10px] lg:text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">Confirm Password</label>
+                                            <Input type="password" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} className="h-14 lg:h-16 rounded-2xl lg:rounded-[24px] bg-[#f5f5f7] border-none px-6 lg:px-8 text-base lg:text-lg font-bold" placeholder="••••••••" />
                                         </div>
-                                        <Button type="submit" disabled={isUpdatingPassword} variant="secondary" className="w-full h-16 rounded-[24px] font-black tracking-widest border-[#e5e5ea] hover:bg-[#f5f5f7]">
+                                        <Button type="submit" disabled={isUpdatingPassword} variant="secondary" className="w-full h-14 lg:h-16 rounded-2xl lg:rounded-[24px] font-black tracking-widest border-[#e5e5ea] hover:bg-[#f5f5f7]">
                                             {isUpdatingPassword ? 'UPDATING...' : 'CHANGE PASSWORD'}
                                         </Button>
                                     </form>

@@ -88,8 +88,8 @@ export function TaskDetailsModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-[#1d1d1f]/30 backdrop-blur-md animate-in fade-in duration-300">
-            <Card className="w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-[0_32px_64px_rgba(0,0,0,0.15)] animate-in zoom-in-95 duration-300 border-none bg-white">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 lg:p-8 bg-[#1d1d1f]/30 backdrop-blur-md animate-in fade-in duration-300">
+            <Card className="w-full h-full sm:h-auto sm:max-w-5xl sm:max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-[0_32px_64px_rgba(0,0,0,0.15)] animate-in zoom-in-95 duration-300 border-none bg-white sm:rounded-[2.5rem]">
                 {/* Modal Header */}
                 <div className="flex items-center justify-between p-6 border-b border-[#e5e5ea] bg-[#f5f5f7]/50">
                     <div className="flex items-center gap-3">
@@ -129,8 +129,8 @@ export function TaskDetailsModal({
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
                         {/* Left Column: Details & Comments */}
                         <div className="lg:col-span-2 space-y-10">
                             <section>
@@ -139,7 +139,7 @@ export function TaskDetailsModal({
                                         <input 
                                             value={editData.name}
                                             onChange={e => setEditData({...editData, name: e.target.value})}
-                                            className="text-3xl font-black text-[#1d1d1f] tracking-tight leading-tight w-full bg-[#f5f5f7] p-2 rounded-xl outline-none ring-2 ring-[#0071e3]/20"
+                                            className="text-2xl sm:text-4xl font-black text-[#1d1d1f] tracking-tight leading-tight w-full bg-[#f5f5f7] p-2 rounded-xl outline-none ring-2 ring-[#0071e3]/20"
                                         />
                                         <textarea 
                                             value={editData.notes}
@@ -152,8 +152,8 @@ export function TaskDetailsModal({
                                     </div>
                                 ) : (
                                     <>
-                                        <h2 className="text-4xl font-black text-[#1d1d1f] tracking-tight leading-tight mb-6">{task.name}</h2>
-                                        <div className="text-[#1d1d1f] text-base leading-relaxed bg-[#f5f5f7] p-8 rounded-[2rem] border border-[#e5e5ea] shadow-sm">
+                                        <h2 className="text-2xl sm:text-4xl font-black text-[#1d1d1f] tracking-tight leading-tight mb-4 sm:mb-6">{task.name}</h2>
+                                        <div className="text-[#1d1d1f] text-sm sm:text-base leading-relaxed bg-[#f5f5f7] p-4 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-[#e5e5ea] shadow-sm">
                                             {task.notes || <span className="text-[#86868b] italic text-sm">No detailed notes provided.</span>}
                                         </div>
                                     </>
@@ -182,7 +182,7 @@ export function TaskDetailsModal({
                                                         <h4 className="font-bold text-sm text-[#1d1d1f]">{sub.name}</h4>
                                                         <Badge variant="Low" className="tabular-nums">{sub.hours_spent}h</Badge>
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-[10px] text-[#86868b] font-bold uppercase tracking-widest">
+                                                    <div className="flex items-center gap-2 text-[10px] text-[#86868b] font-bold uppercase tracking-widest flex-wrap">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                                                         <span>{sub.date_logged}</span>
                                                         <div className="w-1 h-1 bg-[#d2d2d7] rounded-full"></div>

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
 import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, updateTaskStatus, deleteTask, updateTask, getSubtasks, saveSubtask, updateSubtaskStatus, updateSubtaskHours, deleteSubtask, updateSubtask, updateProfile, changePassword, updateOwnPassword, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification } from '@/app/actions/actions';
 import { Card, Button, Input, Select, Badge } from '@/components/ui/components';
+import { Menu, X } from 'lucide-react';
 
 // Helper component for Sidebar items
 const NavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick: () => void }) => (
@@ -114,6 +115,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         refreshData();
@@ -366,7 +368,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         }
 
         return (
-            <div className="space-y-4 max-h-[750px] overflow-y-auto pr-2 pb-4">
+            <div className="space-y-4 max-h-[500px] sm:max-h-[750px] overflow-y-auto pr-2 pb-4">
                 {tasksList.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(task => {
                     const isEditing = editingTaskId === task.id;
                     const subtasks = subtasksMap[task.id] || [];
@@ -394,6 +396,18 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                 </div>
                                 <div className="flex gap-2 items-center">
                                     <Badge variant={task.priority}>{task.priority}</Badge>
+                                    {!showAssignee && task.status !== 'Completed' && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleUpdateStatusFromModal(task.id, 'Completed');
+                                            }}
+                                            className="p-1.5 bg-[#f5f5f7] hover:bg-[#34c759]/10 text-[#86868b] hover:text-[#34c759] rounded-lg transition-all"
+                                            title="Mark as Completed"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                        </button>
+                                    )}
                                     {showAssignee ? (
                                         <Badge variant={
                                             task.status === 'Completed' ? 'Low' :
@@ -407,7 +421,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                 </div>
                             </div>
 
-                            <div className="text-sm text-[#86868b] mb-4 grid grid-cols-2 gap-4 font-medium">
+                            <div className="text-sm text-[#86868b] mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4 font-medium">
                                 <div>Timeline: <span className="text-[#1d1d1f]">{task.start_date} to {task.deadline}</span></div>
                                 <div>
                                     Hours Logged: {isEditing ? (
@@ -462,15 +476,15 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                                                     className="h-9 text-sm flex-1"
                                                                     placeholder="Activity name..."
                                                                 />
-                                                                <Input
-                                                                    type="date"
-                                                                    value={editSubtaskData.date_logged || ''}
-                                                                    onChange={e => setEditSubtaskData({ ...editSubtaskData, date_logged: e.target.value })}
-                                                                    className="h-9 text-xs w-32"
-                                                                />
+                                                                 <Input
+                                                                     type="date"
+                                                                     value={editSubtaskData.date_logged || ''}
+                                                                     onChange={e => setEditSubtaskData({ ...editSubtaskData, date_logged: e.target.value })}
+                                                                     className="h-9 text-xs w-full sm:w-32"
+                                                                 />
                                                             </div>
                                                             <div className="flex items-center gap-2">
-                                                                <div className="flex-1 flex items-center gap-2 bg-[#f5f5f7] px-3 py-1 rounded-lg border border-[#d2d2d7]">
+                                                                <div className="flex-1 flex flex-col gap-2 bg-[#f5f5f7] px-3 py-1 rounded-lg border border-[#d2d2d7]">
                                                                     <div className="flex-1 flex flex-col">
                                                                         <span className="text-[8px] uppercase font-bold text-[#86868b]">Start</span>
                                                                         <Input
@@ -577,8 +591,8 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                                 onClick={(e) => e.stopPropagation()}
                                                 className="flex flex-col gap-4 mt-4 p-4 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] shadow-sm"
                                             >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex-1">
+                                                <div className="flex flex-col sm:flex-row items-center gap-3">
+                                                    <div className="flex-1 w-full">
                                                         <Input
                                                             placeholder="New daily activity..."
                                                             value={newSubtaskData[task.id]?.name || ''}
@@ -602,7 +616,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                                             className="h-10 text-sm w-full"
                                                         />
                                                     </div>
-                                                    <div className="w-32">
+                                                    <div className="w-full sm:w-32">
                                                         <Input
                                                             type="date"
                                                             value={newSubtaskData[task.id]?.date_logged || new Date().toISOString().split('T')[0]}
@@ -622,13 +636,13 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                                                     }
                                                                 }));
                                                             }}
-                                                            className="h-10 text-xs"
+                                                            className="h-10 text-xs w-full"
                                                         />
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex-1 flex items-center gap-2 bg-white px-3 py-1 rounded-lg border border-[#d2d2d7] shadow-sm">
+                                                <div className="flex flex-col sm:flex-row items-center gap-3">
+                                                    <div className="flex-1 w-full flex items-center gap-2 bg-white px-3 py-1 rounded-lg border border-[#d2d2d7] shadow-sm">
                                                         <div className="flex-1 flex flex-col min-w-0">
                                                             <span className="text-[9px] uppercase font-bold text-[#86868b]">Start</span>
                                                             <Input
@@ -682,7 +696,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center gap-2 bg-white px-3 rounded-lg border border-[#d2d2d7] h-12 shadow-sm min-w-[70px]">
+                                                    <div className="flex items-center gap-2 bg-white px-3 rounded-lg border border-[#d2d2d7] h-12 shadow-sm w-full sm:min-w-[70px]">
                                                         <div className="flex flex-col items-center">
                                                             <span className="text-[9px] uppercase font-bold text-[#86868b]">Total</span>
                                                             <div className="text-sm font-bold text-[#0071e3]">
@@ -724,9 +738,58 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
     const efficiencyPercentage = totalTasksCount > 0 ? (completedTasksCount / totalTasksCount) * 100 : 0;
 
     return (
-        <div className="flex h-[calc(100vh-140px)] gap-6 overflow-hidden">
-            {/* --- LEFT SIDEBAR --- */}
-            <aside className="w-64 flex flex-col gap-8 py-4">
+        <div className="flex h-screen bg-[#f5f5f7] overflow-hidden">
+            {/* --- MOBILE SIDEBAR (DRAWER) --- */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-[100] lg:hidden">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+                    <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-6 shadow-2xl animate-in slide-in-from-left duration-300">
+                        <div className="flex items-center justify-between mb-10 px-2 flex-shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gradient-to-br from-[#0071e3] to-[#00c6ff] rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg">
+                                    {userName.charAt(0)}
+                                </div>
+                                <span className="text-xl font-black tracking-tight text-[#1d1d1f]">Empower</span>
+                            </div>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2 pb-10">
+                            <NavItem icon="🏠" label="MY TASKS" active={activeTab === 'mine'} onClick={() => { setActiveTab('mine'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon="👥" label="TEAM STATUS" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
+                            
+                            <div className="pt-6 pb-2">
+                                <h4 className="px-4 text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4">Account</h4>
+                                <Button variant="secondary" className="w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl text-[11px] font-black tracking-widest h-auto border-none bg-transparent hover:bg-[#f5f5f7]" onClick={() => window.location.href = '/'}>
+                                    <span>🚪</span> LOGOUT
+                                </Button>
+                            </div>
+                        </nav>
+                        
+                        <div className="mt-auto pt-6">
+                            <div className="bg-[#f5f5f7] rounded-3xl p-5 border border-[#e5e5ea]">
+                                <h4 className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-widest mb-3">Daily Goal</h4>
+                                <div className="flex items-end justify-between mb-2">
+                                    <span className="text-xl font-black text-[#1d1d1f] tracking-tighter">{hoursToday}</span>
+                                    <span className="text-[9px] font-bold text-[#86868b] mb-1">/ {capacityLimit} HRS</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-[#e5e5ea] rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-[#0071e3] transition-all duration-1000 ease-out rounded-full"
+                                        style={{ width: `${capacityPercentage}%` }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- DESKTOP SIDEBAR --- */}
+            <aside className="w-72 bg-white border-r border-[#e5e5ea] flex flex-col p-6 hidden lg:flex shrink-0">
                 <div className="px-4">
                     <div className="flex items-center gap-3 px-2 mb-2">
                         <div className="w-10 h-10 bg-gradient-to-br from-[#0071e3] to-[#00c6ff] rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg ring-4 ring-white">
@@ -781,30 +844,38 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
             </aside>
 
             {/* --- MAIN CONTENT AREA --- */}
-            <main className="flex-1 flex flex-col gap-6 overflow-hidden">
-                <header className="flex justify-between items-center py-2">
-                    <div>
-                        <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mb-1 flex items-center gap-2">
-                            <span>PAGES</span>
-                            <span className="text-[#d2d2d7]">/</span>
-                            <span className="text-[#1d1d1f]">{activeTab.toUpperCase()}</span>
+            <main className="flex-1 flex flex-col gap-6 overflow-hidden p-4 lg:p-0">
+                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-[#e5e5ea] flex items-center justify-between px-4 lg:px-8 sticky top-0 z-[40] -mx-4 lg:mx-0">
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            className="lg:hidden p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <div>
+                            <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
+                                <span className="hidden sm:inline">PAGES</span>
+                                <span className="hidden sm:inline text-[#d2d2d7]">/</span>
+                                <span className="text-[#1d1d1f] tracking-tight">{activeTab.toUpperCase()}</span>
+                            </div>
+                            <h1 className="text-lg lg:text-xl font-black text-[#1d1d1f] tracking-tight capitalize truncate max-w-[150px] sm:max-w-none">
+                                {activeTab === 'mine' ? 'My Workspace' : activeTab === 'team' ? 'Team Feed' : 'Account Settings'}
+                            </h1>
                         </div>
-                        <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight capitalize">
-                            {activeTab === 'mine' ? 'My Workspace' : activeTab === 'team' ? 'Team Feed' : 'Account Settings'}
-                        </h1>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <div className="relative group">
+                        <div className="relative group hidden sm:block">
                             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#86868b]">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
                             </div>
                             <input
                                 type="text"
-                                placeholder="Search tasks..."
+                                placeholder="Search..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 pr-4 py-2 bg-[#f5f5f7] border-none rounded-2xl text-xs font-bold text-[#1d1d1f] outline-none w-64 focus:ring-2 focus:ring-[#0071e3]/20 transition-all placeholder-[#86868b]"
+                                className="pl-10 pr-4 py-2 bg-[#f5f5f7] border-none rounded-2xl text-[11px] font-bold text-[#1d1d1f] outline-none w-40 lg:w-64 focus:ring-2 focus:ring-[#0071e3]/20 transition-all placeholder-[#86868b]"
                             />
                         </div>
                         <div className="relative">
@@ -819,7 +890,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                             </button>
 
                             {showNotifications && (
-                                <div className="absolute right-0 mt-3 w-80 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-[#e5e5ea] z-50 overflow-hidden fade-in">
+                                <div className="absolute right-0 mt-3 w-[calc(100vw-32px)] sm:w-80 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-[#e5e5ea] z-50 overflow-hidden fade-in">
                                     <div className="p-5 border-b border-[#f5f5f7] flex justify-between items-center bg-[#f5f5f7]/50">
                                         <div className="flex flex-col">
                                             <h3 className="font-black text-xs uppercase tracking-widest text-[#1d1d1f]">Notifications</h3>
@@ -890,13 +961,13 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     {activeTab === 'settings' ? (
                         <div className="max-w-4xl mx-auto fade-in space-y-8 pb-10">
-                            <div className="flex items-center gap-6 px-4">
-                                <div className="w-20 h-20 bg-gradient-to-br from-[#0071e3] to-[#00c6ff] rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 px-4 text-center sm:text-left">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-[#0071e3] to-[#00c6ff] rounded-2xl flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-lg">
                                     {userName.charAt(0)}
                                 </div>
-                                <div>
-                                    <h3 className="text-3xl font-extrabold text-[#1d1d1f]">{userName}</h3>
-                                    <p className="text-[#86868b] font-semibold text-lg">Employee Account</p>
+                                <div className="min-w-0">
+                                    <h3 className="text-2xl sm:text-3xl font-extrabold text-[#1d1d1f] truncate">{userName}</h3>
+                                    <p className="text-[#86868b] font-semibold text-base sm:text-lg">Employee Account</p>
                                 </div>
                             </div>
 
@@ -911,23 +982,23 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
                                 {/* Profile Info */}
-                                <Card className="p-8 border-[#e5e5ea] shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center gap-3 mb-8">
+                                <Card className="p-6 sm:p-8 border-[#e5e5ea] shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-3 mb-6 sm:mb-8">
                                         <div className="p-2 bg-[#f5f5f7] rounded-lg">👤</div>
-                                        <h4 className="text-xl font-bold text-[#1d1d1f]">Account Details</h4>
+                                        <h4 className="text-lg sm:text-xl font-bold text-[#1d1d1f]">Account Details</h4>
                                     </div>
                                     <form onSubmit={handleUpdateProfile} className="space-y-6">
                                         <div>
-                                            <label className="block text-xs font-black uppercase tracking-widest mb-2 text-[#86868b]">Display Name</label>
+                                            <label className="block text-[10px] sm:text-xs font-black uppercase tracking-widest mb-2 text-[#86868b]">Display Name</label>
                                             <Input
                                                 value={profileName}
                                                 onChange={e => setProfileName(e.target.value)}
-                                                className="w-full h-12 text-lg font-medium"
+                                                className="w-full h-12 text-base sm:text-lg font-medium"
                                                 placeholder="Enter your name"
                                             />
                                         </div>
                                         <div className="pt-2">
-                                            <Button type="submit" disabled={isUpdatingProfile} className="w-full h-12 text-md font-bold">
+                                            <Button type="submit" disabled={isUpdatingProfile} className="w-full h-12 text-sm sm:text-md font-bold">
                                                 {isUpdatingProfile ? 'Updating...' : 'Update Name'}
                                             </Button>
                                         </div>
@@ -948,7 +1019,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                                 placeholder="At least 6 characters"
                                                 value={passwords.new}
                                                 onChange={e => setPasswords({ ...passwords, new: e.target.value })}
-                                                className="w-full h-12"
+                                                className="w-full h-12 text-sm sm:text-base"
                                             />
                                         </div>
                                         <div>
@@ -958,11 +1029,11 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                                 placeholder="Repeat new password"
                                                 value={passwords.confirm}
                                                 onChange={e => setPasswords({ ...passwords, confirm: e.target.value })}
-                                                className="w-full h-12"
+                                                className="w-full h-12 text-sm sm:text-base"
                                             />
                                         </div>
                                         <div className="pt-2">
-                                            <Button type="submit" variant="secondary" disabled={isUpdatingPassword} className="w-full h-12 text-md font-bold border-[#d2d2d7] hover:bg-[#f5f5f7]">
+                                            <Button type="submit" variant="secondary" disabled={isUpdatingPassword} className="w-full h-12 text-sm sm:text-md font-bold border-[#d2d2d7] hover:bg-[#f5f5f7]">
                                                 {isUpdatingPassword ? 'Updating...' : 'Change Password'}
                                             </Button>
                                         </div>
