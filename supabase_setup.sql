@@ -63,8 +63,11 @@ create policy "Tasks are viewable by everyone." on tasks
 create policy "Employees can insert their own tasks." on tasks
   for insert with check (auth.uid() = employee_id);
 
-create policy "Employees can update their own tasks." on tasks
-  for update using (auth.uid() = employee_id);
+create policy "Employees can update tasks they own or collaborate on." on tasks
+  for update using (
+    auth.uid() = employee_id OR 
+    (assignee_ids IS NOT NULL AND auth.uid() = ANY(assignee_ids))
+  );
   
 create policy "Managers can insert any tasks." on tasks
   for insert with check (

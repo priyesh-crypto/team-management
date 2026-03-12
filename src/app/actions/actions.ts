@@ -18,7 +18,8 @@ export type Status = 'To Do' | 'In Progress' | 'Completed' | 'Blocked'
 
 export type Task = {
     id: string
-    employee_id: string
+    employee_id: string // Owner
+    assignee_ids?: string[] // Collaborators
     name: string
     start_date: string
     deadline: string
@@ -32,6 +33,7 @@ export type Task = {
 export type Subtask = {
     id: string;
     task_id: string;
+    employee_id: string; // Contributor
     name: string;
     hours_spent: number;
     is_completed: boolean;
@@ -95,12 +97,27 @@ export async function saveTask(taskData: Omit<Task, 'id' | 'created_at'>) {
     }
 
     if (task) {
+        // Notify owner
         await createNotification({
             user_id: task.employee_id,
             type: 'system',
             message: `New task assigned: ${task.name}`,
             task_id: task.id
         });
+
+        // Notify other assignees
+        if (task.assignee_ids && task.assignee_ids.length > 0) {
+            for (const assigneeId of task.assignee_ids) {
+                if (assigneeId !== task.employee_id) {
+                    await createNotification({
+                        user_id: assigneeId,
+                        type: 'system',
+                        message: `You were added as a collaborator to: ${task.name}`,
+                        task_id: task.id
+                    });
+                }
+            }
+        }
     }
 
     revalidatePath('/')
@@ -109,9 +126,11 @@ export async function saveTask(taskData: Omit<Task, 'id' | 'created_at'>) {
 export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'id' | 'created_at'>>) {
     const supabase = await createClient()
 
+    const { id: _id, created_at: _created_at, ...sanitizedData } = taskData as any;
+
     const { data: task, error } = await supabase
         .from('tasks')
-        .update(taskData)
+        .update(sanitizedData)
         .eq('id', taskId)
         .select()
         .single()
@@ -240,12 +259,27 @@ export async function updateTaskStatus(taskId: string, status: Status) {
     }
 
     if (task) {
+        // Notify owner
         await createNotification({
             user_id: task.employee_id,
             type: status === 'Blocked' ? 'urgent' : 'system',
             message: `Task status updated to ${status}: ${task.name}`,
             task_id: task.id
         });
+
+        // Notify other assignees
+        if (task.assignee_ids && task.assignee_ids.length > 0) {
+            for (const assigneeId of task.assignee_ids) {
+                if (assigneeId !== task.employee_id) {
+                    await createNotification({
+                        user_id: assigneeId,
+                        type: status === 'Blocked' ? 'urgent' : 'system',
+                        message: `Collaborator task status updated to ${status}: ${task.name}`,
+                        task_id: task.id
+                    });
+                }
+            }
+        }
     }
 
     revalidatePath('/');
@@ -506,20 +540,25 @@ export async function saveComment(commentData: Omit<Comment, 'id' | 'created_at'
         throw new Error(error.message)
     }
 
-    // Notify the task assignee
+    // Notify everyone involved
     const { data: task } = await supabase
         .from('tasks')
-        .select('employee_id, name')
+        .select('employee_id, assignee_ids, name')
         .eq('id', commentData.task_id)
         .single();
 
-    if (task && task.employee_id !== commentData.author_id) {
-        await createNotification({
-            user_id: task.employee_id,
-            type: 'comment',
-            message: `New comment on task: ${task.name}`,
-            task_id: commentData.task_id
-        });
+    if (task) {
+        const recipients = new Set([task.employee_id, ...(task.assignee_ids || [])]);
+        for (const recipientId of recipients) {
+            if (recipientId !== commentData.author_id) {
+                await createNotification({
+                    user_id: recipientId,
+                    type: 'comment',
+                    message: `New comment on task: ${task.name}`,
+                    task_id: commentData.task_id
+                });
+            }
+        }
     }
 
     revalidatePath('/')
@@ -542,27 +581,62 @@ export async function deleteComment(commentId: string) {
 }
 
 export async function deleteEmployee(userId: string) {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
-        throw new Error("Missing Supabase Service Role Key.");
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!serviceKey) {
+        console.error("[DeleteEmployee] Service Role Key is missing.");
+        throw new Error("Missing Supabase Service Role Key. Please add SUPABASE_SERVICE_ROLE_KEY to your .env.local file.");
+    }
+
+    if (!serviceKey.startsWith('ey')) {
+        console.error("[DeleteEmployee] Invalid key format. Expected a JWT starting with 'ey'. Received:", serviceKey.substring(0, 10) + '...');
+        throw new Error("Invalid Service Role Key format. The key must be a long JWT string starting with 'ey'. Please check your Supabase Dashboard > Project Settings > API.");
     }
 
     const { createClient: createAdminClient } = await import('@supabase/supabase-js')
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+        serviceKey,
         { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // 1. Delete from Auth (this will also delete from profiles if RLS/Triggers allow, 
-    // but we explicitly delete from profiles to be sure and handle task reassignments if needed)
-    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-    if (authError) throw new Error(authError.message);
+    console.log(`[DeleteEmployee] Starting deletion for user: ${userId}`);
 
-    // 2. Delete from Profiles (should be handled by cascade if configured, but let's be explicit)
-    const { error: profileError } = await supabaseAdmin.from('profiles').delete().eq('id', userId);
-    if (profileError) throw new Error(profileError.message);
+    try {
+        // 1. Cleanup assignee_ids arrays in tasks
+        // We fetch tasks where the user is a collaborator and remove them
+        const { data: collaboratingTasks, error: fetchError } = await supabaseAdmin
+            .from('tasks')
+            .select('id, assignee_ids')
+            .contains('assignee_ids', [userId]);
 
-    revalidatePath('/')
+        if (fetchError) {
+            console.error("[DeleteEmployee] Error fetching collaborating tasks:", fetchError);
+        } else if (collaboratingTasks && collaboratingTasks.length > 0) {
+            console.log(`[DeleteEmployee] Removing user from ${collaboratingTasks.length} collaborator lists`);
+            for (const task of collaboratingTasks) {
+                const updatedAssignees = (task.assignee_ids || []).filter((id: string) => id !== userId);
+                await supabaseAdmin
+                    .from('tasks')
+                    .update({ assignee_ids: updatedAssignees })
+                    .eq('id', task.id);
+            }
+        }
+
+        // 2. Delete from Auth
+        // This will cascade to profiles, tasks (owned), notifications, and comments via DB constraints
+        const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+        if (authError) {
+            console.error("[DeleteEmployee] Auth deletion failed:", authError);
+            throw new Error(`Auth deletion failed: ${authError.message}`);
+        }
+
+        console.log(`[DeleteEmployee] Successfully deleted user ${userId}`);
+        revalidatePath('/')
+    } catch (error: any) {
+        console.error("[DeleteEmployee] Critical error:", error);
+        throw error;
+    }
 }
 
 export async function sendAlert(userId: string | 'all', message: string, type: 'urgent' | 'system' | 'overdue') {

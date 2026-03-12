@@ -1,10 +1,11 @@
 import React from 'react';
 import { Card, Button, Badge, Select } from './components';
-import { Task, Subtask, Priority, Status, Comment, getComments, saveComment, deleteComment, updateTask, deleteTask } from '@/app/actions/actions';
+import { Task, Subtask, Priority, Status, Comment, getComments, saveComment, deleteComment, updateTask, deleteTask, Profile } from '@/app/actions/actions';
 
 interface TaskDetailsModalProps {
     task: Task;
     subtasks: Subtask[];
+    employees: Profile[];
     onClose: () => void;
     onUpdateStatus: (taskId: string, status: Status) => Promise<void>;
     isEditable?: boolean;
@@ -16,6 +17,7 @@ interface TaskDetailsModalProps {
 export function TaskDetailsModal({ 
     task, 
     subtasks, 
+    employees, 
     onClose, 
     onUpdateStatus, 
     isEditable = true,
@@ -28,6 +30,7 @@ export function TaskDetailsModal({
         name: task.name,
         notes: task.notes,
         priority: task.priority,
+        start_date: task.start_date,
         deadline: task.deadline
     });
     const [comments, setComments] = React.useState<Comment[]>([]);
@@ -37,7 +40,15 @@ export function TaskDetailsModal({
 
     React.useEffect(() => {
         loadComments();
-    }, [task.id]);
+        // Sync edit state when task updates from parent
+        setEditData({
+            name: task.name,
+            notes: task.notes,
+            priority: task.priority,
+            start_date: task.start_date,
+            deadline: task.deadline
+        });
+    }, [task.id, task.name, task.notes, task.priority, task.start_date, task.deadline]);
 
     const loadComments = async () => {
         const data = await getComments(task.id);
@@ -183,11 +194,18 @@ export function TaskDetailsModal({
                                                         <Badge variant="Low" className="tabular-nums">{sub.hours_spent}h</Badge>
                                                     </div>
                                                     <div className="flex items-center gap-2 text-[10px] text-[#86868b] font-bold uppercase tracking-widest flex-wrap">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                                        <span>{sub.date_logged}</span>
-                                                        <div className="w-1 h-1 bg-[#d2d2d7] rounded-full"></div>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                                        <span>{sub.start_time} - {sub.end_time}</span>
+                                                        <div className="flex items-center gap-1.5 bg-[#f5f5f7] px-2 py-0.5 rounded-lg border border-[#e5e5ea] text-[#1d1d1f] scale-95 origin-left">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-[#0071e3]"></div>
+                                                            <span>{employees.find(e => e.id === sub.employee_id)?.name || 'Unknown'}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                                            <span>{sub.date_logged}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                            <span>{sub.start_time} - {sub.end_time}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -298,6 +316,27 @@ export function TaskDetailsModal({
                                 )}
                             </div>
 
+                            <div className="bg-white p-8 rounded-[2.5rem] border border-[#e5e5ea] shadow-sm">
+                                <h4 className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4">Assignees</h4>
+                                <div className="space-y-3">
+                                    {[task.employee_id, ...(task.assignee_ids || [])].map((id, index) => {
+                                        const emp = employees.find(e => e.id === id);
+                                        if (!emp) return null;
+                                        return (
+                                            <div key={`modal-assignee-${id}`} className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] flex items-center justify-center text-[10px] font-black text-white shadow-sm ring-1 ring-black/5">
+                                                    {emp.name?.charAt(0) || '?'}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-black text-[#1d1d1f]">{emp.name}</span>
+                                                    <span className="text-[9px] font-bold text-[#86868b] uppercase tracking-widest">{id === task.employee_id ? 'Primary Owner' : 'Collaborator'}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
                             <div className="space-y-4">
                                 <div className="bg-white p-8 rounded-[2.5rem] border border-[#e5e5ea] shadow-sm hover:shadow-md transition-shadow">
                                     <h4 className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-3">Priority Level</h4>
@@ -335,7 +374,7 @@ export function TaskDetailsModal({
                                         <div className="flex justify-between items-center group/item">
                                             <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest group-hover/item:text-[#1d1d1f] transition-colors">Start</span>
                                             {isEditing ? (
-                                                <input type="date" value={editData.deadline} onChange={e => setEditData({...editData, deadline: e.target.value})} className="text-xs font-bold outline-none" />
+                                                <input type="date" value={editData.start_date} onChange={e => setEditData({...editData, start_date: e.target.value})} className="text-xs font-bold outline-none bg-[#f5f5f7] px-2 py-1 rounded-lg" />
                                             ) : (
                                                 <span className="text-sm font-black text-[#1d1d1f] tracking-tight">{task.start_date}</span>
                                             )}
@@ -344,7 +383,7 @@ export function TaskDetailsModal({
                                         <div className="flex justify-between items-center group/item">
                                             <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest group-hover/item:text-[#1d1d1f] transition-colors">Deadline</span>
                                             {isEditing ? (
-                                                <input type="date" value={editData.deadline} onChange={e => setEditData({...editData, deadline: e.target.value})} className="text-xs font-bold outline-none" />
+                                                <input type="date" value={editData.deadline} onChange={e => setEditData({...editData, deadline: e.target.value})} className="text-xs font-bold outline-none bg-[#f5f5f7] px-2 py-1 rounded-lg" />
                                             ) : (
                                                 <span className="text-sm font-black text-[#ff3b30] tracking-tight">{task.deadline}</span>
                                             )}

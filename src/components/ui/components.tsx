@@ -12,6 +12,7 @@ export function Card({ className, children }: { className?: string, children: Re
 export function Button({
     className,
     variant = 'primary',
+    type = 'button',
     ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' }) {
     const variants = {

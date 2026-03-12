@@ -38,12 +38,15 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const [showBroadcastModal, setShowBroadcastModal] = useState(false);
     const [broadcastForm, setBroadcastForm] = useState({ message: '', type: 'system' as 'urgent' | 'system' });
     const [isBroadcasting, setIsBroadcasting] = useState(false);
+    const [deletingEmpId, setDeletingEmpId] = useState<string | null>(null);
+    const [empStatusMsg, setEmpStatusMsg] = useState<{ id: string, text: string } | null>(null);
 
     // Assign Task State (used in a modal or side panel later maybe, but for now in board)
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [assignForm, setAssignForm] = useState<Partial<Task>>({
         name: '',
         employee_id: '',
+        assignee_ids: [],
         start_date: new Date().toISOString().split('T')[0],
         deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         priority: 'Medium',
@@ -55,8 +58,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         refreshData();
     }, []);
 
-    const refreshData = async () => {
-        setLoading(true);
+    const refreshData = async (silent = false) => {
+        if (!silent) setLoading(true);
         const [fetchedTasks, fetchedProfiles] = await Promise.all([getTasks(), getProfiles()]);
         setTasks(fetchedTasks);
         setEmployees(fetchedProfiles);
@@ -225,13 +228,19 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         }
     };
 
-    const handleDeleteEmployee = async (empId: string) => {
+    const handleDeleteEmployee = async (e: React.MouseEvent, empId: string) => {
+        e.stopPropagation();
+        setEmpStatusMsg(null);
         if (confirm("Are you sure you want to PERMANENTLY delete this employee? This will also remove their access to the system.")) {
+            setDeletingEmpId(empId);
             try {
                 await deleteEmployee(empId);
-                refreshData();
+                await refreshData(true);
             } catch (err: any) {
-                alert(err.message);
+                setEmpStatusMsg({ id: empId, text: err.message || "Deletion failed" });
+                console.error("Delete error:", err);
+            } finally {
+                setDeletingEmpId(null);
             }
         }
     };
@@ -242,7 +251,16 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         try {
             await saveTask(assignForm as any);
             setShowAssignModal(false);
-            setAssignForm({ name: '', employee_id: '', start_date: new Date().toISOString().split('T')[0], deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0], priority: 'Medium', status: 'To Do', notes: '' });
+            setAssignForm({ 
+                name: '', 
+                employee_id: '', 
+                assignee_ids: [],
+                start_date: new Date().toISOString().split('T')[0], 
+                deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0], 
+                priority: 'Medium', 
+                status: 'To Do', 
+                notes: '' 
+            });
             refreshData();
         } catch (err) {
             alert("Error assigning task");
@@ -783,15 +801,37 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                                     <p className="text-[10px] font-mono text-[#86868b] truncate">{emp.id.slice(0, 8)}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2 ml-4 flex-shrink-0">
-                                                <Button variant="secondary" onClick={() => {
-                                                    setEditingEmpId(emp.id);
-                                                    setEditEmpForm({ name: emp.name, role: emp.role, password: '' });
-                                                }} title="Edit Employee" className="rounded-xl w-10 h-10 p-0 flex items-center justify-center border-none bg-white hover:bg-white shadow-sm">
+                                            <div className="flex gap-2 ml-4 flex-shrink-0 items-center">
+                                                {empStatusMsg && empStatusMsg.id === emp.id && (
+                                                    <span className="text-[9px] font-bold text-[#ff3b30] mr-2 animate-in fade-in slide-in-from-right-2">
+                                                        {empStatusMsg.text}
+                                                    </span>
+                                                )}
+                                                <Button 
+                                                    variant="secondary" 
+                                                    disabled={deletingEmpId === emp.id}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingEmpId(emp.id);
+                                                        setEditEmpForm({ name: emp.name || '', role: (emp.role as any) || 'employee', password: '' });
+                                                    }} 
+                                                    title="Edit Employee" 
+                                                    className="rounded-xl w-10 h-10 p-0 flex items-center justify-center border-none bg-white hover:bg-white shadow-sm"
+                                                >
                                                     <Pencil className="w-4 h-4 text-[#1d1d1f]" />
                                                 </Button>
-                                                <Button variant="secondary" onClick={() => handleDeleteEmployee(emp.id)} title="Delete Employee" className="rounded-xl w-10 h-10 p-0 flex items-center justify-center border-none bg-white hover:bg-[#fff2f2] shadow-sm">
-                                                    <Trash2 className="w-4 h-4 text-[#ff3b30]" />
+                                                <Button 
+                                                    variant="secondary" 
+                                                    disabled={deletingEmpId === emp.id}
+                                                    onClick={(e) => handleDeleteEmployee(e, emp.id)} 
+                                                    title="Delete Employee" 
+                                                    className={`rounded-xl w-10 h-10 p-0 flex items-center justify-center border-none bg-white shadow-sm ${deletingEmpId === emp.id ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#fff2f2]'}`}
+                                                >
+                                                    {deletingEmpId === emp.id ? (
+                                                        <div className="w-4 h-4 border-2 border-[#ff3b30] border-t-transparent rounded-full animate-spin"></div>
+                                                    ) : (
+                                                        <Trash2 className="w-4 h-4 text-[#ff3b30]" />
+                                                    )}
                                                 </Button>
                                             </div>
                                         </div>
@@ -901,14 +941,41 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
                         <form onSubmit={handleAssignTask} className="space-y-8">
                             <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Assign To</label>
-                                    <Select required value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
-                                        <option value="">Select teammate</option>
-                                        {employees.filter(e => e.role === 'employee').map(emp => (
-                                            <option key={emp.id} value={emp.id}>{emp.name}</option>
-                                        ))}
-                                    </Select>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Primary Owner</label>
+                                        <Select required value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
+                                            <option value="">Select owner</option>
+                                            {employees.filter(e => e.role === 'employee').map(emp => (
+                                                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                            ))}
+                                        </Select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Additional Collaborators</label>
+                                        <div className="flex flex-wrap gap-2 p-4 bg-[#f5f5f7] rounded-[24px]">
+                                            {employees.filter(e => e.role === 'employee' && e.id !== assignForm.employee_id).map(emp => {
+                                                const isSelected = assignForm.assignee_ids?.includes(emp.id);
+                                                return (
+                                                    <button
+                                                        key={emp.id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const current = assignForm.assignee_ids || [];
+                                                            const next = isSelected 
+                                                                ? current.filter(id => id !== emp.id)
+                                                                : [...current, emp.id];
+                                                            setAssignForm({ ...assignForm, assignee_ids: next });
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${isSelected ? 'bg-[#0071e3] text-white shadow-md' : 'bg-white text-[#86868b] hover:bg-[#e5e5ea]'}`}
+                                                    >
+                                                        {emp.name}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
@@ -948,7 +1015,9 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     onUpdateStatus={handleUpdateStatusFromModal}
                     isEditable={true}
                     currentUserId={userId}
+                    isManager={true}
                     refreshData={refreshData}
+                    employees={employees}
                 />
             )}
 
@@ -1047,10 +1116,16 @@ function BoardColumn({ title, tasks, employees, onTaskClick }: { title: string, 
                             </div>
                             
                             <div className="flex items-center justify-between mt-auto pt-6 border-t border-[#f0f0f2]">
-                                <div className="flex -space-x-2">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] border-2 border-white flex items-center justify-center text-[10px] font-black text-white shadow-sm">
-                                        {employees.find(e => e.id === task.employee_id)?.name?.charAt(0) || '?'}
-                                    </div>
+                                <div className="flex -space-x-2 overflow-hidden">
+                                    {[task.employee_id, ...(task.assignee_ids || [])].map((id, idx) => {
+                                        const emp = employees.find(e => e.id === id);
+                                        if (!emp) return null;
+                                        return (
+                                            <div key={`${task.id}-assignee-${id}`} className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] border-2 border-white flex items-center justify-center text-[10px] font-black text-white shadow-sm ring-1 ring-black/5" title={emp.name}>
+                                                {emp.name?.charAt(0) || '?'}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                                 <div className="flex items-center gap-3 text-[9px] font-black text-[#d2d2d7]">
                                     <span className="group-hover:text-[#1d1d1f] transition-colors">💬 0</span>

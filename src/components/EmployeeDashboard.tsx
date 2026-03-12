@@ -81,7 +81,8 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         status: Status,
         notes: string,
         start_time: string,
-        end_time: string
+        end_time: string,
+        assignee_ids: string[]
     }>({
         name: '',
         start_date: new Date().toISOString().split('T')[0],
@@ -91,7 +92,8 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         status: 'To Do',
         notes: '',
         start_time: '09:00',
-        end_time: '17:00'
+        end_time: '17:00',
+        assignee_ids: []
     });
 
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -126,8 +128,18 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         const [tasks, profiles] = await Promise.all([getTasks(), getProfiles()]);
 
         setAllTasks(tasks);
-        setMyTasks(tasks.filter(t => t.employee_id === userId));
+        const myTasksFiltered = tasks.filter(t => t.employee_id === userId || (t.assignee_ids && t.assignee_ids.includes(userId)));
+        setMyTasks(myTasksFiltered);
         setEmployees(profiles);
+
+        // Sync selected task if it's open
+        if (selectedTask) {
+            const updatedTask = tasks.find(t => t.id === selectedTask.task.id);
+            if (updatedTask) {
+                const subtasks = await getSubtasks(updatedTask.id);
+                setSelectedTask({ task: updatedTask, subtasks });
+            }
+        }
 
         // Fetch notifications
         const notifs = await getNotifications(userId);
@@ -135,7 +147,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         setUnreadCount(notifs.filter(n => !n.is_read).length);
 
         // Fetch subtasks for my tasks
-        const myTaskIds = tasks.filter(t => t.employee_id === userId).map(t => t.id);
+        const myTaskIds = myTasksFiltered.map(t => t.id);
         const subtasksPromises = myTaskIds.map(id => getSubtasks(id));
         const subtasksResults = await Promise.all(subtasksPromises);
 
@@ -200,7 +212,8 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                 ...prev,
                 name: '',
                 hours_spent: 0,
-                notes: ''
+                notes: '',
+                assignee_ids: []
             }));
         } catch (err: any) {
             setError(err.message || 'Failed to save task.');
@@ -209,7 +222,9 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
 
     const handleUpdateTask = async (taskId: string) => {
         try {
-            await updateTask(taskId, editTaskData);
+            // Clean the payload to ensure only relevant fields are sent
+            const { id: _, created_at: __, ...sanitizedData } = editTaskData as any;
+            await updateTask(taskId, sanitizedData);
             setEditingTaskId(null);
             refreshData();
         } catch (err: any) {
@@ -224,6 +239,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         try {
             await saveSubtask({ 
                 task_id: taskId, 
+                employee_id: userId,
                 name: data.name.trim(), 
                 hours_spent: Number(data.hours) || 0,
                 is_completed: false,
@@ -244,8 +260,9 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
             const updatedSubtasks = await getSubtasks(taskId);
             setSubtasksMap(prev => ({ ...prev, [taskId]: updatedSubtasks }));
             // Also refresh main tasks since hours_spent on task might have changed
-            const tasks = await getTasks();
-            setMyTasks(tasks.filter(t => t.employee_id === userId));
+            const updatedTasks = await getTasks();
+            setAllTasks(updatedTasks);
+            setMyTasks(updatedTasks.filter(t => t.employee_id === userId || (t.assignee_ids && t.assignee_ids.includes(userId))));
         } catch (err: any) {
             alert("Failed to add subtask.");
         }
@@ -376,7 +393,11 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                     return (
                         <div 
                             key={task.id} 
-                            onClick={() => handleTaskClick(task)}
+                            onClick={() => {
+                                if (!isEditing) {
+                                    handleTaskClick(task);
+                                }
+                            }}
                             className="p-5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all duration-300 cursor-pointer border border-[#e5e5ea] rounded-3xl hover:-translate-y-1 bg-white"
                         >
                             <div className="flex justify-between items-start mb-3">
@@ -391,8 +412,21 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                         <h4 className="font-bold text-lg text-[#1d1d1f]">{task.name}</h4>
                                     )}
                                     {showAssignee && (
-                                        <div className="text-sm font-medium text-[#0071e3] mt-0.5">Assigned to: {getEmployeeName(task.employee_id)}</div>
+                                        <div className="flex flex-col gap-1 mt-0.5">
+                                            <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest">Main Owner</div>
+                                            <div className="text-sm font-medium text-[#0071e3]">{getEmployeeName(task.employee_id)}</div>
+                                        </div>
                                     )}
+                                    <div className="flex items-center gap-1.5 mt-2 overflow-hidden">
+                                        <div key={task.employee_id} className="w-6 h-6 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] flex items-center justify-center text-[8px] font-black text-white shadow-sm ring-1 ring-white" title={`Owner: ${getEmployeeName(task.employee_id)}`}>
+                                            {getEmployeeName(task.employee_id).charAt(0)}
+                                        </div>
+                                        {(task.assignee_ids || []).map(id => (
+                                            <div key={id} className="w-6 h-6 rounded-full bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center text-[8px] font-black text-[#1d1d1f] shadow-sm ring-1 ring-white -ml-2" title={`Collaborator: ${getEmployeeName(id)}`}>
+                                                {getEmployeeName(id).charAt(0)}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                                 <div className="flex gap-2 items-center">
                                     <Badge variant={task.priority}>{task.priority}</Badge>
@@ -406,6 +440,23 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                             title="Mark as Completed"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                        </button>
+                                    )}
+                                    {!showAssignee && !isEditing && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingTaskId(task.id);
+                                                setEditTaskData({
+                                                    ...task,
+                                                    hours_spent: Number(task.hours_spent),
+                                                    assignee_ids: task.assignee_ids || []
+                                                });
+                                            }}
+                                            className="p-1.5 bg-[#f5f5f7] hover:bg-[#0071e3]/10 text-[#86868b] hover:text-[#0071e3] rounded-lg transition-all"
+                                            title="Edit Task"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                                         </button>
                                     )}
                                     {showAssignee ? (
@@ -422,29 +473,104 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                             </div>
 
                             <div className="text-sm text-[#86868b] mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4 font-medium">
-                                <div>Timeline: <span className="text-[#1d1d1f]">{task.start_date} to {task.deadline}</span></div>
-                                <div>
-                                    Hours Logged: {isEditing ? (
-                                        <Input
-                                            type="number"
-                                            value={editTaskData.hours_spent}
-                                            onChange={e => setEditTaskData({ ...editTaskData, hours_spent: Number(e.target.value) })}
-                                            className="w-20 inline-block h-8 py-1 ml-1"
-                                        />
+                                <div className="flex items-center gap-2">
+                                    <span className="uppercase text-[9px] font-black tracking-widest text-[#86868b]">Timeline</span>
+                                    {isEditing ? (
+                                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-[#e5e5ea] shadow-sm">
+                                            <Input
+                                                type="date"
+                                                value={editTaskData.start_date}
+                                                onChange={e => setEditTaskData({ ...editTaskData, start_date: e.target.value })}
+                                                className="h-6 text-[10px] w-28 border-none p-0 focus-visible:ring-0 bg-transparent"
+                                            />
+                                            <span className="text-[10px] text-[#d2d2d7]">→</span>
+                                            <Input
+                                                type="date"
+                                                value={editTaskData.deadline}
+                                                onChange={e => setEditTaskData({ ...editTaskData, deadline: e.target.value })}
+                                                className="h-6 text-[10px] w-28 border-none p-0 focus-visible:ring-0 bg-transparent"
+                                            />
+                                        </div>
                                     ) : (
-                                        <span className="text-[#0071e3] font-bold">{task.hours_spent}h</span>
+                                        <span className="text-[#1d1d1f] font-bold">{task.start_date} - {task.deadline}</span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 lg:justify-end">
+                                    <span className="uppercase text-[9px] font-black tracking-widest text-[#86868b]">Hours</span>
+                                    {isEditing ? (
+                                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-[#e5e5ea] shadow-sm">
+                                            <Input
+                                                type="number"
+                                                value={editTaskData.hours_spent}
+                                                onChange={e => setEditTaskData({ ...editTaskData, hours_spent: Number(e.target.value) })}
+                                                className="w-12 h-6 text-[10px] font-bold text-[#0071e3] border-none p-0 focus-visible:ring-0 bg-transparent text-center"
+                                            />
+                                            <span className="text-[9px] font-bold text-[#86868b]">HRS</span>
+                                        </div>
+                                    ) : (
+                                        <div className="px-2 py-0.5 bg-[#0071e3]/5 rounded-lg border border-[#0071e3]/10">
+                                            <span className="text-[#0071e3] font-black">{task.hours_spent}h</span>
+                                        </div>
                                     )}
                                 </div>
                             </div>
 
                             <div className="space-y-3">
                                 {isEditing ? (
-                                    <textarea
-                                        value={editTaskData.notes}
-                                        onChange={e => setEditTaskData({ ...editTaskData, notes: e.target.value })}
-                                        className="w-full text-sm bg-[#f5f5f7] text-[#1d1d1f] p-3 rounded-lg border border-[#e5e5ea] min-h-[80px] outline-none focus:ring-1 focus:ring-[#0071e3]"
-                                        placeholder="Add notes or updates..."
-                                    />
+                                    <div className="space-y-3">
+                                        <div className="space-y-1.5 px-3 py-2 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
+                                            <div className="text-[10px] font-black uppercase tracking-widest text-[#86868b]">Collaborators</div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {employees.filter(e => e.id !== userId).map(emp => {
+                                                    const isSelected = editTaskData.assignee_ids?.includes(emp.id);
+                                                    return (
+                                                        <button
+                                                            key={`edit-collab-${emp.id}`}
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const current = editTaskData.assignee_ids || [];
+                                                                const next = isSelected 
+                                                                    ? current.filter(id => id !== emp.id)
+                                                                    : [...current, emp.id];
+                                                                setEditTaskData({ ...editTaskData, assignee_ids: next });
+                                                            }}
+                                                            className={`px-2 py-1 rounded-lg text-[9px] font-black transition-all border ${isSelected ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-sm' : 'bg-white text-[#86868b] border-[#e5e5ea] hover:bg-[#e5e5ea]'}`}
+                                                        >
+                                                            {emp.name}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                        <textarea
+                                            value={editTaskData.notes}
+                                            onChange={e => setEditTaskData({ ...editTaskData, notes: e.target.value })}
+                                            className="w-full text-sm bg-[#f5f5f7] text-[#1d1d1f] p-3 rounded-lg border border-[#e5e5ea] min-h-[80px] outline-none focus:ring-1 focus:ring-[#0071e3]"
+                                            placeholder="Add notes or updates..."
+                                        />
+                                        <div className="flex justify-end gap-2">
+                                            <Button 
+                                                variant="secondary" 
+                                                className="h-8 py-0 px-3 text-[10px] font-bold border-[#d2d2d7]"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingTaskId(null);
+                                                }}
+                                            >
+                                                CANCEL
+                                            </Button>
+                                            <Button 
+                                                className="h-8 py-0 px-4 text-[10px] font-bold"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleUpdateTask(task.id);
+                                                }}
+                                            >
+                                                SAVE CHANGES
+                                            </Button>
+                                        </div>
+                                    </div>
                                 ) : task.notes && (
                                     <div className="text-sm bg-[#f5f5f7] text-[#1d1d1f] p-3 rounded-lg border border-[#e5e5ea]">
                                         <div className="font-semibold text-xs uppercase text-[#86868b] mb-1">Notes / Update</div>
@@ -1176,6 +1302,34 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                             </div>
 
                             <div>
+                                <label className="block text-[10px] font-bold mb-2 text-[#86868b] uppercase tracking-widest">Collaborators</label>
+                                <div className="flex flex-wrap gap-1.5 p-3 bg-[#f5f5f7] rounded-xl border border-[#d2d2d7]">
+                                    {employees.filter(e => e.id !== userId).map(emp => {
+                                        const isSelected = formData.assignee_ids?.includes(emp.id);
+                                        return (
+                                            <button
+                                                key={`create-collab-${emp.id}`}
+                                                type="button"
+                                                onClick={() => {
+                                                    const current = formData.assignee_ids || [];
+                                                    const next = isSelected 
+                                                        ? current.filter(id => id !== emp.id)
+                                                        : [...current, emp.id];
+                                                    setFormData({ ...formData, assignee_ids: next });
+                                                }}
+                                                className={`px-2 py-1 rounded-lg text-[9px] font-black transition-all border ${isSelected ? 'bg-[#0071e3] text-white border-[#0071e3] shadow-sm' : 'bg-white text-[#86868b] border-[#e5e5ea] hover:bg-[#e5e5ea]'}`}
+                                            >
+                                                {emp.name}
+                                            </button>
+                                        );
+                                    })}
+                                    {employees.filter(e => e.id !== userId).length === 0 && (
+                                        <span className="text-[9px] text-[#86868b] italic">No other team members found.</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div>
                                 <label className="block text-[10px] font-bold mb-1 text-[#86868b] uppercase">Notes</label>
                                 <textarea
                                     className="w-full bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0071e3] min-h-[60px]"
@@ -1213,6 +1367,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                     isEditable={activeTab === 'mine'}
                     currentUserId={userId}
                     refreshData={refreshData}
+                    employees={employees}
                 />
             )}
         </div>
