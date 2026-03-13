@@ -42,6 +42,11 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const [empStatusMsg, setEmpStatusMsg] = useState<{ id: string, text: string } | null>(null);
     const [assignError, setAssignError] = useState<string | null>(null);
 
+    // Custom Task Delete State
+    const [isDeletingTask, setIsDeletingTask] = useState(false);
+    const [showTaskDeleteConfirm, setShowTaskDeleteConfirm] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState<{ id: string, name: string } | null>(null);
+
     // Assign Task State (used in a modal or side panel later maybe, but for now in board)
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [assignForm, setAssignForm] = useState<Partial<Task>>({
@@ -251,6 +256,31 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                 setDeletingEmpId(null);
             }
         }
+    };
+
+    const handleDeleteTask = (taskId: string, taskName: string) => {
+        setTaskToDelete({ id: taskId, name: taskName });
+        setShowTaskDeleteConfirm(true);
+    };
+
+    const confirmDeleteTask = async () => {
+        if (!taskToDelete) return;
+        setIsDeletingTask(true);
+        try {
+            await deleteTask(taskToDelete.id);
+            await refreshData(true);
+            setShowTaskDeleteConfirm(false);
+            setTaskToDelete(null);
+        } catch (err: any) {
+            alert(err.message || "Failed to delete task.");
+        } finally {
+            setIsDeletingTask(false);
+        }
+    };
+
+    const cancelDeleteTask = () => {
+        setShowTaskDeleteConfirm(false);
+        setTaskToDelete(null);
     };
 
     const handleAssignTask = async (e: React.FormEvent) => {
@@ -511,10 +541,10 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             {/* Board View */}
                             <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 min-w-full sm:min-w-[800px] xl:min-w-none">
-                                    <BoardColumn title="TO DO" tasks={tasks.filter(t => t.status === 'To Do' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
-                                    <BoardColumn title="IN PROGRESS" tasks={tasks.filter(t => t.status === 'In Progress' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
-                                    <BoardColumn title="BLOCKED" tasks={tasks.filter(t => t.status === 'Blocked' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
-                                    <BoardColumn title="COMPLETED" tasks={tasks.filter(t => t.status === 'Completed' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} />
+                                    <BoardColumn title="TO DO" tasks={tasks.filter(t => t.status === 'To Do' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
+                                    <BoardColumn title="IN PROGRESS" tasks={tasks.filter(t => t.status === 'In Progress' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
+                                    <BoardColumn title="BLOCKED" tasks={tasks.filter(t => t.status === 'Blocked' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
+                                    <BoardColumn title="COMPLETED" tasks={tasks.filter(t => t.status === 'Completed' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
                                 </div>
                             </div>
 
@@ -1076,6 +1106,44 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     </Card>
                 </div>
             )}
+            {showTaskDeleteConfirm && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div 
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+                        onClick={cancelDeleteTask}
+                    />
+                    <Card className="relative w-full max-w-[400px] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.3)] border-none bg-white/90 backdrop-blur-xl animate-in zoom-in-95 duration-200 rounded-[40px]">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-[#ff3b30]/10 rounded-full flex items-center justify-center mb-6">
+                                <Trash2 size={32} color="#ff3b30" strokeWidth={2.5} />
+                            </div>
+                            
+                            <h3 className="text-xl font-black text-[#1d1d1f] mb-2">Delete Task?</h3>
+                            <p className="text-sm text-[#86868b] font-medium leading-relaxed mb-8">
+                                Are you sure you want to delete <span className="text-[#1d1d1f] font-bold">"{taskToDelete?.name}"</span>? This action cannot be undone.
+                            </p>
+
+                            <div className="flex gap-3 w-full">
+                                <Button 
+                                    variant="secondary" 
+                                    className="flex-1 h-12 rounded-2xl font-bold border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#1d1d1f]"
+                                    onClick={cancelDeleteTask}
+                                    disabled={isDeletingTask}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button 
+                                    className="flex-1 h-12 rounded-2xl font-bold bg-[#ff3b30] hover:bg-[#ff3b30]/90 text-white shadow-[0_4px_20px_rgba(255,59,48,0.3)] border-none"
+                                    onClick={confirmDeleteTask}
+                                    disabled={isDeletingTask}
+                                >
+                                    {isDeletingTask ? 'Deleting...' : 'Delete Task'}
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
 
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {
@@ -1111,7 +1179,7 @@ function NavItem({ icon, label, active = false, onClick }: { icon: string, label
     );
 }
 
-function BoardColumn({ title, tasks, employees, onTaskClick }: { title: string, tasks: Task[], employees: Profile[], onTaskClick: (task: Task) => void }) {
+function BoardColumn({ title, tasks, employees, onTaskClick, onDeleteTask }: { title: string, tasks: Task[], employees: Profile[], onTaskClick: (task: Task) => void, onDeleteTask: (taskId: string, taskName: string) => void }) {
     return (
         <div className="space-y-8 flex flex-col h-full">
             <div className="flex items-center justify-between px-2">
@@ -1131,9 +1199,21 @@ function BoardColumn({ title, tasks, employees, onTaskClick }: { title: string, 
                             className="bg-white p-6 rounded-[32px] shadow-sm border border-[#eceef0] hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 group cursor-pointer relative overflow-hidden"
                         >
                             <div className="absolute top-0 left-0 w-1 h-full bg-[#f0f0f2] group-hover:bg-[#0071e3] transition-colors"></div>
-                            <div className="flex justify-between items-start mb-6">
-                                <h4 className="text-xs font-black text-[#1d1d1f] leading-relaxed pr-4">{task.name || 'Main Project'}</h4>
-                                <div className={`w-2 h-2 rounded-full shrink-0 ${task.priority === 'Urgent' ? 'bg-[#ff3b30]' : task.priority === 'High' ? 'bg-[#ff9500]' : 'bg-[#0071e3]'}`}></div>
+                             <div className="flex justify-between items-start mb-6">
+                                <h4 className="text-xs font-black text-[#1d1d1f] leading-relaxed pr-4 flex-1">{task.name || 'Main Project'}</h4>
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full shrink-0 ${task.priority === 'Urgent' ? 'bg-[#ff3b30]' : task.priority === 'High' ? 'bg-[#ff9500]' : 'bg-[#0071e3]'}`}></div>
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDeleteTask(task.id, task.name);
+                                        }}
+                                        className="p-1.5 hover:bg-[#ff3b30]/10 text-[#86868b] hover:text-[#ff3b30] rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                        title="Delete Task"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
                             </div>
                             
                             <div className="flex items-center justify-between mt-auto pt-6 border-t border-[#f0f0f2]">
