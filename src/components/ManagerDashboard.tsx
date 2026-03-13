@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, createEmployeeAccount, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, createEmployeeAccount, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert } from '@/app/actions/actions';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
 import { Pencil, Trash2, Menu, X } from 'lucide-react';
@@ -40,6 +40,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const [isBroadcasting, setIsBroadcasting] = useState(false);
     const [deletingEmpId, setDeletingEmpId] = useState<string | null>(null);
     const [empStatusMsg, setEmpStatusMsg] = useState<{ id: string, text: string } | null>(null);
+    const [assignError, setAssignError] = useState<string | null>(null);
 
     // Assign Task State (used in a modal or side panel later maybe, but for now in board)
     const [showAssignModal, setShowAssignModal] = useState(false);
@@ -60,24 +61,31 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
     const refreshData = async (silent = false) => {
         if (!silent) setLoading(true);
-        const [fetchedTasks, fetchedProfiles] = await Promise.all([getTasks(), getProfiles()]);
-        setTasks(fetchedTasks);
-        setEmployees(fetchedProfiles);
-        
-        // Fetch all subtasks
-        const subtasksPromises = fetchedTasks.map(t => getSubtasks(t.id));
-        const subtasksResults = await Promise.all(subtasksPromises);
-        const newMap: Record<string, Subtask[]> = {};
-        fetchedTasks.forEach((t, i) => {
-            newMap[t.id] = subtasksResults[i];
-        });
-        setSubtasksMap(newMap);
-        // Fetch notifications
-        const notifs = await getNotifications(userId);
-        setNotifications(notifs);
-        setUnreadCount(notifs.filter(n => !n.is_read).length);
-        
-        setLoading(false);
+        try {
+            const [fetchedTasks, fetchedProfiles] = await Promise.all([getTasks(), getProfiles()]);
+            setTasks(fetchedTasks);
+            setEmployees(fetchedProfiles);
+            
+            // Fetch all subtasks in bulk for better performance
+            const taskIds = fetchedTasks.map(t => t.id);
+            const allSubtasks = await getBulkSubtasks(taskIds);
+            
+            const newMap: Record<string, Subtask[]> = {};
+            allSubtasks.forEach(st => {
+                if (!newMap[st.task_id]) newMap[st.task_id] = [];
+                newMap[st.task_id].push(st);
+            });
+            setSubtasksMap(newMap);
+
+            // Fetch notifications
+            const notifs = await getNotifications(userId);
+            setNotifications(notifs);
+            setUnreadCount(notifs.filter(n => !n.is_read).length);
+        } catch (error) {
+            console.error("Error refreshing dashboard data:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // --- Timeline Logic ---
@@ -248,6 +256,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const handleAssignTask = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!assignForm.employee_id || !assignForm.name) return;
+        setAssignError(null);
         try {
             await saveTask(assignForm as any);
             setShowAssignModal(false);
@@ -262,8 +271,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                 notes: '' 
             });
             refreshData();
-        } catch (err) {
-            alert("Error assigning task");
+        } catch (err: any) {
+            setAssignError(err.message || "Error assigning task");
         }
     };
 
@@ -793,13 +802,14 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-lg font-black shadow-sm group-hover:bg-[#0071e3] group-hover:text-white transition-all flex-shrink-0">
                                                     {emp.name.charAt(0)}
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-black text-[#1d1d1f] truncate">{emp.name}</p>
-                                                        {emp.role === 'manager' && <Badge className="bg-[#0071e3] text-white border-none text-[8px] px-2 flex-shrink-0">ADMIN</Badge>}
+                                                    <div className="min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-black text-[#1d1d1f] truncate">{emp.name}</p>
+                                                            {emp.role === 'manager' && <Badge className="bg-[#0071e3] text-white border-none text-[8px] px-2 flex-shrink-0">ADMIN</Badge>}
+                                                        </div>
+                                                        <p className="text-[10px] font-bold text-[#0071e3] truncate mb-0.5">{emp.email}</p>
+                                                        <p className="text-[9px] font-mono text-[#86868b] truncate opacity-50">{emp.id.slice(0, 8)}</p>
                                                     </div>
-                                                    <p className="text-[10px] font-mono text-[#86868b] truncate">{emp.id.slice(0, 8)}</p>
-                                                </div>
                                             </div>
                                             <div className="flex gap-2 ml-4 flex-shrink-0 items-center">
                                                 {empStatusMsg && empStatusMsg.id === emp.id && (
@@ -936,7 +946,10 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     <Card className="w-full max-w-xl p-10 rounded-[48px] bg-white shadow-2xl animate-in zoom-in-95 duration-200">
                         <div className="flex justify-between items-center mb-10">
                             <h2 className="text-3xl font-black text-[#1d1d1f] tracking-tight">Create New Task</h2>
-                            <button onClick={() => setShowAssignModal(false)} className="w-10 h-10 rounded-full bg-[#f5f5f7] flex items-center justify-center font-bold hover:bg-[#e5e5ea]">✕</button>
+                            <button onClick={() => {
+                                setShowAssignModal(false);
+                                setAssignError(null);
+                            }} className="w-10 h-10 rounded-full bg-[#f5f5f7] flex items-center justify-center font-bold hover:bg-[#e5e5ea]">✕</button>
                         </div>
 
                         <form onSubmit={handleAssignTask} className="space-y-8">
@@ -980,7 +993,15 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Task Objective</label>
-                                    <Input required value={assignForm.name} onChange={e => setAssignForm({ ...assignForm, name: e.target.value })} placeholder="What needs to be done?" className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
+                                    <Input required value={assignForm.name} onChange={e => {
+                                        setAssignForm({ ...assignForm, name: e.target.value });
+                                        if (assignError) setAssignError(null);
+                                    }} placeholder="What needs to be done?" className={`h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold ${assignError ? 'ring-2 ring-red-500' : ''}`} />
+                                    {assignError && (
+                                        <p className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest ml-4 animate-in fade-in slide-in-from-top-2">
+                                            {assignError}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-6">

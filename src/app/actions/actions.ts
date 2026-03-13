@@ -64,9 +64,67 @@ export type Notification = {
 
 export async function getProfiles(): Promise<Profile[]> {
     const supabase = await createClient()
-    const { data, error } = await supabase.from('profiles').select('*')
+    
+    // Try to fetch email directly from profiles (assuming migration has run)
+    const { data: profiles, error } = await supabase.from('profiles').select('*')
+    
     if (error) {
         console.error("Error fetching profiles:", error)
+        return []
+    }
+
+    // Check if any profile has an email. If not, fallback to slow auth method (temporary)
+    const hasEmails = profiles.some(p => p.email);
+    if (hasEmails) {
+        return profiles;
+    }
+
+    // Slow fallback logic (will be bypassed once user runs migration)
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    if (serviceKey) {
+        const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+        const supabaseAdmin = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            serviceKey,
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        )
+
+        const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers()
+        if (!authError && users) {
+            return (profiles || []).map(profile => {
+                const authUser = users.find(u => u.id === profile.id)
+                return {
+                    ...profile,
+                    email: authUser?.email || ''
+                }
+            })
+        }
+    }
+
+    return (profiles || []).map(p => ({ ...p, email: '' }))
+}
+
+export async function getSubtasks(taskId: string): Promise<Subtask[]> {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('subtasks')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: true })
+        
+    if (error) {
+        console.error("Error fetching subtasks:", error)
+        return []
+    }
+    return data || []
+}
+
+export async function getBulkSubtasks(taskIds: string[]): Promise<Subtask[]> {
+    if (!taskIds.length) return []
+    const supabase = await createClient()
+    const { data, error } = await supabase.from('subtasks').select('*').in('task_id', taskIds)
+    if (error) {
+        console.error("Error fetching bulk subtasks:", error)
         return []
     }
     return data || []
@@ -84,6 +142,22 @@ export async function getTasks(): Promise<Task[]> {
 
 export async function saveTask(taskData: Omit<Task, 'id' | 'created_at'>) {
     const supabase = await createClient()
+
+    // Duplication Check: Check if a task with the same name already exists (case-insensitive)
+    const { data: existingTask, error: checkError } = await supabase
+        .from('tasks')
+        .select('id')
+        .ilike('name', taskData.name)
+        .limit(1)
+        .maybeSingle()
+
+    if (checkError) {
+        console.error("Error checking for duplicate task:", checkError)
+    }
+
+    if (existingTask) {
+        throw new Error(`A task with the name "${taskData.name}" already exists. Please choose a unique name.`)
+    }
 
     const { data: task, error } = await supabase
         .from('tasks')
@@ -298,22 +372,6 @@ export async function deleteTask(taskId: string) {
     revalidatePath('/');
 }
 
-// Subtask Actions
-export async function getSubtasks(taskId: string): Promise<Subtask[]> {
-    const supabase = await createClient()
-
-    const { data, error } = await supabase
-        .from('subtasks')
-        .select('*')
-        .eq('task_id', taskId)
-        .order('created_at', { ascending: true })
-
-    if (error) {
-        console.error("Error fetching subtasks:", error)
-        return []
-    }
-    return data || []
-}
 
 async function recalculateTaskHours(taskId: string) {
     const supabase = await createClient()
@@ -381,17 +439,128 @@ export async function updateSubtask(subtaskData: Partial<Subtask> & { id: string
 export async function updateSubtaskStatus(subtaskId: string, taskId: string, isCompleted: boolean) {
     const supabase = await createClient()
 
-    const { error } = await supabase
+    const { data: subtask, error } = await supabase
         .from('subtasks')
         .update({ is_completed: isCompleted })
         .eq('id', subtaskId)
+        .select()
+        .single()
 
     if (error) {
         console.error("Error updating subtask status:", error)
         throw new Error(error.message)
     }
 
+    if (isCompleted && subtask) {
+        // Trigger email notification (fire and forget to not block UI)
+        sendSubtaskCompletionEmail(subtaskId, taskId).catch(err => console.error("Email notification failed:", err));
+    }
+
     revalidatePath('/')
+}
+
+async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
+    const supabase = await createClient();
+    
+    // 1. Fetch Task and all its subtasks
+    const { data: task, error: taskError } = await supabase.from('tasks').select('*').eq('id', taskId).single();
+    const { data: allSubtasks, error: subError } = await supabase.from('subtasks').select('*').eq('task_id', taskId);
+    
+    if (taskError || !task || subError) return;
+
+    // 2. Check if this was the last sub-task
+    const completedCount = allSubtasks.filter(s => s.is_completed).length;
+    const totalCount = allSubtasks.length;
+    const isLastSubtask = completedCount === totalCount;
+    const progress = Math.round((completedCount / totalCount) * 100);
+
+    // 3. Fetch Assignee Names and Emails
+    const profiles = await getProfiles();
+    const owner = profiles.find(p => p.id === task.employee_id);
+    const collaborators = profiles.filter(p => task.assignee_ids?.includes(p.id));
+    const allAssignees = [owner, ...collaborators].filter((p): p is Profile => !!p);
+    
+    const recipientEmails = allAssignees.map(p => p.email).filter((e): e is string => !!e);
+    if (recipientEmails.length === 0 || !resend) return;
+
+    // 4. Construct Teamwork-style Email
+    const currentSubtask = allSubtasks.find(s => s.id === subtaskId);
+    const subject = `(Task Management) - System just completed the ${isLastSubtask ? 'last ' : ''}sub-task in "${task.name}" - ${currentSubtask?.name || 'Subtask'}`;
+    
+    const assigneeNames = allAssignees.map(p => p.name).join(', ');
+    const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}`;
+
+    const html = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e5ea; border-radius: 16px; overflow: hidden; background-color: #ffffff; color: #1d1d1f;">
+            <div style="padding: 12px 24px; background-color: #f5f5f7; border-bottom: 1px solid #e5e5ea; color: #86868b; font-size: 12px; text-align: center;">
+                ===== WRITE YOUR REPLY ABOVE THIS LINE =====
+            </div>
+            
+            <div style="padding: 32px 24px;">
+                <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">System Bot has completed a sub-task you are involved in</p>
+                ${isLastSubtask ? '<p style="margin: 0 0 24px 0; font-size: 14px; color: #0071e3; font-weight: 600;">You are now able to complete the parent task</p>' : ''}
+                
+                <div style="margin-bottom: 32px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Parent Task</div>
+                    <div style="font-size: 20px; font-weight: 800; color: #1d1d1f;">${task.name}</div>
+                </div>
+
+                <div style="margin-bottom: 32px; padding: 24px; background-color: #f5f5f7; border-radius: 12px;">
+                    <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Sub-Task Details</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <tr>
+                            <td style="padding: 6px 0; color: #86868b; width: 120px; font-weight: 600;">Completed</td>
+                            <td style="padding: 6px 0; color: #1d1d1f; font-weight: 700;">${currentSubtask?.name}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px 0; color: #86868b; font-weight: 600;">Progress</td>
+                            <td style="padding: 6px 0;">
+                                <span style="color: #0071e3; font-weight: 800;">${progress}%</span>
+                                <span style="font-size: 11px; color: #86868b; margin-left: 4px;">(${completedCount}/${totalCount} sub-tasks)</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px 0; color: #86868b; font-weight: 600;">Assigned To</td>
+                            <td style="padding: 6px 0; color: #1d1d1f; font-weight: 600;">${assigneeNames}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 6px 0; color: #86868b; font-weight: 600;">Priority</td>
+                            <td style="padding: 6px 0;"><span style="background-color: ${task.priority === 'Urgent' ? '#ff3b30' : task.priority === 'High' ? '#ff9500' : '#0071e3'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase;">${task.priority}</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 0 6px 0; color: #86868b; font-weight: 600;" colspan="2">Timeline</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0 0 12px 0; font-weight: 700; color: #1d1d1f;" colspan="2">${task.start_date} - ${task.deadline}</td>
+                        </tr>
+                    </table>
+                    
+                    <a href="${dashboardUrl}" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background-color: #0071e3; color: white; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 700;">View Task in Dashboard</a>
+                </div>
+
+                <div style="border-top: 1px solid #e5e5ea; padding-top: 24px; font-size: 12px; color: #86868b; line-height: 1.5;">
+                    <div style="font-weight: 700; color: #1d1d1f; margin-bottom: 4px;">Project Details</div>
+                    <div>Project: Task Management</div>
+                    <div>Company: Scaletrix.ai</div>
+                </div>
+            </div>
+            
+            <div style="padding: 24px; background-color: #f5f5f7; font-size: 11px; color: #86868b; text-align: center;">
+                This is an automated notification from your Task Management System.
+            </div>
+        </div>
+    `;
+
+    try {
+        await resend.emails.send({
+            from: 'TaskHub Bot <bot@resend.dev>',
+            to: recipientEmails,
+            subject: subject,
+            html: html
+        });
+    } catch (e) {
+        console.error("Error sending subtask completion email:", e);
+    }
 }
 
 export async function updateSubtaskHours(subtaskId: string, taskId: string, hours: number) {
