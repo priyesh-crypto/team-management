@@ -553,7 +553,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
 
     try {
         await resend.emails.send({
-            from: 'TaskHub Bot <bot@resend.dev>',
+            from: process.env.RESEND_FROM_EMAIL || 'TaskHub <onboarding@resend.dev>',
             to: recipientEmails,
             subject: subject,
             html: html
@@ -861,7 +861,7 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
             const subject = type === 'urgent' ? `URGENT: Task Management Alert` : `Notification: Task Management System`;
             
             await resend.emails.send({
-                from: 'TaskHub <alerts@resend.dev>', // Note: This is an example, usually needs a verified domain
+                from: process.env.RESEND_FROM_EMAIL || 'TaskHub <onboarding@resend.dev>',
                 to: targets.map(t => t.email),
                 subject: subject,
                 html: `
