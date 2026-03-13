@@ -99,6 +99,9 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editTaskData, setEditTaskData] = useState<Partial<Task>>({});
     const [subtasksMap, setSubtasksMap] = useState<Record<string, Subtask[]>>({});
+    const [isDeletingTask, setIsDeletingTask] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState<{ id: string, name: string } | null>(null);
     const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
     const [editSubtaskData, setEditSubtaskData] = useState<Partial<Subtask>>({});
     const [newSubtaskData, setNewSubtaskData] = useState<Record<string, { 
@@ -316,14 +319,29 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         }
     };
 
-    const handleDeleteTask = async (taskId: string) => {
-        if (!confirm("Are you sure you want to delete this task? This cannot be undone.")) return;
+    const handleDeleteTask = (taskId: string, taskName: string) => {
+        setTaskToDelete({ id: taskId, name: taskName });
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!taskToDelete) return;
+        setIsDeletingTask(true);
         try {
-            await deleteTask(taskId);
+            await deleteTask(taskToDelete.id);
             await refreshData();
+            setShowDeleteConfirm(false);
+            setTaskToDelete(null);
         } catch (err: any) {
             alert(err.message || "Failed to delete task.");
+        } finally {
+            setIsDeletingTask(false);
         }
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setTaskToDelete(null);
     };
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -477,7 +495,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleDeleteTask(task.id);
+                                                handleDeleteTask(task.id, task.name);
                                             }}
                                             className="p-1.5 bg-[#f5f5f7] hover:bg-[#ff3b30]/10 text-[#86868b] hover:text-[#ff3b30] rounded-lg transition-all"
                                             title="Delete Task"
@@ -1400,6 +1418,46 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                     refreshData={refreshData}
                     employees={employees}
                 />
+            )}
+
+            {/* Custom Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div 
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+                        onClick={cancelDelete}
+                    />
+                    <Card className="relative w-full max-w-[400px] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.3)] border-none bg-white/90 backdrop-blur-xl animate-in zoom-in-95 duration-200">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-[#ff3b30]/10 rounded-full flex items-center justify-center mb-6">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff3b30" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </div>
+                            
+                            <h3 className="text-xl font-black text-[#1d1d1f] mb-2">Delete Task?</h3>
+                            <p className="text-sm text-[#86868b] font-medium leading-relaxed mb-8">
+                                Are you sure you want to delete <span className="text-[#1d1d1f] font-bold">"{taskToDelete?.name}"</span>? This action cannot be undone.
+                            </p>
+
+                            <div className="flex gap-3 w-full">
+                                <Button 
+                                    variant="secondary" 
+                                    className="flex-1 h-12 rounded-2xl font-bold border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#1d1d1f]"
+                                    onClick={cancelDelete}
+                                    disabled={isDeletingTask}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button 
+                                    className="flex-1 h-12 rounded-2xl font-bold bg-[#ff3b30] hover:bg-[#ff3b30]/90 text-white shadow-[0_4px_20px_rgba(255,59,48,0.3)]"
+                                    onClick={confirmDelete}
+                                    disabled={isDeletingTask}
+                                >
+                                    {isDeletingTask ? 'Deleting...' : 'Delete Task'}
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
             )}
         </div>
     );
