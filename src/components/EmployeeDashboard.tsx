@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
+import TimelineSchedule from '@/components/ui/TimelineSchedule';
 import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, updateTaskStatus, deleteTask, updateTask, getSubtasks, getBulkSubtasks, saveSubtask, updateSubtaskStatus, updateSubtaskHours, deleteSubtask, updateSubtask, updateProfile, changePassword, updateOwnPassword, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification } from '@/app/actions/actions';
 import { Card, Button, Input, Select, Badge } from '@/components/ui/components';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Clock } from 'lucide-react';
 
 // Helper component for Sidebar items
 const NavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick: () => void }) => (
@@ -60,7 +61,7 @@ const CircularProgress = ({ percentage, color = "#0071e3" }: { percentage: numbe
 };
 
 export default function EmployeeDashboard({ userId, userName }: { userId: string, userName: string }) {
-    const [activeTab, setActiveTab] = useState<'mine' | 'team' | 'settings'>('mine');
+    const [activeTab, setActiveTab] = useState<'mine' | 'team' | 'schedule' | 'settings'>('mine');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTask, setSelectedTask] = useState<{ task: Task, subtasks: Subtask[] } | null>(null);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -121,6 +122,99 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [activeTimers, setActiveTimers] = useState<Record<string, string>>({}); // taskId -> ISO startTime
+    const [now, setNow] = useState(new Date());
+
+    useEffect(() => {
+        const saved = localStorage.getItem('activeTimers');
+        if (saved) {
+            try {
+                setActiveTimers(JSON.parse(saved));
+            } catch (e) {
+                console.error("Error loading timers:", e);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('activeTimers', JSON.stringify(activeTimers));
+    }, [activeTimers]);
+
+    useEffect(() => {
+        const interval = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const formatElapsed = (startTimeIso: string) => {
+        const start = new Date(startTimeIso);
+        const diff = Math.floor((now.getTime() - start.getTime()) / 1000);
+        if (diff < 0) return "00:00:00";
+        const h = Math.floor(diff / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        const s = diff % 60;
+        return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
+    };
+
+    const handleStartTimer = (subtaskId: string, taskId: string) => {
+        setActiveTimers(prev => ({ ...prev, [subtaskId]: new Date().toISOString() }));
+    };
+
+    const handleStopTimer = async (subtaskId: string, taskId: string) => {
+        const startTimeIso = activeTimers[subtaskId];
+        if (!startTimeIso) return;
+
+        const start = new Date(startTimeIso);
+        const end = new Date();
+        const diffHrs = Number(((end.getTime() - start.getTime()) / (1000 * 3600)).toFixed(2));
+
+        const formatTime = (date: Date) => {
+            return date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+        };
+
+        if (subtaskId.startsWith('new-')) {
+            setNewSubtaskData(prev => ({
+                ...prev,
+                [taskId]: {
+                    ...(prev[taskId] || { name: '', date_logged: new Date().toISOString().split('T')[0] }),
+                    hours: diffHrs,
+                    start_time: formatTime(start),
+                    end_time: formatTime(end)
+                }
+            }));
+        } else {
+            // Existing subtask - update immediately
+            const currentSubtasks = subtasksMap[taskId] || [];
+            const subtask = currentSubtasks.find(s => s.id === subtaskId);
+            if (subtask) {
+                const totalHours = Number(((subtask.hours_spent || 0) + diffHrs).toFixed(2));
+                try {
+                    await updateSubtask({
+                        id: subtaskId,
+                        task_id: taskId,
+                        hours_spent: totalHours,
+                        start_time: formatTime(start),
+                        end_time: formatTime(end)
+                    });
+                    const updatedSubtasks = await getSubtasks(taskId);
+                    setSubtasksMap(prev => ({ ...prev, [taskId]: updatedSubtasks }));
+                    
+                    // Refresh main tasks to update total hours
+                    const updatedTasks = await getTasks();
+                    setAllTasks(updatedTasks);
+                    setMyTasks(updatedTasks.filter(t => t.employee_id === userId || (t.assignee_ids && t.assignee_ids.includes(userId))));
+                } catch (err) {
+                    console.error("Failed to update subtask via timer:", err);
+                    alert("Failed to update subtask time.");
+                }
+            }
+        }
+
+        setActiveTimers(prev => {
+            const next = { ...prev };
+            delete next[subtaskId];
+            return next;
+        });
+    };
 
     useEffect(() => {
         refreshData();
@@ -441,7 +535,14 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                             className="font-bold text-lg text-[#1d1d1f] w-full mb-1"
                                         />
                                     ) : (
-                                        <h4 className="font-bold text-lg text-[#1d1d1f]">{task.name}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-lg text-[#1d1d1f]">{task.name}</h4>
+                                            {activeTimers[task.id] && (
+                                                <Badge className="bg-[#ff3b30] text-white animate-pulse text-[8px] px-1.5 py-0 border-none font-black tracking-widest">
+                                                    LIVE
+                                                </Badge>
+                                            )}
+                                        </div>
                                     )}
                                     {showAssignee && (
                                         <div className="flex flex-col gap-1 mt-0.5">
@@ -734,19 +835,37 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                                                 )}
                                                             </div>
                                                             <div className="flex items-center gap-1">
+                                                                {activeTimers[subtask.id] ? (
+                                                                    <button
+                                                                        onClick={() => handleStopTimer(subtask.id, task.id)}
+                                                                        className="flex items-center gap-1 px-1.5 py-0.5 bg-[#ff3b30] text-white rounded-md text-[9px] font-black animate-pulse"
+                                                                        title="Stop Timer"
+                                                                    >
+                                                                        <div className="w-1 h-1 bg-white rounded-full animate-ping"></div>
+                                                                        {formatElapsed(activeTimers[subtask.id])}
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => handleStartTimer(subtask.id, task.id)}
+                                                                        className="opacity-0 group-hover:opacity-100 text-[#86868b] hover:text-[#0071e3] transition-all p-1"
+                                                                        title="Start Timer"
+                                                                    >
+                                                                        <Clock size={12} strokeWidth={3} />
+                                                                    </button>
+                                                                )}
                                                                 <button
                                                                     onClick={() => {
                                                                         setEditingSubtaskId(subtask.id);
                                                                         setEditSubtaskData(subtask);
                                                                     }}
-                                                                    className="opacity-0 group-hover:opacity-100 text-[#86868b] hover:text-[#0071e3] transition-all"
+                                                                    className="opacity-0 group-hover:opacity-100 text-[#86868b] hover:text-[#0071e3] transition-all p-1"
                                                                     title="Edit subtask"
                                                                 >
                                                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleDeleteSubtask(task.id, subtask.id)}
-                                                                    className="opacity-0 group-hover:opacity-100 text-[#86868b] hover:text-[#e83f3f] transition-all"
+                                                                    className="opacity-0 group-hover:opacity-100 text-[#86868b] hover:text-[#e83f3f] transition-all p-1"
                                                                     title="Delete subtask"
                                                                 >
                                                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
@@ -876,12 +995,32 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => handleAddSubtask(task.id)}
-                                                    className="w-full py-1.5 bg-[#0071e3] text-white rounded-lg font-bold text-[10px] hover:bg-[#0077ed] transition-colors"
-                                                >
-                                                    Add Log Entry
-                                                </button>
+                                                <div className="flex flex-col gap-2">
+                                                    {activeTimers[`new-${task.id}`] ? (
+                                                        <button
+                                                            onClick={() => handleStopTimer(`new-${task.id}`, task.id)}
+                                                            className="w-full py-2 bg-[#ff3b30] text-white rounded-xl font-black text-[10px] tracking-widest hover:bg-[#e03126] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#ff3b30]/20 animate-pulse"
+                                                        >
+                                                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
+                                                            STOP TIMER ({formatElapsed(activeTimers[`new-${task.id}`])})
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleStartTimer(`new-${task.id}`, task.id)}
+                                                            className="w-full py-2 bg-[#0071e3] text-white rounded-xl font-black text-[10px] tracking-widest hover:bg-[#0077ed] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#0071e3]/20"
+                                                        >
+                                                            <Clock size={12} strokeWidth={3} />
+                                                            START TIMER FOR NEW WORK LOG
+                                                        </button>
+                                                    )}
+                                                    
+                                                    <button
+                                                        onClick={() => handleAddSubtask(task.id)}
+                                                        className="w-full py-2 bg-[#1d1d1f] text-white rounded-xl font-black text-[10px] tracking-widest hover:bg-black transition-all shadow-lg shadow-black/10"
+                                                    >
+                                                        UPLOAD WORK LOG
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -986,6 +1125,12 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                         onClick={() => setActiveTab('team')}
                     />
                     <NavItem
+                        label="SCHEDULE"
+                        icon={<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>}
+                        active={activeTab === 'schedule'}
+                        onClick={() => setActiveTab('schedule')}
+                    />
+                    <NavItem
                         label="SETTINGS"
                         icon={<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>}
                         active={activeTab === 'settings'}
@@ -1014,7 +1159,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
             </aside>
 
             {/* --- MAIN CONTENT AREA --- */}
-            <main className="flex-1 flex flex-col gap-6 overflow-hidden p-4 lg:p-0">
+            <main className="flex-1 flex flex-col overflow-hidden">
                 <header className="h-20 bg-white/80 backdrop-blur-md border-b border-[#e5e5ea] flex items-center justify-between px-4 lg:px-8 sticky top-0 z-[40] -mx-4 lg:mx-0">
                     <div className="flex items-center gap-4">
                         <button 
@@ -1239,6 +1384,15 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                 </div>
                             )}
                         </div>
+                    ) : activeTab === 'schedule' ? (
+                        <div className="h-[calc(100vh-160px)] min-h-[500px] fade-in">
+                            <TimelineSchedule 
+                                tasks={allTasks} 
+                                employees={employees} 
+                                onTaskClick={(task) => setSelectedTask({ task, subtasks: [] })} 
+                                refreshData={refreshData}
+                            />
+                        </div>
                     ) : (
                         /* Team View */
                         <div className="max-w-4xl mx-auto fade-in">
@@ -1413,6 +1567,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                     subtasks={selectedTask.subtasks}
                     onClose={() => setSelectedTask(null)}
                     onUpdateStatus={handleUpdateStatusFromModal}
+                    onDeleteTask={handleDeleteTask}
                     isEditable={activeTab === 'mine'}
                     currentUserId={userId}
                     refreshData={refreshData}

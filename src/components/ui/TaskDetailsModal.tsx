@@ -1,6 +1,7 @@
 import React from 'react';
-import { Card, Button, Badge, Select } from './components';
-import { Task, Subtask, Priority, Status, Comment, getComments, saveComment, deleteComment, updateTask, deleteTask, Profile } from '@/app/actions/actions';
+import { Card, Button, Badge, Select, Input } from './components';
+import { Task, Subtask, Priority, Status, Comment, getComments, saveComment, deleteComment, updateTask, Profile, ActivityLog, getActivityLogs } from '@/app/actions/actions';
+import { Trash2, MessageSquare, Clock, Users, Calendar, X, ExternalLink, Pencil as PencilIcon, Save, History, CheckCircle2, PlusCircle, AlertCircle } from 'lucide-react';
 
 interface TaskDetailsModalProps {
     task: Task;
@@ -8,6 +9,7 @@ interface TaskDetailsModalProps {
     employees: Profile[];
     onClose: () => void;
     onUpdateStatus: (taskId: string, status: Status) => Promise<void>;
+    onDeleteTask: (taskId: string, taskName: string) => void;
     isEditable?: boolean;
     currentUserId: string;
     isManager?: boolean;
@@ -20,6 +22,7 @@ export function TaskDetailsModal({
     employees, 
     onClose, 
     onUpdateStatus, 
+    onDeleteTask,
     isEditable = true,
     currentUserId,
     isManager = false,
@@ -34,13 +37,14 @@ export function TaskDetailsModal({
         deadline: task.deadline
     });
     const [comments, setComments] = React.useState<Comment[]>([]);
+    const [activityLogs, setActivityLogs] = React.useState<ActivityLog[]>([]);
     const [newComment, setNewComment] = React.useState('');
     const [isSaving, setIsSaving] = React.useState(false);
     const [isCommenting, setIsCommenting] = React.useState(false);
 
     React.useEffect(() => {
         loadComments();
-        // Sync edit state when task updates from parent
+        loadActivity();
         setEditData({
             name: task.name,
             notes: task.notes,
@@ -55,12 +59,18 @@ export function TaskDetailsModal({
         setComments(data);
     };
 
+    const loadActivity = async () => {
+        const data = await getActivityLogs(task.id);
+        setActivityLogs(data);
+    };
+
     const handleSaveEdit = async () => {
         setIsSaving(true);
         try {
             await updateTask(task.id, editData);
             setIsEditing(false);
             refreshData();
+            loadActivity();
         } catch (err) {
             alert("Failed to update task.");
         } finally {
@@ -79,6 +89,7 @@ export function TaskDetailsModal({
             });
             setNewComment('');
             loadComments();
+            loadActivity();
         } catch (err) {
             alert("Failed to add comment.");
         } finally {
@@ -86,193 +97,230 @@ export function TaskDetailsModal({
         }
     };
 
-    const handleDeleteTask = async () => {
-        if (confirm("Are you sure you want to delete this task? This action cannot be undone.")) {
-            try {
-                await deleteTask(task.id);
-                onClose();
-                refreshData();
-            } catch (err) {
-                alert("Failed to delete task.");
-            }
-        }
-    };
-
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 lg:p-8 bg-[#1d1d1f]/30 backdrop-blur-md animate-in fade-in duration-300">
-            <Card className="w-full h-full sm:h-auto sm:max-w-5xl sm:max-h-[90vh] overflow-hidden flex flex-col p-0 shadow-[0_32px_64px_rgba(0,0,0,0.15)] animate-in zoom-in-95 duration-300 border-none bg-white sm:rounded-[2.5rem]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1d1d1f]/40 backdrop-blur-md animate-in fade-in duration-200">
+            <Card className="w-full max-w-5xl h-[85vh] overflow-hidden flex flex-col p-0 shadow-[0_32px_64px_rgba(0,0,0,0.2)] animate-in zoom-in-95 duration-200 border-none bg-white rounded-3xl">
                 {/* Modal Header */}
-                <div className="flex items-center justify-between p-6 border-b border-[#e5e5ea] bg-[#f5f5f7]/50">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e5ea] bg-[#f5f5f7]/30">
                     <div className="flex items-center gap-3">
-                        <Badge variant={task.priority}>{task.priority}</Badge>
-                        <div className="w-[1px] h-4 bg-[#d2d2d7]"></div>
-                        <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest">TASK ID: {task.id.slice(0, 8)}</span>
+                        <Badge variant={task.priority} className="text-[10px] px-2 py-0.5 font-black uppercase tracking-widest">{task.priority}</Badge>
+                        <div className="w-[1px] h-3 bg-[#d2d2d7]"></div>
+                        <span className="text-[9px] font-black text-[#86868b] uppercase tracking-[0.15em] tabular-nums">ID: {task.id.slice(0, 8)}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                         {(isManager || isEditable) && (
                             <button 
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`p-2 rounded-xl transition-all ${isEditing ? 'bg-[#ff3b30] text-white' : 'hover:bg-[#f5f5f7] text-[#0071e3]'}`}
-                                title={isEditing ? "Cancel Editing" : "Edit Task"}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isEditing ? 'bg-[#ff3b30] text-white' : 'hover:bg-[#f5f5f7] text-[#1d1d1f]'}`}
+                                title={isEditing ? "Cancel" : "Edit"}
                             >
-                                {isEditing ? (
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                                ) : (
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                                )}
+                                {isEditing ? <X size={16} strokeWidth={2.5} /> : <PencilIcon size={16} strokeWidth={2.5} />}
                             </button>
                         )}
                         {isManager && (
                             <button 
-                                onClick={handleDeleteTask}
-                                className="p-2 hover:bg-[#ff3b30]/10 text-[#ff3b30] rounded-xl transition-all"
+                                onClick={() => onDeleteTask(task.id, task.name)}
+                                className="w-8 h-8 rounded-lg hover:bg-[#ff3b30]/10 text-[#ff3b30] flex items-center justify-center transition-all"
                                 title="Delete Task"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
+                                <Trash2 size={16} strokeWidth={2.5} />
                             </button>
                         )}
+                        <div className="w-[1px] h-3 bg-[#d2d2d7] mx-1"></div>
                         <button 
                             onClick={onClose}
-                            className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors text-[#86868b] hover:text-[#1d1d1f]"
+                            className="w-8 h-8 rounded-lg hover:bg-[#f5f5f7] flex items-center justify-center transition-colors text-[#86868b] hover:text-[#1d1d1f]"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                            <X size={18} strokeWidth={2.5} />
                         </button>
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                         {/* Left Column: Details & Comments */}
-                        <div className="lg:col-span-2 space-y-10">
+                        <div className="lg:col-span-2 space-y-8">
                             <section>
                                 {isEditing ? (
-                                    <div className="space-y-4">
-                                        <input 
-                                            value={editData.name}
-                                            onChange={e => setEditData({...editData, name: e.target.value})}
-                                            className="text-2xl sm:text-4xl font-black text-[#1d1d1f] tracking-tight leading-tight w-full bg-[#f5f5f7] p-2 rounded-xl outline-none ring-2 ring-[#0071e3]/20"
-                                        />
-                                        <textarea 
-                                            value={editData.notes}
-                                            onChange={e => setEditData({...editData, notes: e.target.value})}
-                                            className="text-[#1d1d1f] text-base leading-relaxed bg-[#f5f5f7] p-6 rounded-3xl border border-[#e5e5ea] w-full min-h-[150px] outline-none ring-2 ring-[#0071e3]/20"
-                                        />
-                                        <Button onClick={handleSaveEdit} disabled={isSaving} className="w-full">
-                                            {isSaving ? 'Saving Changes...' : 'Save Updates'}
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Task Name</label>
+                                            <Input 
+                                                value={editData.name}
+                                                onChange={e => setEditData({...editData, name: e.target.value})}
+                                                className="h-11 rounded-xl bg-[#f5f5f7] border-none px-5 text-lg font-black tracking-tight"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Detailed Notes</label>
+                                            <textarea 
+                                                value={editData.notes}
+                                                onChange={e => setEditData({...editData, notes: e.target.value})}
+                                                className="w-full min-h-[120px] rounded-2xl bg-[#f5f5f7] border-none p-5 text-sm font-medium resize-none focus:ring-1 ring-[#0071e3]"
+                                            />
+                                        </div>
+                                        <Button onClick={handleSaveEdit} disabled={isSaving} className="w-full h-11 rounded-xl bg-[#1d1d1f] hover:bg-black font-black tracking-widest text-[10px]">
+                                            <Save size={14} className="mr-2" /> {isSaving ? 'SAVING...' : 'SAVE CHANGES'}
                                         </Button>
                                     </div>
                                 ) : (
-                                    <>
-                                        <h2 className="text-2xl sm:text-4xl font-black text-[#1d1d1f] tracking-tight leading-tight mb-4 sm:mb-6">{task.name}</h2>
-                                        <div className="text-[#1d1d1f] text-sm sm:text-base leading-relaxed bg-[#f5f5f7] p-4 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-[#e5e5ea] shadow-sm">
-                                            {task.notes || <span className="text-[#86868b] italic text-sm">No detailed notes provided.</span>}
+                                    <div className="space-y-4">
+                                        <h2 className="text-3xl font-black text-[#1d1d1f] tracking-tighter leading-none">{task.name}</h2>
+                                        <div className="bg-[#f5f5f7] p-6 rounded-2xl border border-[#e5e5ea] shadow-sm">
+                                            <p className="text-[#1d1d1f] text-sm leading-relaxed font-medium">
+                                                {task.notes || <span className="text-[#86868b] italic">No description provided.</span>}
+                                            </p>
                                         </div>
-                                    </>
+                                    </div>
                                 )}
+                            </section>
+
+                            {/* Activity Timeline Section */}
+                            <section>
+                                <h3 className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
+                                    <History size={12} className="text-[#0071e3]" />
+                                    <span>Activity History</span>
+                                    <div className="flex-1 h-[1px] bg-[#f0f0f2]"></div>
+                                </h3>
+                                <div className="space-y-6 ml-2 border-l-2 border-[#f0f0f2] pl-6 py-2">
+                                    {activityLogs.length > 0 ? (
+                                        activityLogs.map((log) => {
+                                            let Icon = History;
+                                            let iconBg = 'bg-[#f5f5f7]';
+                                            let iconColor = 'text-[#86868b]';
+
+                                            if (log.type === 'task_created') {
+                                                Icon = PlusCircle;
+                                                iconBg = 'bg-[#34c759]/10';
+                                                iconColor = 'text-[#34c759]';
+                                            } else if (log.type === 'task_status_changed') {
+                                                Icon = CheckCircle2;
+                                                iconBg = 'bg-[#0071e3]/10';
+                                                iconColor = 'text-[#0071e3]';
+                                            } else if (log.type === 'comment_added') {
+                                                Icon = MessageSquare;
+                                                iconBg = 'bg-[#ff9500]/10';
+                                                iconColor = 'text-[#ff9500]';
+                                            }
+
+                                            return (
+                                                <div key={log.id} className="relative">
+                                                    <div className={`absolute -left-[35px] top-0 w-4 h-4 rounded-full ${iconBg} border-2 border-white flex items-center justify-center ${iconColor} shadow-sm z-10`}>
+                                                        <Icon size={8} strokeWidth={3} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[11px] font-bold text-[#1d1d1f] leading-snug">{log.description}</p>
+                                                        <div className="flex items-center gap-1.5 mt-1">
+                                                            <span className="text-[9px] font-black text-[#86868b] uppercase tracking-wider">{log.actor_name}</span>
+                                                            <div className="w-0.5 h-0.5 bg-[#d2d2d7] rounded-full"></div>
+                                                            <span className="text-[9px] font-medium text-[#c7c7cc] tabular-nums">
+                                                                {new Date(log.created_at).toLocaleDateString()} at {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-center py-6">
+                                            <p className="text-[9px] font-black text-[#c7c7cc] uppercase tracking-widest">Beginning of records</p>
+                                        </div>
+                                    )}
+                                </div>
                             </section>
 
                             {/* Subtasks Section */}
                             <section>
-                                <h3 className="text-[12px] font-black text-[#1d1d1f] uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-                                    <span className="w-2 h-2 bg-[#0071e3] rounded-full"></span>
+                                <h3 className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
+                                    <span className="w-1.5 h-1.5 bg-[#0071e3] rounded-full"></span>
                                     <span>Work Logs</span>
-                                    <div className="flex-1 h-[1px] bg-[#e5e5ea]"></div>
-                                    <span className="text-[#0071e3] bg-[#0071e3]/10 px-3 py-1 rounded-full text-[10px] tabular-nums">{subtasks.length}</span>
+                                    <div className="flex-1 h-[1px] bg-[#f0f0f2]"></div>
+                                    <Badge variant="secondary" className="bg-[#f0f0f2] text-[9px] px-1.5 h-5 flex items-center justify-center tabular-nums">{subtasks.length}</Badge>
                                 </h3>
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {subtasks.length > 0 ? (
-                                        subtasks.sort((a,b) => new Date(b.date_logged || '').getTime() - new Date(a.date_logged || '').getTime()).map((sub, idx) => (
-                                            <div key={sub.id} className="relative pl-10 group">
-                                                <div className="absolute left-[11px] top-4 bottom-0 w-[2px] bg-[#f5f5f7] group-last:hidden"></div>
-                                                <div className="absolute left-0 top-2 w-6 h-6 bg-white border-2 border-[#0071e3] rounded-full flex items-center justify-center z-10 shadow-sm transition-transform group-hover:scale-110">
-                                                    <div className="w-2 h-2 bg-[#0071e3] rounded-full"></div>
-                                                </div>
-                                                
-                                                <div className="bg-white p-5 rounded-2xl border border-[#e5e5ea] hover:shadow-lg transition-all cursor-default">
-                                                    <div className="flex justify-between items-center mb-2">
-                                                        <h4 className="font-bold text-sm text-[#1d1d1f]">{sub.name}</h4>
-                                                        <Badge variant="Low" className="tabular-nums">{sub.hours_spent}h</Badge>
+                                        subtasks.sort((a,b) => new Date(b.date_logged || '').getTime() - new Date(a.date_logged || '').getTime()).map((sub) => (
+                                            <div key={sub.id} className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] flex items-center justify-between group hover:border-[#0071e3] transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-white border border-[#e2e2e7] flex items-center justify-center text-[#1d1d1f] font-black text-[10px] shadow-sm">
+                                                        {sub.hours_spent}h
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-[10px] text-[#86868b] font-bold uppercase tracking-widest flex-wrap">
-                                                        <div className="flex items-center gap-1.5 bg-[#f5f5f7] px-2 py-0.5 rounded-lg border border-[#e5e5ea] text-[#1d1d1f] scale-95 origin-left">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-[#0071e3]"></div>
-                                                            <span>{employees.find(e => e.id === sub.employee_id)?.name || 'Unknown'}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                                            <span>{sub.date_logged}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                                            <span>{sub.start_time} - {sub.end_time}</span>
+                                                    <div>
+                                                        <h4 className="font-bold text-[11px] text-[#1d1d1f] leading-tight">{sub.name}</h4>
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <span className="text-[9px] font-bold text-[#86868b] uppercase tracking-wider">{employees.find(e => e.id === sub.employee_id)?.name}</span>
+                                                            <div className="w-1 h-1 bg-[#d2d2d7] rounded-full"></div>
+                                                            <span className="text-[9px] font-medium text-[#86868b] tabular-nums">{sub.date_logged}</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="text-center py-12 bg-[#f5f5f7] rounded-[2rem] border border-dashed border-[#d2d2d7]">
-                                            <div className="text-3xl mb-2">✍️</div>
-                                            <p className="text-[#86868b] text-sm font-bold uppercase tracking-widest">No activity logged</p>
+                                        <div className="text-center py-10 bg-[#f5f5f7] rounded-2xl border border-dashed border-[#d2d2d7]">
+                                            <p className="text-[9px] font-black text-[#86868b] uppercase tracking-widest">No activity found</p>
                                         </div>
                                     )}
                                 </div>
                             </section>
 
                             {/* Comments Section */}
-                            <section className="pt-6 border-t border-[#e5e5ea]">
-                                <h3 className="text-[12px] font-black text-[#1d1d1f] uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
-                                    <span className="w-2 h-2 bg-[#ff9500] rounded-full"></span>
+                            <section className="pt-6 border-t border-[#f0f0f2]">
+                                <h3 className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
+                                    <MessageSquare size={12} className="text-[#ff9500]" />
                                     <span>Discussion</span>
-                                    <div className="flex-1 h-[1px] bg-[#e5e5ea]"></div>
-                                    <span className="text-[#ff9500] bg-[#ff9500]/10 px-3 py-1 rounded-full text-[10px] tabular-nums">{comments.length}</span>
+                                    <div className="flex-1 h-[1px] bg-[#f0f0f2]"></div>
+                                    <Badge variant="secondary" className="bg-[#ff9500]/10 text-[#ff9500] text-[9px] px-1.5 h-5 flex items-center justify-center tabular-nums">{comments.length}</Badge>
                                 </h3>
                                 
-                                <div className="space-y-6 mb-8">
+                                <div className="space-y-5 mb-6">
                                     {comments.map((comment) => (
-                                        <div key={comment.id} className="flex gap-4 group">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-[#f5f5f7] to-[#d2d2d7] rounded-2xl flex items-center justify-center text-[#1d1d1f] font-black text-sm border border-[#e5e5ea] shadow-sm flex-shrink-0">
+                                        <div key={comment.id} className="flex gap-4 group animate-in slide-in-from-left-2 duration-300">
+                                            <div className="w-9 h-9 bg-[#1d1d1f] rounded-xl flex items-center justify-center text-white font-black text-[11px] flex-shrink-0 shadow-lg shadow-[#1d1d1f]/10">
                                                 {comment.author_name?.charAt(0)}
                                             </div>
-                                            <div className="flex-1 space-y-1">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-black text-xs text-[#1d1d1f]">{comment.author_name}</span>
-                                                    <span className="text-[10px] font-bold text-[#86868b] uppercase tracking-tighter">
-                                                        {new Date(comment.created_at).toLocaleDateString()} at {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between mb-1.5 px-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-black text-[11px] text-[#1d1d1f] tracking-tight">{comment.author_name}</span>
+                                                        <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest tabular-nums opacity-60">
+                                                            {new Date(comment.created_at).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
                                                     {comment.author_id === currentUserId && (
                                                         <button 
                                                             onClick={async () => {
                                                                 if (confirm("Delete this comment?")) {
                                                                     await deleteComment(comment.id);
                                                                     loadComments();
+                                                                    loadActivity();
                                                                 }
                                                             }}
                                                             className="opacity-0 group-hover:opacity-100 p-1 text-[#ff3b30] hover:bg-[#ff3b30]/10 rounded-lg transition-all"
                                                         >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /></svg>
+                                                            <Trash2 size={12} strokeWidth={2.5} />
                                                         </button>
                                                     )}
                                                 </div>
-                                                <p className="text-sm text-[#1d1d1f] font-medium leading-relaxed bg-[#f5f5f7] p-4 rounded-2xl border border-transparent hover:border-[#e5e5ea] transition-all">
-                                                    {comment.content}
-                                                </p>
+                                                <div className="bg-[#f5f5f7] px-5 py-4 rounded-2xl border border-transparent hover:border-[#e5e5ea] transition-all shadow-sm">
+                                                    <p className="text-xs text-[#1d1d1f] font-medium leading-relaxed">{comment.content}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
                                     {comments.length === 0 && (
-                                        <div className="text-center py-8 text-[#86868b] text-sm font-medium italic">
-                                            No comments yet. Start the conversation!
+                                        <div className="text-center py-8 bg-[#f5f5f7]/50 rounded-2xl border border-dashed border-[#e5e5ea]">
+                                            <p className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] opacity-40">No discussion yet</p>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="relative group">
+                                <div className="relative">
                                     <textarea 
                                         value={newComment}
                                         onChange={e => setNewComment(e.target.value)}
-                                        placeholder="Add a comment or feedback..."
-                                        className="w-full bg-[#f5f5f7] border-2 border-transparent focus:border-[#0071e3]/30 focus:bg-white text-[#1d1d1f] rounded-3xl px-6 py-4 outline-none transition-all duration-300 min-h-[100px] text-sm font-medium placeholder-[#86868b] shadow-inner"
+                                        placeholder="Add a comment..."
+                                        className="w-full bg-[#f5f5f7] border-none focus:ring-1 ring-[#0071e3]/30 text-[#1d1d1f] rounded-xl px-5 py-3 text-xs font-medium min-h-[80px] outline-none transition-all placeholder-[#86868b]"
                                         onKeyDown={e => {
                                             if (e.key === 'Enter' && !e.shiftKey) {
                                                 e.preventDefault();
@@ -283,26 +331,26 @@ export function TaskDetailsModal({
                                     <button 
                                         onClick={handleAddComment}
                                         disabled={isCommenting || !newComment.trim()}
-                                        className="absolute bottom-4 right-4 p-3 bg-[#0071e3] text-white rounded-2xl hover:bg-[#0077ed] transition-all disabled:opacity-50 disabled:grayscale shadow-lg shadow-[#0071e3]/20 active:scale-95"
+                                        className="absolute bottom-3 right-3 w-8 h-8 bg-[#1d1d1f] text-white rounded-lg flex items-center justify-center hover:bg-black transition-all disabled:opacity-30 disabled:grayscale shadow-md"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+                                        <Save size={14} />
                                     </button>
                                 </div>
                             </section>
                         </div>
 
                         {/* Right Column: Meta & Controls */}
-                        <div className="space-y-8">
-                            <div className="bg-[#f5f5f7] p-8 rounded-[2.5rem] border border-[#e5e5ea] shadow-sm">
-                                <h4 className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-6 flex items-center justify-between">
-                                    <span>Task Status</span>
-                                    <div className="w-1.5 h-1.5 bg-[#0071e3] rounded-full animate-pulse"></div>
+                        <div className="space-y-6">
+                            <div className="bg-[#f5f5f7] p-6 rounded-2xl border border-[#e5e5ea]">
+                                <h4 className="text-[9px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4 flex items-center justify-between">
+                                    <span>Status</span>
+                                    <Clock size={12} className="text-[#0071e3]" />
                                 </h4>
                                 {isEditable || isManager ? (
                                     <Select 
                                         value={task.status}
                                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onUpdateStatus(task.id, e.target.value as Status)}
-                                        className="w-full h-14 text-base font-black bg-white border-2 border-[#d2d2d7] rounded-2xl shadow-sm focus:border-[#0071e3] transition-all"
+                                        className="w-full h-10 text-[11px] font-bold bg-white border border-[#d2d2d7] rounded-xl focus:ring-1 ring-[#0071e3] transition-all"
                                     >
                                         <option>To Do</option>
                                         <option>In Progress</option>
@@ -310,26 +358,29 @@ export function TaskDetailsModal({
                                         <option>Completed</option>
                                     </Select>
                                 ) : (
-                                    <Badge variant={task.status === 'Completed' ? 'Low' : task.status === 'Blocked' ? 'Urgent' : 'default'} className="w-full justify-center py-4 text-sm font-black tracking-widest uppercase rounded-2xl">
-                                        {task.status}
-                                    </Badge>
+                                    <div className="w-full h-10 bg-white rounded-xl border border-[#e5e5ea] flex items-center justify-center">
+                                        <span className="text-[11px] font-black uppercase tracking-widest text-[#1d1d1f]">{task.status}</span>
+                                    </div>
                                 )}
                             </div>
 
-                            <div className="bg-white p-8 rounded-[2.5rem] border border-[#e5e5ea] shadow-sm">
-                                <h4 className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4">Assignees</h4>
-                                <div className="space-y-3">
-                                    {[task.employee_id, ...(task.assignee_ids || [])].map((id, index) => {
+                            <div className="bg-white p-6 rounded-2xl border border-[#e5e5ea] shadow-sm">
+                                <h4 className="text-[9px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                    <Users size={12} />
+                                    <span>Assignees</span>
+                                </h4>
+                                <div className="space-y-2.5">
+                                    {[task.employee_id, ...(task.assignee_ids || [])].map((id) => {
                                         const emp = employees.find(e => e.id === id);
                                         if (!emp) return null;
                                         return (
-                                            <div key={`modal-assignee-${id}`} className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] flex items-center justify-center text-[10px] font-black text-white shadow-sm ring-1 ring-black/5">
+                                            <div key={`modal-assignee-${id}`} className="flex items-center gap-2.5">
+                                                <div className="w-7 h-7 rounded-lg bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center text-[10px] font-black text-[#1d1d1f]">
                                                     {emp.name?.charAt(0) || '?'}
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-black text-[#1d1d1f]">{emp.name}</span>
-                                                    <span className="text-[9px] font-bold text-[#86868b] uppercase tracking-widest">{id === task.employee_id ? 'Primary Owner' : 'Collaborator'}</span>
+                                                <div className="min-w-0">
+                                                    <p className="text-[10px] font-black text-[#1d1d1f] leading-tight truncate">{emp.name}</p>
+                                                    <p className="text-[8px] font-bold text-[#86868b] uppercase tracking-widest mt-0.5">{id === task.employee_id ? 'Owner' : 'Collab'}</p>
                                                 </div>
                                             </div>
                                         );
@@ -338,13 +389,13 @@ export function TaskDetailsModal({
                             </div>
 
                             <div className="space-y-4">
-                                <div className="bg-white p-8 rounded-[2.5rem] border border-[#e5e5ea] shadow-sm hover:shadow-md transition-shadow">
-                                    <h4 className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-3">Priority Level</h4>
+                                <div className="bg-[#f5f5f7] p-5 rounded-2xl border border-[#e5e5ea]">
+                                    <h4 className="text-[9px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-3">Priority</h4>
                                     {isEditing ? (
                                         <Select 
                                             value={editData.priority}
                                             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditData({...editData, priority: e.target.value as Priority})}
-                                            className="w-full h-10 text-xs font-bold rounded-xl"
+                                            className="w-full h-9 text-[10px] font-bold rounded-lg"
                                         >
                                             <option>Low</option>
                                             <option>Medium</option>
@@ -352,55 +403,55 @@ export function TaskDetailsModal({
                                             <option>Urgent</option>
                                         </Select>
                                     ) : (
-                                        <Badge variant={task.priority} className="text-xs font-black uppercase tracking-widest px-4 py-1.5">{task.priority}</Badge>
+                                        <Badge variant={task.priority} className="text-[9px] font-black px-3 py-0.5">{task.priority}</Badge>
                                     )}
                                 </div>
 
-                                <div className="bg-white p-8 rounded-[2.5rem] border border-[#e5e5ea] shadow-sm hover:shadow-md transition-shadow">
-                                    <h4 className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-3">Time Tracking</h4>
+                                <div className="bg-white p-6 rounded-2xl border border-[#e5e5ea] shadow-sm">
+                                    <h4 className="text-[9px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-3">Time Spent</h4>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="text-5xl font-black text-[#1d1d1f] tracking-tighter tabular-nums">{task.hours_spent}</span>
-                                        <span className="text-sm font-black text-[#86868b] uppercase tracking-widest">Hrs</span>
+                                        <span className="text-3xl font-black text-[#1d1d1f] tabular-nums tracking-tighter">{task.hours_spent}</span>
+                                        <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest">Hrs</span>
                                     </div>
-                                    <div className="mt-4 h-2 w-full bg-[#f5f5f7] rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#0071e3] rounded-full" style={{ width: `${Math.min((task.hours_spent / 40) * 100, 100)}%` }}></div>
+                                    <div className="mt-3 h-1.5 w-full bg-[#f5f5f7] rounded-full overflow-hidden">
+                                        <div className="h-full bg-[#0071e3] rounded-full transition-all duration-500" style={{ width: `${Math.min((task.hours_spent / 40) * 100, 100)}%` }}></div>
                                     </div>
-                                    <p className="text-[10px] font-bold text-[#86868b] mt-2 uppercase">of weekly capacity (40h)</p>
                                 </div>
                                 
-                                <div className="bg-white p-8 rounded-[2.5rem] border border-[#e5e5ea] shadow-sm hover:shadow-md transition-shadow">
-                                    <h4 className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-5">Timeline</h4>
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center group/item">
-                                            <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest group-hover/item:text-[#1d1d1f] transition-colors">Start</span>
+                                <div className="bg-white p-6 rounded-2xl border border-[#e5e5ea] shadow-sm">
+                                    <h4 className="text-[9px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                        <Calendar size={12} />
+                                        <span>Timeline</span>
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[9px] font-bold text-[#86868b] uppercase">Start</span>
                                             {isEditing ? (
-                                                <input type="date" value={editData.start_date} onChange={e => setEditData({...editData, start_date: e.target.value})} className="text-xs font-bold outline-none bg-[#f5f5f7] px-2 py-1 rounded-lg" />
+                                                <input type="date" value={editData.start_date} onChange={e => setEditData({...editData, start_date: e.target.value})} className="text-[10px] font-bold outline-none bg-[#f5f5f7] px-2 py-1 rounded-md" />
                                             ) : (
-                                                <span className="text-sm font-black text-[#1d1d1f] tracking-tight">{task.start_date}</span>
+                                                <span className="text-[10px] font-black text-[#1d1d1f]">{task.start_date}</span>
                                             )}
                                         </div>
-                                        <div className="h-[1px] bg-[#f5f5f7]"></div>
-                                        <div className="flex justify-between items-center group/item">
-                                            <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest group-hover/item:text-[#1d1d1f] transition-colors">Deadline</span>
+                                        <div className="h-[1px] bg-[#f0f0f2]"></div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[9px] font-bold text-[#86868b] uppercase">Due</span>
                                             {isEditing ? (
-                                                <input type="date" value={editData.deadline} onChange={e => setEditData({...editData, deadline: e.target.value})} className="text-xs font-bold outline-none bg-[#f5f5f7] px-2 py-1 rounded-lg" />
+                                                <input type="date" value={editData.deadline} onChange={e => setEditData({...editData, deadline: e.target.value})} className="text-[10px] font-bold outline-none bg-[#f5f5f7] px-2 py-1 rounded-md" />
                                             ) : (
-                                                <span className="text-sm font-black text-[#ff3b30] tracking-tight">{task.deadline}</span>
+                                                <span className="text-[10px] font-black text-[#ff3b30]">{task.deadline}</span>
                                             )}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="pt-6">
-                                <Button 
-                                    onClick={onClose}
-                                    variant="secondary"
-                                    className="w-full h-16 text-[12px] font-black uppercase tracking-[0.2em] rounded-3xl border-2 border-[#d2d2d7] hover:bg-[#1d1d1f] hover:text-white hover:border-[#1d1d1f] transition-all transform active:scale-[0.98]"
-                                >
-                                    Close Details
-                                </Button>
-                            </div>
+                            <Button 
+                                onClick={onClose}
+                                variant="secondary"
+                                className="w-full h-11 text-[10px] font-black uppercase tracking-widest rounded-xl border border-[#d2d2d7] hover:bg-[#1d1d1f] hover:text-white transition-all transform active:scale-[0.98]"
+                            >
+                                CLOSE DETAILS
+                            </Button>
                         </div>
                     </div>
                 </div>

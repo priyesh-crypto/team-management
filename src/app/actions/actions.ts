@@ -18,11 +18,15 @@ export type Status = 'To Do' | 'In Progress' | 'Completed' | 'Blocked'
 
 export type Task = {
     id: string
+    org_id: string
+    workspace_id: string
     employee_id: string // Owner
     assignee_ids?: string[] // Collaborators
     name: string
     start_date: string
     deadline: string
+    start_time?: string
+    end_time?: string
     priority: Priority
     hours_spent: number
     status: Status
@@ -32,6 +36,7 @@ export type Task = {
 
 export type Subtask = {
     id: string;
+    org_id: string;
     task_id: string;
     employee_id: string; // Contributor
     name: string;
@@ -62,47 +67,131 @@ export type Notification = {
     created_at: string;
 }
 
+export type ActivityLog = {
+    id: string;
+    org_id: string;
+    actor_id: string;
+    actor_name?: string; // Joined from profiles
+    task_id?: string;
+    type: 'task_created' | 'task_updated' | 'task_deleted' | 'task_status_changed' | 'comment_added' | 'subtask_created' | 'subtask_updated' | 'subtask_deleted';
+    description: string;
+    metadata?: Record<string, any>;
+    created_at: string;
+}
+
+
+export async function requireOrgContext() {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error("Unauthorized: Please sign in.")
+
+    const { data: mData, error: memberError } = await supabase
+        .from('organization_members')
+        .select('org_id, role')
+        .eq('user_id', user.id)
+
+    if (memberError || !mData || mData.length === 0) throw new Error("Unauthorized: You do not belong to an organization.")
+
+    const selectedMember = mData[0];
+
+    const { data: workspaces } = await supabase
+        .from('workspaces')
+        .select('id')
+        .eq('org_id', selectedMember.org_id)
+        .limit(1)
+
+    const workspace = workspaces?.[0];
+
+    return {
+        userId: user.id,
+        orgId: selectedMember.org_id,
+        role: selectedMember.role,
+        workspaceId: workspace?.id
+    }
+}
+
 export async function getProfiles(): Promise<Profile[]> {
     const supabase = await createClient()
     
-    // Try to fetch email directly from profiles (assuming migration has run)
-    const { data: profiles, error } = await supabase.from('profiles').select('*')
+    let orgId;
+    let userId;
+    try {
+        const context = await requireOrgContext();
+        orgId = context.orgId;
+        userId = context.userId;
+    } catch (e) {
+        return []; // If not logged in or no org, return empty
+    }
+
+    const { data: members, error: memError } = await supabase
+        .from('organization_members')
+        .select('user_id, role')
+        .eq('org_id', orgId);
+
+    if (memError || !members) return [];
+
+    const userIds = members.map(m => m.user_id);
+
+    const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', userIds);
     
-    if (error) {
+    let finalProfiles: Profile[] = profiles || [];
+    
+    // Fallback: If some members don't have profiles yet, create synthetic ones
+    if (finalProfiles.length < userIds.length) {
+        const missingUserIds = userIds.filter(id => !finalProfiles.find(p => p.id === id));
+        for (const missingId of missingUserIds) {
+            const memberInfo = members.find(m => m.user_id === missingId);
+            finalProfiles.push({
+                id: missingId,
+                name: 'Unknown Member', // Will be enriched by auth users below if possible
+                role: (memberInfo?.role as any) || 'employee'
+            });
+        }
+    }
+
+    if (error && finalProfiles.length === 0) {
         console.error("Error fetching profiles:", error)
         return []
     }
 
-    // Check if any profile has an email. If not, fallback to slow auth method (temporary)
-    const hasEmails = profiles.some(p => p.email);
-    if (hasEmails) {
-        return profiles;
-    }
-
-    // Slow fallback logic (will be bypassed once user runs migration)
+    // Fetch Auth Users for emails and fallback names (requires Admin API)
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    let authUsers: any[] = [];
     if (serviceKey) {
-        const { createClient: createAdminClient } = await import('@supabase/supabase-js')
-        const supabaseAdmin = createAdminClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            serviceKey,
-            { auth: { autoRefreshToken: false, persistSession: false } }
-        )
+        try {
+            const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+            const supabaseAdmin = createAdminClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                serviceKey,
+                { auth: { autoRefreshToken: false, persistSession: false } }
+            )
 
-        const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers()
-        if (!authError && users) {
-            return (profiles || []).map(profile => {
-                const authUser = users.find(u => u.id === profile.id)
-                return {
-                    ...profile,
-                    email: authUser?.email || ''
-                }
-            })
+            const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers()
+            if (!authError && users) {
+                authUsers = users;
+            }
+        } catch (e) {
+            console.error("[getProfiles] Admin API error:", e);
         }
     }
 
-    return (profiles || []).map(p => ({ ...p, email: '' }))
+    // Use MEMBERS as the source of truth to ensure everyone is listed
+    return members.map(m => {
+        const p = (profiles || []).find(prof => prof.id === m.user_id);
+        const a = authUsers.find(u => u.id === m.user_id);
+        
+        return {
+            id: m.user_id,
+            name: p?.name || a?.user_metadata?.name || a?.email?.split('@')[0] || 'Team Member',
+            email: p?.email || a?.email || '',
+            role: p?.role || m.role || 'employee'
+        } as Profile;
+    });
 }
+
 
 export async function getSubtasks(taskId: string): Promise<Subtask[]> {
     const supabase = await createClient()
@@ -140,7 +229,10 @@ export async function getTasks(): Promise<Task[]> {
     return data || []
 }
 
-export async function saveTask(taskData: Omit<Task, 'id' | 'created_at'>) {
+export async function saveTask(taskData: Omit<Task, 'id' | 'created_at' | 'org_id' | 'workspace_id'>) {
+    const { userId, orgId, workspaceId } = await requireOrgContext();
+    if (!workspaceId) throw new Error("No default workspace found for organization.");
+
     const supabase = await createClient()
 
     // Duplication Check: Check if a task with the same name already exists (case-insensitive)
@@ -148,6 +240,7 @@ export async function saveTask(taskData: Omit<Task, 'id' | 'created_at'>) {
         .from('tasks')
         .select('id')
         .ilike('name', taskData.name)
+        .eq('org_id', orgId)
         .limit(1)
         .maybeSingle()
 
@@ -161,7 +254,7 @@ export async function saveTask(taskData: Omit<Task, 'id' | 'created_at'>) {
 
     const { data: task, error } = await supabase
         .from('tasks')
-        .insert([taskData])
+        .insert([{ ...taskData, org_id: orgId, workspace_id: workspaceId }])
         .select()
         .single()
 
@@ -171,6 +264,15 @@ export async function saveTask(taskData: Omit<Task, 'id' | 'created_at'>) {
     }
 
     if (task) {
+        await logActivity({
+            org_id: orgId,
+            actor_id: userId,
+            task_id: task.id,
+            type: 'task_created',
+            description: `Created new task: "${task.name}"`,
+            metadata: { name: task.name }
+        });
+
         // Notify owner
         await createNotification({
             user_id: task.employee_id,
@@ -197,7 +299,8 @@ export async function saveTask(taskData: Omit<Task, 'id' | 'created_at'>) {
     revalidatePath('/')
 }
 
-export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'id' | 'created_at'>>) {
+export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'id' | 'created_at' | 'org_id' | 'workspace_id'>>) {
+    const { userId, orgId } = await requireOrgContext();
     const supabase = await createClient()
 
     const { id: _id, created_at: _created_at, ...sanitizedData } = taskData as any;
@@ -214,50 +317,164 @@ export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'i
         throw new Error(error.message)
     }
 
-    if (task && taskData.employee_id) {
-        await createNotification({
-            user_id: task.employee_id,
-            type: 'system',
-            message: `Task assignment updated: ${task.name}`,
-            task_id: task.id
+    if (task) {
+        await logActivity({
+            org_id: orgId,
+            actor_id: userId,
+            task_id: task.id,
+            type: 'task_updated',
+            description: `Updated task details for "${task.name}"`,
+            metadata: { name: task.name, updates: sanitizedData }
         });
+
+        if (taskData.employee_id) {
+            await createNotification({
+                user_id: task.employee_id,
+                type: 'system',
+                message: `Task assignment updated: ${task.name}`,
+                task_id: task.id
+            });
+        }
     }
 
     revalidatePath('/')
 }
 
-export async function createEmployeeAccount(name: string, email: string, password: string) {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
-        throw new Error("Missing Supabase Service Role Key. Cannot create users.");
+export async function inviteMember(email: string, role: string) {
+    const { orgId, role: currentUserRole } = await requireOrgContext();
+    if (currentUserRole !== 'owner' && currentUserRole !== 'admin' && currentUserRole !== 'manager') {
+        throw new Error("Unauthorized to invite members.");
     }
 
-    // Import the absolute base client to use the admin role (not the SSR client)
-    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error("Missing Supabase Service Role Key.");
+    }
 
+    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
-        {
-            auth: {
-                autoRefreshToken: false,
-                persistSession: false
-            }
-        }
+        { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-        email: email,
-        password: password,
-        email_confirm: true,
-        user_metadata: { name: name, role: 'employee' }
-    });
-
-    if (error) {
-        throw new Error(error.message);
+    // 1. Create Invite Record
+    const { data: invite, error: inviteError } = await supabaseAdmin
+        .from('invitations')
+        .insert({ org_id: orgId, email, role })
+        .select()
+        .single();
+        
+    if (inviteError) {
+        if (inviteError.code === '23505') { // Unique constraint violation
+            throw new Error(`An invitation for ${email} already exists in this organization.`);
+        }
+        console.error("Error creating invite:", inviteError);
+        throw new Error("Failed to create invitation. " + inviteError.message);
     }
 
-    // The database trigger we wrote handles inserting the public profile automatically!
+    // 2. Send Email
+    if (resend && process.env.RESEND_FROM_EMAIL) {
+        const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${invite.token}`;
+        
+        // Fetch org name for the email
+        const { data: org } = await supabaseAdmin.from('organizations').select('name').eq('id', orgId).single();
+        const orgName = org?.name || "an organization";
+
+        try {
+            await resend.emails.send({
+                from: process.env.RESEND_FROM_EMAIL,
+                to: email,
+                subject: `You have been invited to join ${orgName}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px;">
+                        <h2>You've been invited!</h2>
+                        <p>You have been invited to join <strong>${orgName}</strong> as a ${role}.</p>
+                        <p>Click the link below to set up your account and get started:</p>
+                        <a href="${inviteUrl}" style="display: inline-block; padding: 10px 20px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">Accept Invitation</a>
+                        <p style="margin-top: 20px; font-size: 12px; color: #666;">If you didn't expect this invitation, you can safely ignore this email.</p>
+                    </div>
+                `
+            });
+        } catch (e) {
+            console.error("Failed to send invite email", e);
+        }
+    } else {
+        console.warn("Resend is not configured. Invite URL:", `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${invite.token}`);
+    }
+
     revalidatePath('/')
+}
+
+export async function acceptInvitation(token: string, name: string, password: string) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error("Missing Supabase Service Role Key.");
+    }
+
+    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+    const supabaseAdmin = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    // 1. Fetch and Validate Token
+    const { data: invite, error: fetchError } = await supabaseAdmin
+        .from('invitations')
+        .select('*')
+        .eq('token', token)
+        .single();
+        
+    if (fetchError || !invite) {
+        throw new Error("Invalid or expired invitation token.");
+    }
+
+    if (new Date(invite.expires_at) < new Date()) {
+        throw new Error("This invitation has expired.");
+    }
+
+    // 2. Check if user already exists
+    const { data: userObj, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: invite.email,
+        password: password,
+        email_confirm: true,
+        user_metadata: { name, role: 'employee' } // Base role, true role in org_members
+    });
+
+    const userId = userObj?.user?.id;
+
+    if (createError) {
+        if (createError.message.includes("already registered")) {
+            throw new Error(`User with email ${invite.email} already exists. Please log in and contact support or ask to be linked manually.`);
+        } else {
+            throw new Error(createError.message);
+        }
+    }
+
+    if (!userId) {
+        throw new Error("Failed to create user account.");
+    }
+
+    // 3. Link user to organization
+    const { error: memberError } = await supabaseAdmin
+        .from('organization_members')
+        .insert({ org_id: invite.org_id, user_id: userId, role: invite.role });
+
+    if (memberError) {
+        console.error("Failed to link org member:", memberError);
+        throw new Error("User created but failed to link to organization.");
+    }
+
+    // 4. Delete the used token
+    await supabaseAdmin.from('invitations').delete().eq('id', invite.id);
+
+    // 5. Ensure profile exists for onboarding
+    await supabaseAdmin.from('profiles').upsert({
+        id: userId,
+        name: name,
+        role: 'employee'
+    });
+
+    return { email: invite.email }
 }
 
 export async function updateEmployeeProfile(userId: string, name: string, role: string) {
@@ -320,6 +537,7 @@ export async function updateOwnPassword(newPassword: string) {
 }
 
 export async function updateTaskStatus(taskId: string, status: Status) {
+    const { userId, orgId } = await requireOrgContext();
     const supabase = await createClient();
     const { data: task, error } = await supabase
         .from('tasks')
@@ -333,6 +551,16 @@ export async function updateTaskStatus(taskId: string, status: Status) {
     }
 
     if (task) {
+        // Log Activity
+        await logActivity({
+            org_id: orgId,
+            actor_id: userId,
+            task_id: taskId,
+            type: 'task_status_changed',
+            description: `Changed status of "${task.name}" to ${status}`,
+            metadata: { from: task.status, to: status, name: task.name }
+        });
+
         // Notify owner
         await createNotification({
             user_id: task.employee_id,
@@ -356,19 +584,6 @@ export async function updateTaskStatus(taskId: string, status: Status) {
         }
     }
 
-    revalidatePath('/');
-}
-
-export async function deleteTask(taskId: string) {
-    const supabase = await createClient();
-    const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
-
-    if (error) {
-        throw new Error(error.message);
-    }
     revalidatePath('/');
 }
 
@@ -400,13 +615,15 @@ async function recalculateTaskHours(taskId: string) {
     revalidatePath('/')
 }
 
-export async function saveSubtask(subtaskData: Omit<Subtask, 'id' | 'created_at'>) {
+export async function saveSubtask(subtaskData: Omit<Subtask, 'id' | 'created_at' | 'org_id'>) {
+    const { orgId, userId } = await requireOrgContext();
     const supabase = await createClient()
 
     const { error } = await supabase
         .from('subtasks')
         .insert([{
             ...subtaskData,
+            org_id: orgId,
             date_logged: subtaskData.date_logged || new Date().toISOString().split('T')[0]
         }])
 
@@ -415,10 +632,20 @@ export async function saveSubtask(subtaskData: Omit<Subtask, 'id' | 'created_at'
         throw new Error(error.message)
     }
 
+    // Log Activity
+    await logActivity({
+        org_id: orgId,
+        actor_id: userId,
+        task_id: subtaskData.task_id,
+        type: 'subtask_created',
+        description: `Logged work: ${subtaskData.name} (${subtaskData.hours_spent} hrs)`,
+        metadata: { name: subtaskData.name, hours: subtaskData.hours_spent }
+    });
+
     await recalculateTaskHours(subtaskData.task_id)
 }
 
-export async function updateSubtask(subtaskData: Partial<Subtask> & { id: string, task_id: string }) {
+export async function updateSubtask(subtaskData: Partial<Omit<Subtask, 'org_id'>> & { id: string, task_id: string }) {
     const supabase = await createClient()
 
     const { id, task_id, ...updateData } = subtaskData
@@ -541,7 +768,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
                 <div style="border-top: 1px solid #e5e5ea; padding-top: 24px; font-size: 12px; color: #86868b; line-height: 1.5;">
                     <div style="font-weight: 700; color: #1d1d1f; margin-bottom: 4px;">Project Details</div>
                     <div>Project: Task Management</div>
-                    <div>Company: Scaletrix.ai</div>
+                    <div>Company: Mindbird.ai</div>
                 </div>
             </div>
             
@@ -659,6 +886,65 @@ export async function clearNotifications(userId: string) {
     revalidatePath('/')
 }
 
+export async function deleteTask(taskId: string) {
+    const { userId, orgId } = await requireOrgContext();
+    const supabase = await createClient()
+
+    // Get task name for logging
+    const { data: task } = await supabase.from('tasks').select('name').eq('id', taskId).single();
+
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+    if (error) throw new Error(error.message)
+
+    if (task) {
+        await logActivity({
+            org_id: orgId,
+            actor_id: userId,
+            task_id: taskId,
+            type: 'task_deleted',
+            description: `Deleted task: "${task.name}"`,
+            metadata: { name: task.name }
+        });
+    }
+
+    revalidatePath('/')
+}
+
+export async function logActivity(activity: Omit<ActivityLog, 'id' | 'created_at' | 'actor_name'>) {
+    const supabase = await createClient()
+    const { error } = await supabase.from('activity_logs').insert([activity])
+    if (error) {
+        console.error("Error logging activity:", error)
+    }
+}
+
+export async function getActivityLogs(taskId?: string): Promise<ActivityLog[]> {
+    const { orgId } = await requireOrgContext()
+    const supabase = await createClient()
+
+    let query = supabase
+        .from('activity_logs')
+        .select('*, profiles:actor_id(name)')
+        .eq('org_id', orgId)
+        .order('created_at', { ascending: false })
+
+    if (taskId) {
+        query = query.eq('task_id', taskId)
+    }
+
+    const { data, error } = await query.limit(50)
+
+    if (error) {
+        console.error("Error fetching activity logs:", error)
+        return []
+    }
+
+    return (data || []).map(log => ({
+        ...log,
+        actor_name: (log as any).profiles?.name || 'Unknown'
+    }))
+}
+
 export async function createNotification(notificationData: Omit<Notification, 'id' | 'created_at' | 'is_read'>) {
     const supabase = await createClient()
 
@@ -757,9 +1043,10 @@ export async function deleteEmployee(userId: string) {
         throw new Error("Missing Supabase Service Role Key. Please add SUPABASE_SERVICE_ROLE_KEY to your .env.local file.");
     }
 
-    if (!serviceKey.startsWith('ey')) {
-        console.error("[DeleteEmployee] Invalid key format. Expected a JWT starting with 'ey'. Received:", serviceKey.substring(0, 10) + '...');
-        throw new Error("Invalid Service Role Key format. The key must be a long JWT string starting with 'ey'. Please check your Supabase Dashboard > Project Settings > API.");
+    // Relaxed check to allow both traditional JWT and newer sb_secret_ prefixes
+    if (!serviceKey.startsWith('ey') && !serviceKey.startsWith('sb_secret_')) {
+        console.error("[DeleteEmployee] Invalid key format. Received:", serviceKey.substring(0, 10) + '...');
+        throw new Error("Invalid Service Role Key format. Please check your Supabase Dashboard > Project Settings > API.");
     }
 
     const { createClient: createAdminClient } = await import('@supabase/supabase-js')
