@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, createEmployeeAccount, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, inviteMember, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert } from '@/app/actions/actions';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
-import { Pencil, Trash2, Menu, X } from 'lucide-react';
+import TimelineSchedule from '@/components/ui/TimelineSchedule';
+import { Pencil, Trash2, Menu, X, Calendar } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
 
 export default function ManagerDashboard({ userId, userName }: { userId: string, userName: string }) {
     const [activeTab, setActiveTab] = useState<'board' | 'planning' | 'team' | 'settings'>('board');
@@ -28,8 +30,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
     // Team Management Form State
-    const [newEmpForm, setNewEmpForm] = useState({ name: '', email: '', password: '' });
-    const [empError, setEmpError] = useState('');
+    const [inviteForm, setInviteForm] = useState({ email: '', role: 'employee' });
+    const [inviteResult, setInviteResult] = useState<{type: 'error' | 'success', text: string} | null>(null);
     const [editingEmpId, setEditingEmpId] = useState<string | null>(null);
     const [editEmpForm, setEditEmpForm] = useState({ name: '', role: 'employee', password: '' });
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -41,6 +43,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const [deletingEmpId, setDeletingEmpId] = useState<string | null>(null);
     const [empStatusMsg, setEmpStatusMsg] = useState<{ id: string, text: string } | null>(null);
     const [assignError, setAssignError] = useState<string | null>(null);
+    const [showEmployeeDeleteConfirm, setShowEmployeeDeleteConfirm] = useState(false);
+    const [employeeToDelete, setEmployeeToDelete] = useState<{ id: string, name: string } | null>(null);
 
     // Custom Task Delete State
     const [isDeletingTask, setIsDeletingTask] = useState(false);
@@ -62,6 +66,22 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
     useEffect(() => {
         refreshData();
+
+        // Initialize Supabase client for real-time
+        const supabase = createClient();
+        
+        // Subscribe to tasks, subtasks, profiles, and notifications
+        const taskChannel = supabase
+            .channel('manager-dashboard-realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => refreshData(true))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'subtasks' }, () => refreshData(true))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => refreshData(true))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => refreshData(true))
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(taskChannel);
+        };
     }, []);
 
     const refreshData = async (silent = false) => {
@@ -215,15 +235,16 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         }
     };
 
-    const handleCreateEmployee = async (e: React.FormEvent) => {
+    const handleInviteMember = async (e: React.FormEvent) => {
         e.preventDefault();
-        setEmpError('');
+        setInviteResult(null);
         try {
-            await createEmployeeAccount(newEmpForm.name, newEmpForm.email, newEmpForm.password);
-            setNewEmpForm({ name: '', email: '', password: '' });
-            refreshData();
+            await inviteMember(inviteForm.email, inviteForm.role);
+            setInviteResult({ type: 'success', text: `Invitation sent to ${inviteForm.email}` });
+            setInviteForm({ email: '', role: 'employee' });
+            refreshData(); 
         } catch (err: any) {
-            setEmpError(err.message || 'Failed to create employee.');
+            setInviteResult({ type: 'error', text: err.message || 'Failed to send invite.' });
         }
     };
 
@@ -241,21 +262,34 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         }
     };
 
-    const handleDeleteEmployee = async (e: React.MouseEvent, empId: string) => {
+    const handleDeleteEmployee = async (e: React.MouseEvent, empId: string, empName: string) => {
         e.stopPropagation();
         setEmpStatusMsg(null);
-        if (confirm("Are you sure you want to PERMANENTLY delete this employee? This will also remove their access to the system.")) {
-            setDeletingEmpId(empId);
-            try {
-                await deleteEmployee(empId);
-                await refreshData(true);
-            } catch (err: any) {
-                setEmpStatusMsg({ id: empId, text: err.message || "Deletion failed" });
-                console.error("Delete error:", err);
-            } finally {
-                setDeletingEmpId(null);
-            }
+        setEmployeeToDelete({ id: empId, name: empName });
+        setShowEmployeeDeleteConfirm(true);
+    };
+
+    const confirmDeleteEmployee = async () => {
+        if (!employeeToDelete) return;
+        setDeletingEmpId(employeeToDelete.id);
+        try {
+            await deleteEmployee(employeeToDelete.id);
+            setEmployees(prev => prev.filter(emp => emp.id !== employeeToDelete.id));
+            setShowEmployeeDeleteConfirm(false);
+            setEmployeeToDelete(null);
+        } catch (err: any) {
+            console.error("Delete employee error:", err);
+            setEmpStatusMsg({ id: employeeToDelete.id, text: err.message || 'Failed to delete employee.' });
+            setShowEmployeeDeleteConfirm(false);
+        } finally {
+            setDeletingEmpId(null);
         }
+    };
+
+    const cancelDeleteEmployee = () => {
+        setShowEmployeeDeleteConfirm(false);
+        setEmployeeToDelete(null);
+        setDeletingEmpId(null);
     };
 
     const handleDeleteTask = (taskId: string, taskName: string) => {
@@ -271,6 +305,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             await refreshData(true);
             setShowTaskDeleteConfirm(false);
             setTaskToDelete(null);
+            // Close the details modal if it's open
+            setSelectedTask(null);
         } catch (err: any) {
             alert(err.message || "Failed to delete task.");
         } finally {
@@ -340,8 +376,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-6 shadow-2xl animate-in slide-in-from-left duration-300">
                         <div className="flex items-center justify-between mb-10 px-2">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-[#0071e3] rounded-xl flex items-center justify-center text-white font-black text-xl">M</div>
-                                <span className="text-xl font-black tracking-tight text-[#1d1d1f]">Manager Hub</span>
+                                <div className="w-10 h-10 bg-[#0071e3] rounded-xl flex items-center justify-center text-white font-black text-lg">MB</div>
+                                <span className="text-xl font-black tracking-tight text-[#1d1d1f]">Mindbird.ai</span>
                             </div>
                             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl">
                                 <X size={20} />
@@ -372,78 +408,82 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             )}
 
             {/* --- DESKTOP SIDEBAR --- */}
-            <div className="w-72 bg-white border-r border-[#e5e5ea] flex flex-col p-6 hidden lg:flex">
-                <div className="flex items-center gap-3 mb-10 px-2">
-                    <div className="w-10 h-10 bg-[#0071e3] rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-[#0071e3]/20">M</div>
-                    <span className="text-xl font-black tracking-tight text-[#1d1d1f]">Manager Hub</span>
+            <div className="w-60 bg-white border-r border-[#e5e5ea] flex flex-col p-5 hidden lg:flex">
+                <div className="flex items-center gap-3 mb-8 px-1">
+                    <div className="w-8 h-8 bg-[#0071e3] rounded-lg flex items-center justify-center text-white font-black text-sm shadow-sm">MB</div>
+                    <div>
+                        <span className="text-sm font-black tracking-tight text-[#1d1d1f] leading-none block">Mindbird.ai</span>
+                        <span className="text-[10px] text-[#86868b] uppercase tracking-widest font-bold">Pro Edition</span>
+                    </div>
                 </div>
 
-                <nav className="flex-1 space-y-2">
+                <nav className="flex-1 space-y-1.5">
                     <NavItem icon="📊" label="DASHBOARD" active={activeTab === 'board'} onClick={() => setActiveTab('board')} />
                     <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => setActiveTab('planning')} />
                     <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
                     <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
                 </nav>
 
-                <div className="mt-auto p-4 bg-[#f5f5f7] rounded-[24px] border border-[#e5e5ea]">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] flex items-center justify-center text-xs text-white font-bold">
+                <div className="mt-auto p-4 bg-[#f5f5f7] rounded-2xl border border-[#e5e5ea]">
+                    <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[10px] font-bold border border-[#d2d2d7]">
                             {userName.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black truncate">{userName}</p>
-                            <p className="text-[10px] text-[#86868b] font-bold">Admin Privileges</p>
+                            <p className="text-[11px] font-bold truncate leading-tight">{userName}</p>
+                            <p className="text-[9px] text-[#86868b] font-medium uppercase tracking-tighter">Admin</p>
                         </div>
                     </div>
-                    <Button variant="secondary" className="w-full text-[10px] font-black tracking-widest py-2 rounded-xl h-auto" onClick={() => window.location.href = '/'}>LOGOUT</Button>
+                    <button onClick={() => window.location.href = '/'} className="w-full py-1.5 text-[10px] font-black uppercase tracking-widest text-[#86868b] hover:text-[#1d1d1f] transition-colors border border-[#d2d2d7] rounded-lg bg-white/50">
+                        Logout
+                    </button>
                 </div>
             </div>
 
             {/* --- MAIN CONTENT --- */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
-                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-[#e5e5ea] flex items-center justify-between px-4 lg:px-8 sticky top-0 z-[40]">
+                <header className="h-14 bg-white/80 backdrop-blur-md border-b border-[#e5e5ea] flex items-center justify-between px-6 lg:px-6 sticky top-0 z-[40]">
                     <div className="flex items-center gap-4">
                         <button 
                             onClick={() => setIsMobileMenuOpen(true)}
                             className="lg:hidden p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"
                         >
-                            <Menu size={20} />
+                            <Menu size={18} />
                         </button>
                         <div>
-                            <div className="flex items-center gap-2 text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-1">
-                                <span className="hidden sm:inline">Pages</span>
-                                <span className="hidden sm:inline">/</span>
-                                <span className="text-[#1d1d1f]">{activeTab.toUpperCase()}</span>
+                            <div className="flex items-center gap-1.5 text-[9px] font-bold text-[#86868b] uppercase tracking-wider mb-0.5">
+                                <span className="hidden sm:inline">Portal</span>
+                                <span className="hidden sm:inline opacity-30">/</span>
+                                <span className="text-[#000]">{activeTab.toUpperCase()}</span>
                             </div>
-                            <h1 className="text-lg lg:text-xl font-black text-[#1d1d1f] tracking-tight capitalize truncate max-w-[150px] sm:max-w-none">
+                            <h1 className="text-sm font-black text-[#1d1d1f] tracking-tight truncate max-w-[150px] sm:max-w-none">
                                 {activeTab === 'board' ? 'Organization Overview' : activeTab === 'planning' ? 'Project Timeline' : activeTab === 'team' ? 'Team Management' : 'My Account'}
                             </h1>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <div className="relative group hidden sm:block">
-                            <Input 
-                                placeholder="Search tasks..." 
+                            <input 
+                                placeholder="Search everything..." 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-48 lg:w-64 bg-[#f5f5f7] border-none rounded-2xl h-10 px-10 text-xs font-medium" 
+                                className="w-48 lg:w-56 bg-[#f5f5f7] border-none rounded-lg h-8 px-8 text-[11px] font-medium placeholder:text-[#86868b] focus:ring-1 ring-[#0071e3] transition-all" 
                             />
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30">🔍</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] opacity-40">🔍</span>
                         </div>
-                        <Button className="rounded-2xl h-10 px-4 lg:px-6 font-black text-[10px] tracking-widest shadow-lg shadow-[#0071e3]/20" onClick={() => setShowAssignModal(true)}>
-                            <span className="hidden sm:inline">+ NEW TASK</span>
-                            <span className="sm:hidden">+</span>
-                        </Button>
+                        <button className="rounded-lg h-8 px-3 bg-[#0071e3] text-white font-bold text-[10px] tracking-tight shadow-sm hover:bg-[#005bb7] transition-colors" onClick={() => setShowAssignModal(true)}>
+                            + NEW TASK
+                        </button>
                         <div className="relative">
                             <div 
                                 onClick={() => setShowNotifications(!showNotifications)}
-                                className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg cursor-pointer transition-colors relative ${showNotifications ? 'bg-[#0071e3] text-white' : 'bg-[#f5f5f7] hover:bg-[#e5e5ea]'}`}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center text-base cursor-pointer transition-colors relative ${showNotifications ? 'bg-[#0071e3] text-white' : 'bg-[#f5f5f7] hover:bg-[#e5e5ea]'}`}
                             >
-                                🔔
+                                <span className="scale-90">🔔</span>
                                 {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ff3b30] text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">
+                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#ff3b30] text-white text-[9px] font-black rounded-full flex items-center justify-center border border-white">
                                         {unreadCount}
                                     </span>
                                 )}
@@ -549,65 +589,65 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             </div>
 
                             {/* Right Stats Panel */}
-                            <div className="w-full lg:w-80 space-y-8 flex-shrink-0">
-                                <Card className="p-8 pb-10 rounded-[32px] bg-white border-[#eceef0] shadow-sm">
-                                    <div className="flex justify-between items-center mb-10">
-                                        <h3 className="text-sm font-black text-[#1d1d1f] tracking-widest uppercase">Efficiency</h3>
-                                        <Badge variant="secondary" className="bg-[#f0f0f2] text-[#1d1d1f] font-black text-[9px]">2026</Badge>
+                            <div className="w-full lg:w-72 space-y-6 flex-shrink-0">
+                                <Card className="p-6 rounded-[24px] bg-white border-[#eceef0] shadow-sm">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-[10px] font-black text-[#86868b] tracking-widest uppercase">Efficiency</h3>
+                                        <Badge variant="secondary" className="bg-[#f0f0f2] text-[#1d1d1f] font-bold text-[8px]">2026</Badge>
                                     </div>
                                     
-                                    <div className="flex flex-col items-center gap-10">
-                                        <div className="relative w-40 h-40">
+                                    <div className="flex flex-col items-center gap-6">
+                                        <div className="relative w-32 h-32">
                                             <svg className="w-full h-full transform -rotate-90">
-                                                <circle cx="80" cy="80" r="70" className="stroke-[#f0f0f2] stroke-[12] fill-none" />
+                                                <circle cx="64" cy="64" r="56" className="stroke-[#f0f0f2] stroke-[10] fill-none" />
                                                 <circle 
-                                                    cx="80" cy="80" r="70" 
-                                                    className="stroke-[#0071e3] stroke-[12] fill-none transition-all duration-1000 ease-out"
+                                                    cx="64" cy="64" r="56" 
+                                                    className="stroke-[#0071e3] stroke-[10] fill-none transition-all duration-1000 ease-out"
                                                     style={{ 
-                                                        strokeDasharray: '440',
-                                                        strokeDashoffset: 440 - (440 * (boardStats.completed / (boardStats.total || 1)))
+                                                        strokeDasharray: '352',
+                                                        strokeDashoffset: 352 - (352 * (boardStats.completed / (boardStats.total || 1)))
                                                     }}
                                                 />
                                             </svg>
                                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                                <span className="text-3xl font-black text-[#1d1d1f]">{Math.round((boardStats.completed / (boardStats.total || 1)) * 100)}%</span>
-                                                <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest">Completed</span>
+                                                <span className="text-2xl font-black text-[#1d1d1f]">{Math.round((boardStats.completed / (boardStats.total || 1)) * 100)}%</span>
+                                                <span className="text-[9px] font-bold text-[#86868b] uppercase tracking-wider">Done</span>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-4 w-full">
-                                            <div className="p-4 bg-[#f5f5f7] rounded-[24px]">
-                                                <div className="flex items-center gap-2 mb-2">
+                                        <div className="grid grid-cols-2 gap-3 w-full">
+                                            <div className="p-3 bg-[#f5f5f7] rounded-2xl">
+                                                <div className="flex items-center gap-1.5 mb-1">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-[#0071e3]"></div>
-                                                    <span className="text-[9px] font-black text-[#86868b] tracking-widest">TOTAL</span>
+                                                    <span className="text-[8px] font-bold text-[#86868b] tracking-wider uppercase">Total</span>
                                                 </div>
-                                                <p className="text-xl font-black">{boardStats.total}</p>
+                                                <p className="text-lg font-black">{boardStats.total}</p>
                                             </div>
-                                            <div className="p-4 bg-[#f5f5f7] rounded-[24px]">
-                                                <div className="flex items-center gap-2 mb-2">
+                                            <div className="p-3 bg-[#f5f5f7] rounded-2xl">
+                                                <div className="flex items-center gap-2 mb-1">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-[#34c759]"></div>
-                                                    <span className="text-[9px] font-black text-[#86868b] tracking-widest">DONE</span>
+                                                    <span className="text-[8px] font-bold text-[#86868b] tracking-wider uppercase">Done</span>
                                                 </div>
-                                                <p className="text-xl font-black">{boardStats.completed}</p>
+                                                <p className="text-lg font-black">{boardStats.completed}</p>
                                             </div>
                                         </div>
                                     </div>
                                 </Card>
 
-                                <Card className="p-8 pb-10 rounded-[32px] bg-white border-[#eceef0] shadow-sm">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="text-sm font-black text-[#1d1d1f] tracking-widest uppercase">Priority Heatmap</h3>
-                                        <div className="w-2 h-2 rounded-full bg-[#ff3b30] animate-pulse"></div>
+                                <Card className="p-6 rounded-[24px] bg-white border-[#eceef0] shadow-sm">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-[10px] font-black text-[#86868b] tracking-widest uppercase">Hotspots</h3>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-[#ff3b30] animate-pulse"></div>
                                     </div>
-                                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-6">Critical Active & Overdue</p>
+                                    <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-wider mb-4 opacity-50">Critical Signals</p>
                                     
-                                    <div className="space-y-6">
-                                        <div className="p-4 bg-[#fff2f2] rounded-2xl border border-[#ff3b30]/10">
+                                    <div className="space-y-4">
+                                        <div className="p-3 bg-[#fff2f2] rounded-xl border border-[#ff3b30]/10">
                                             <div className="flex justify-between items-center mb-1">
                                                 <span className="text-[10px] font-black text-[#ff3b30] uppercase tracking-widest">Overdue</span>
-                                                <span className="text-lg font-black text-[#ff3b30]">{heatmapData.overdue.length}</span>
+                                                <span className="text-base font-black text-[#ff3b30]">{heatmapData.overdue.length}</span>
                                             </div>
-                                            <div className="h-1.5 w-full bg-[#ff3b30]/10 rounded-full overflow-hidden">
+                                            <div className="h-1 w-full bg-[#ff3b30]/10 rounded-full overflow-hidden">
                                                 <div 
                                                     className="h-full bg-[#ff3b30] rounded-full transition-all duration-1000"
                                                     style={{ width: `${Math.min(100, (heatmapData.overdue.length / (heatmapData.active.length + heatmapData.overdue.length || 1)) * 100)}%` }}
@@ -615,12 +655,12 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                             </div>
                                         </div>
 
-                                        <div className="p-4 bg-[#f5f5f7] rounded-2xl border border-[#e5e5ea]">
+                                        <div className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
                                             <div className="flex justify-between items-center mb-1">
-                                                <span className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-widest">Active High/Urgent</span>
-                                                <span className="text-lg font-black text-[#1d1d1f]">{heatmapData.active.length}</span>
+                                                <span className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-widest">High/Urgent</span>
+                                                <span className="text-base font-black text-[#1d1d1f]">{heatmapData.active.length}</span>
                                             </div>
-                                            <div className="h-1.5 w-full bg-[#e5e5ea] rounded-full overflow-hidden">
+                                            <div className="h-1 w-full bg-[#e5e5ea] rounded-full overflow-hidden">
                                                 <div 
                                                     className="h-full bg-[#1d1d1f] rounded-full transition-all duration-1000"
                                                     style={{ width: `${Math.min(100, (heatmapData.active.length / (heatmapData.active.length + heatmapData.overdue.length || 1)) * 100)}%` }}
@@ -628,48 +668,34 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                             </div>
                                         </div>
 
-                                        <div className="pt-2">
-                                            <div className="flex flex-col gap-3">
-                                                {heatmapData.overdue.slice(0, 5).map(t => (
-                                                    <div 
-                                                        key={t.id} 
-                                                        onClick={() => handleTaskClick(t)}
-                                                        className="group cursor-pointer p-3 bg-[#fff2f2]/50 hover:bg-[#fff2f2] rounded-xl border border-[#ff3b30]/10 transition-all"
-                                                    >
-                                                        <div className="flex justify-between items-start mb-1">
-                                                            <span className="text-[10px] font-black text-[#ff3b30] uppercase tracking-wider line-clamp-1 flex-1">{t.name}</span>
-                                                            <Badge className="bg-[#ff3b30] text-white text-[7px] font-black px-1 rounded ml-2">OVERDUE</Badge>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-4 h-4 rounded-full bg-[#ff3b30]/10 flex items-center justify-center text-[7px] font-bold text-[#ff3b30] uppercase">
-                                                                {t.employee?.charAt(0)}
-                                                            </div>
-                                                            <span className="text-[9px] font-bold text-[#86868b]">{t.employee}</span>
-                                                        </div>
+                                        <div className="pt-2 space-y-2">
+                                            {heatmapData.overdue.slice(0, 3).map(t => (
+                                                <div 
+                                                    key={t.id} 
+                                                    onClick={() => handleTaskClick(t)}
+                                                    className="group cursor-pointer p-2.5 bg-[#fff2f2]/50 hover:bg-[#fff2f2] rounded-lg border border-[#ff3b30]/5 transition-all"
+                                                >
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="text-[10px] font-bold text-[#ff3b30] uppercase tracking-tight line-clamp-1 flex-1">{t.name}</span>
+                                                        <Badge className="bg-[#ff3b30] text-white text-[7px] font-black px-1 rounded ml-2">OVERDUE</Badge>
                                                     </div>
-                                                ))}
-                                                {heatmapData.active.slice(0, 5).map(t => (
-                                                    <div 
-                                                        key={t.id} 
-                                                        onClick={() => handleTaskClick(t)}
-                                                        className="group cursor-pointer p-3 bg-[#f5f5f7]/50 hover:bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] transition-all"
-                                                    >
-                                                        <div className="flex justify-between items-start mb-1">
-                                                            <span className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-wider line-clamp-1 flex-1">{t.name}</span>
-                                                            <Badge className="bg-[#1d1d1f] text-white text-[7px] font-black px-1 rounded ml-2">{t.priority}</Badge>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-4 h-4 rounded-full bg-[#1d1d1f]/10 flex items-center justify-center text-[7px] font-bold text-[#1d1d1f] uppercase">
-                                                                {t.employee?.charAt(0)}
-                                                            </div>
-                                                            <span className="text-[9px] font-bold text-[#86868b]">{t.employee}</span>
-                                                        </div>
+                                                </div>
+                                            ))}
+                                            {heatmapData.active.slice(0, 3).map(t => (
+                                                <div 
+                                                    key={t.id} 
+                                                    onClick={() => handleTaskClick(t)}
+                                                    className="group cursor-pointer p-2.5 bg-[#f5f5f7]/50 hover:bg-[#f5f5f7] rounded-lg border border-[#e5e5ea]/50 transition-all"
+                                                >
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="text-[10px] font-bold text-[#1d1d1f] uppercase tracking-tight line-clamp-1 flex-1">{t.name}</span>
+                                                        <Badge className="bg-[#1d1d1f] text-white text-[7px] font-black px-1 rounded ml-2">{t.priority}</Badge>
                                                     </div>
-                                                ))}
-                                                {(heatmapData.overdue.length > 5 || heatmapData.active.length > 5) && (
-                                                    <p className="text-[9px] font-bold text-center text-[#86868b] mt-2 tracking-widest uppercase">+{heatmapData.overdue.length + heatmapData.active.length - 10} More Critical Tasks</p>
-                                                )}
-                                            </div>
+                                                </div>
+                                            ))}
+                                            {(heatmapData.overdue.length > 3 || heatmapData.active.length > 3) && (
+                                                <p className="text-[8px] font-bold text-center text-[#86868b] mt-2 tracking-widest uppercase opacity-40">+{heatmapData.overdue.length + heatmapData.active.length - 6} More critical</p>
+                                            )}
                                         </div>
                                     </div>
                                 </Card>
@@ -678,201 +704,96 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     )}
 
                     {activeTab === 'planning' && (
-                        <div className="space-y-6 lg:space-y-8 bg-white rounded-[32px] lg:rounded-[40px] p-4 sm:p-6 lg:p-10 shadow-sm border border-[#eceef0]">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
-                                <div>
-                                    <h2 className="text-2xl lg:text-3xl font-black text-[#1d1d1f] tracking-tight">Timeline</h2>
-                                    <p className="text-[#86868b] font-bold text-xs lg:text-sm">March 2026 - Sprint Planning</p>
-                                </div>
-                                <div className="flex gap-2 lg:gap-3">
-                                    <Button 
-                                        variant="secondary" 
-                                        onClick={() => setViewMode('day')}
-                                        className={`h-9 lg:h-11 px-4 rounded-2xl border-[#eceef0] font-black text-[9px] lg:text-[10px] tracking-widest transition-all ${viewMode === 'day' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
-                                    >
-                                        DAY
-                                    </Button>
-                                    <Button 
-                                        variant="secondary" 
-                                        onClick={() => setViewMode('week')}
-                                        className={`h-9 lg:h-11 px-4 rounded-2xl border-[#eceef0] font-black text-[9px] lg:text-[10px] tracking-widest transition-all ${viewMode === 'week' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
-                                    >
-                                        WEEK
-                                    </Button>
-                                    <Button 
-                                        variant="secondary" 
-                                        onClick={() => setViewMode('month')}
-                                        className={`h-9 lg:h-11 px-4 rounded-2xl border-[#eceef0] font-black text-[9px] lg:text-[10px] tracking-widest transition-all ${viewMode === 'month' ? 'bg-[#1d1d1f] text-white shadow-lg' : 'hover:bg-[#f5f5f7]'}`}
-                                    >
-                                        MONTH
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="overflow-x-auto pb-6 relative min-h-[500px]">
-                                {/* Timeline Grid */}
-                                <div className="min-w-[800px] lg:min-w-[1200px]">
-                                    {/* Date Header */}
-                                    <div className="flex mb-10 pl-32 lg:pl-48">
-                                        {timelineData.days.map((date, i) => (
-                                            <div key={i} className="flex-1 text-center group">
-                                                <div className={`text-[10px] font-black mb-2 transition-colors ${date.toDateString() === new Date().toDateString() ? 'text-[#0071e3]' : 'text-[#86868b]'}`}>
-                                                    {date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()}
-                                                </div>
-                                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center mx-auto transition-all ${date.toDateString() === new Date().toDateString() ? 'bg-[#0071e3] text-white shadow-lg' : 'group-hover:bg-[#f5f5f7] text-[#1d1d1f] font-bold'}`}>
-                                                    {date.getDate()}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Employee Rows */}
-                                    <div className="space-y-6">
-                                        {employees.filter(e => e.role === 'employee' && (e.name.toLowerCase().includes(searchQuery.toLowerCase()))).map(emp => (
-                                            <div key={emp.id} className="flex group/row">
-                                                {/* Employee Info Sticky Column */}
-                                                <div className="w-32 lg:w-48 pr-4 lg:pr-8 flex items-center gap-2 lg:gap-3 sticky left-0 z-[5] bg-white/90 backdrop-blur-sm py-2">
-                                                    <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-xl lg:rounded-2xl bg-[#f5f5f7] flex items-center justify-center text-xs lg:text-sm font-black border border-[#e5e5ea] group-hover/row:border-[#0071e3] transition-colors">
-                                                        {emp.name.charAt(0)}
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-[10px] lg:text-[11px] font-black text-[#1d1d1f] leading-none mb-1 truncate">{emp.name}</p>
-                                                        <p className="text-[8px] lg:text-[9px] font-bold text-[#86868b] uppercase tracking-widest">{tasks.filter(t => t.employee_id === emp.id).length} TASKS</p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Tasks Container */}
-                                                <div className="flex-1 border-b border-[#f0f0f2] pb-6 relative">
-                                                    <div className="absolute inset-0 flex">
-                                                        {timelineData.days.map((_, i) => (
-                                                            <div key={i} className="flex-1 border-l border-[#f0f0f2]/50 last:border-r"></div>
-                                                        ))}
-                                                    </div>
-                                                    
-                                                    <div className="relative pt-4 flex flex-col gap-3 min-h-[40px]">
-                                                        {/* Processed tasks for this employee */}
-                                                        {(() => {
-                                                            const empTasks = tasks.filter(t => t.employee_id === emp.id && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())));
-                                                            // Logic for row packing could go here, but let's just render them for now
-                                                            return empTasks.map(task => {
-                                                                const dayWidth = 100 / timelineData.days.length;
-                                                                const start = new Date(task.start_date);
-                                                                const end = new Date(task.deadline);
-                                                                
-                                                                const startIndex = Math.max(0, Math.floor((start.getTime() - timelineData.startDate.getTime()) / (1000 * 60 * 60 * 24)));
-                                                                const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                                                                const duration = Math.min(timelineData.days.length - startIndex, totalDays);
-
-                                                                if (startIndex >= timelineData.days.length || duration <= 0) return null;
-
-                                                                return (
-                                                                    <div 
-                                                                        key={task.id}
-                                                                        onClick={() => handleTaskClick(task)}
-                                                                        className="h-10 rounded-2xl bg-[#f5f5f7] border border-[#e5e5ea] shadow-sm flex items-center px-4 gap-3 group transition-all hover:bg-[#1d1d1f] hover:text-white hover:z-10 cursor-pointer overflow-hidden"
-                                                                        style={{
-                                                                            marginLeft: `${startIndex * dayWidth}%`,
-                                                                            width: `${duration * dayWidth}%`
-                                                                        }}
-                                                                    >
-                                                                        <div className={`w-2 h-2 rounded-full shrink-0 ${task.status === 'Completed' ? 'bg-[#34c759]' : task.priority === 'Urgent' ? 'bg-[#ff3b30]' : 'bg-[#0071e3]'}`}></div>
-                                                                        <span className="text-[10px] font-black truncate">{task.name}</span>
-                                                                        <span className="text-[8px] font-bold opacity-0 group-hover:opacity-60 ml-auto whitespace-nowrap">{task.hours_spent} HRS</span>
-                                                                    </div>
-                                                                );
-                                                            });
-                                                        })()}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="h-[calc(100vh-180px)] min-h-[600px]">
+                            <TimelineSchedule 
+                                tasks={tasks} 
+                                employees={employees} 
+                                onTaskClick={handleTaskClick}
+                                refreshData={refreshData}
+                            />
                         </div>
                     )}
 
                     {activeTab === 'team' && (
                         <div className="space-y-10">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white p-6 lg:p-8 rounded-[32px] lg:rounded-[40px] shadow-sm border border-[#eceef0]">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-[#eceef0]">
                                 <div>
-                                    <h3 className="text-lg lg:text-xl font-black text-[#1d1d1f] tracking-tight">Communication Center</h3>
-                                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">Broadcast messages to all employees</p>
+                                    <h3 className="text-base font-black text-[#1d1d1f] tracking-tight">Communication Center</h3>
+                                    <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-widest mt-0.5">Alert Broadcast System</p>
                                 </div>
-                                <Button onClick={() => setShowBroadcastModal(true)} className="w-full sm:w-auto rounded-2xl h-12 px-8 font-black text-[10px] tracking-widest shadow-lg shadow-[#ff9500]/20 bg-[#ff9500] hover:bg-[#ff8c00]">📢 BROADCAST ALERT</Button>
+                                <Button onClick={() => setShowBroadcastModal(true)} className="w-full sm:w-auto rounded-lg h-9 px-6 bg-[#0071e3] text-white font-bold text-[10px] tracking-tight shadow-sm hover:bg-[#005bb7] transition-colors">📢 BROADCAST ALERT</Button>
                             </div>
                             
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                            <Card className="p-6 lg:p-10 rounded-[32px] lg:rounded-[40px]">
-                                <h3 className="text-xl lg:text-2xl font-black mb-6 lg:mb-8 text-[#1d1d1f] tracking-tight">Add New Member</h3>
-                                <form onSubmit={handleCreateEmployee} className="space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
-                                        <Input required value={newEmpForm.name} onChange={e => setNewEmpForm({ ...newEmpForm, name: e.target.value })} placeholder="Jane Cooper" className="h-14 rounded-3xl bg-[#f5f5f7] border-none px-6 text-sm font-bold" />
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <Card className="p-6 rounded-2xl border-[#eceef0]">
+                                <h3 className="text-base font-black mb-4 text-[#1d1d1f] tracking-tight">Invite Member</h3>
+                                <form onSubmit={handleInviteMember} className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
+                                        <input type="email" required value={inviteForm.email} onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })} placeholder="colleague@company.com" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
-                                        <Input type="email" required value={newEmpForm.email} onChange={e => setNewEmpForm({ ...newEmpForm, email: e.target.value })} placeholder="jane@apple.com" className="h-14 rounded-3xl bg-[#f5f5f7] border-none px-6 text-sm font-bold" />
+                                    <div className="space-y-1.5">
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>
+                                        <select 
+                                            value={inviteForm.role} 
+                                            onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
+                                            className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0071e3]"
+                                        >
+                                            <option value="employee">Employee</option>
+                                            <option value="manager">Manager</option>
+                                        </select>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Password</label>
-                                        <Input required value={newEmpForm.password} onChange={e => setNewEmpForm({ ...newEmpForm, password: e.target.value })} placeholder="••••••••" className="h-14 rounded-3xl bg-[#f5f5f7] border-none px-6 text-sm font-bold" />
-                                    </div>
-                                    {empError && <p className="text-[#ff3b30] text-xs font-bold px-4">{empError}</p>}
-                                    <Button type="submit" className="w-full h-14 rounded-3xl font-black tracking-widest text-xs mt-4 shadow-xl shadow-[#0071e3]/20">CREATE MEMBER</Button>
+                                    
+                                    {inviteResult && (
+                                        <p className={`text-[10px] font-bold px-4 ${inviteResult.type === 'error' ? 'text-[#ff3b30]' : 'text-[#34c759]'}`}>
+                                            {inviteResult.text}
+                                        </p>
+                                    )}
+                                    <button type="submit" className="w-full h-10 rounded-xl bg-[#0071e3] text-white font-black tracking-widest text-[10px] mt-2 shadow-sm hover:bg-[#005bb7] transition-colors">SEND INVITATION</button>
                                 </form>
                             </Card>
 
-                            <Card className="p-6 lg:p-10 rounded-[32px] lg:rounded-[40px]">
-                                <h3 className="text-xl lg:text-2xl font-black mb-6 lg:mb-8 text-[#1d1d1f] tracking-tight">Active Members</h3>
-                                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
+                            <Card className="p-6 rounded-2xl border-[#eceef0]">
+                                <h3 className="text-base font-black mb-4 text-[#1d1d1f] tracking-tight">Active Members</h3>
+                                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                                     {employees.filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map(emp => (
-                                        <div key={emp.id} className="p-6 bg-[#f5f5f7] rounded-[32px] border border-[#e5e5ea] flex items-center justify-between group hover:border-[#0071e3] transition-colors min-w-0">
-                                            <div className="flex items-center gap-4 min-w-0 flex-1">
-                                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-lg font-black shadow-sm group-hover:bg-[#0071e3] group-hover:text-white transition-all flex-shrink-0">
+                                        <div key={emp.id} className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] flex items-center justify-between group hover:border-[#0071e3] transition-colors min-w-0">
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <div className="w-8 h-8 rounded-full bg-white border border-[#e5e5ea] flex items-center justify-center text-[10px] font-black shadow-sm group-hover:bg-[#0071e3] group-hover:text-white transition-all flex-shrink-0">
                                                     {emp.name.charAt(0)}
                                                 </div>
                                                     <div className="min-w-0">
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="font-black text-[#1d1d1f] truncate">{emp.name}</p>
-                                                            {emp.role === 'manager' && <Badge className="bg-[#0071e3] text-white border-none text-[8px] px-2 flex-shrink-0">ADMIN</Badge>}
+                                                        <div className="flex items-center gap-1.5">
+                                                            <p className="text-[11px] font-bold text-[#1d1d1f] truncate leading-tight">{emp.name}</p>
+                                                            {emp.role === 'manager' && <Badge className="bg-[#0071e3] text-white border-none text-[7px] px-1.5 flex-shrink-0">ADM</Badge>}
                                                         </div>
-                                                        <p className="text-[10px] font-bold text-[#0071e3] truncate mb-0.5">{emp.email}</p>
-                                                        <p className="text-[9px] font-mono text-[#86868b] truncate opacity-50">{emp.id.slice(0, 8)}</p>
+                                                        <p className="text-[9px] font-medium text-[#86868b] truncate leading-none">{emp.email}</p>
                                                     </div>
                                             </div>
-                                            <div className="flex gap-2 ml-4 flex-shrink-0 items-center">
+                                            <div className="flex gap-1.5 ml-3 flex-shrink-0 items-center">
                                                 {empStatusMsg && empStatusMsg.id === emp.id && (
-                                                    <span className="text-[9px] font-bold text-[#ff3b30] mr-2 animate-in fade-in slide-in-from-right-2">
+                                                    <span className="text-[8px] font-bold text-[#ff3b30] mr-1 animate-in fade-in slide-in-from-right-1">
                                                         {empStatusMsg.text}
                                                     </span>
                                                 )}
-                                                <Button 
-                                                    variant="secondary" 
+                                                <button 
                                                     disabled={deletingEmpId === emp.id}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setEditingEmpId(emp.id);
                                                         setEditEmpForm({ name: emp.name || '', role: (emp.role as any) || 'employee', password: '' });
                                                     }} 
-                                                    title="Edit Employee" 
-                                                    className="rounded-xl w-10 h-10 p-0 flex items-center justify-center border-none bg-white hover:bg-white shadow-sm"
+                                                    className="w-7 h-7 rounded-lg border border-[#e5e5ea] bg-white flex items-center justify-center hover:bg-[#f5f5f7] transition-colors"
                                                 >
-                                                    <Pencil className="w-4 h-4 text-[#1d1d1f]" />
-                                                </Button>
-                                                <Button 
-                                                    variant="secondary" 
+                                                    <Pencil className="w-3 h-3 text-[#1d1d1f]" />
+                                                </button>
+                                                <button 
+                                                    className="w-7 h-7 rounded-lg border border-[#e5e5ea] bg-white flex items-center justify-center hover:bg-[#ff3b30]/10 text-[#ff3b30] transition-colors"
+                                                    onClick={(e) => handleDeleteEmployee(e, emp.id, emp.name)} 
                                                     disabled={deletingEmpId === emp.id}
-                                                    onClick={(e) => handleDeleteEmployee(e, emp.id)} 
-                                                    title="Delete Employee" 
-                                                    className={`rounded-xl w-10 h-10 p-0 flex items-center justify-center border-none bg-white shadow-sm ${deletingEmpId === emp.id ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#fff2f2]'}`}
                                                 >
-                                                    {deletingEmpId === emp.id ? (
-                                                        <div className="w-4 h-4 border-2 border-[#ff3b30] border-t-transparent rounded-full animate-spin"></div>
-                                                    ) : (
-                                                        <Trash2 className="w-4 h-4 text-[#ff3b30]" />
-                                                    )}
-                                                </Button>
+                                                    <Trash2 size={12} />
+                                                </button>
                                             </div>
                                         </div>
                                     ))}
@@ -883,51 +804,53 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     )}
 
                     {activeTab === 'settings' && (
-                        <div className="max-w-4xl mx-auto space-y-10">
-                            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8 mb-10 sm:mb-16 text-center sm:text-left">
-                                <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-[#0071e3] to-[#00c6ff] rounded-[32px] sm:rounded-[48px] flex items-center justify-center text-white text-3xl sm:text-5xl font-black shadow-2xl shadow-[#0071e3]/30">
+                        <div className="max-w-2xl mx-auto space-y-6">
+                            <div className="flex items-center gap-6 mb-10 pb-8 border-b border-[#f0f0f2]">
+                                <div className="w-16 h-16 bg-[#0071e3] rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-sm">
                                     {userName.charAt(0)}
                                 </div>
                                 <div>
-                                    <h2 className="text-3xl sm:text-5xl font-black text-[#1d1d1f] tracking-tighter mb-2">{userName}</h2>
-                                    <p className="text-base sm:text-xl font-bold text-[#86868b] tracking-tight">Executive Management Account</p>
+                                    <h2 className="text-xl font-black text-[#1d1d1f] tracking-tight">{userName}</h2>
+                                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest leading-none mt-1">Workspace Admin</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                <Card className="p-6 lg:p-10 rounded-3xl lg:rounded-[40px]">
-                                    <h3 className="text-lg lg:text-xl font-black mb-6 lg:mb-10 text-[#1d1d1f] flex items-center gap-3">
-                                        <span className="w-8 h-8 rounded-xl bg-[#f5f5f7] flex items-center justify-center text-sm">👤</span>
+                            <div className="grid grid-cols-1 gap-6">
+                                <Card className="p-6 rounded-2xl border-[#eceef0]">
+                                    <h3 className="text-[10px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">👤</span>
                                         Profile Details
                                     </h3>
-                                    <form onSubmit={handleUpdateProfile} className="space-y-6 lg:space-y-8">
-                                        <div className="space-y-3 lg:space-y-4">
-                                            <label className="text-[10px] lg:text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
-                                            <Input value={profileName} onChange={e => setProfileName(e.target.value)} className="h-14 lg:h-16 rounded-2xl lg:rounded-[24px] bg-[#f5f5f7] border-none px-6 lg:px-8 text-base lg:text-lg font-bold" />
+                                    <form onSubmit={handleUpdateProfile} className="space-y-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
+                                            <input value={profileName} onChange={e => setProfileName(e.target.value)} className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
                                         </div>
-                                        <Button type="submit" disabled={isUpdatingProfile} className="w-full h-14 lg:h-16 rounded-2xl lg:rounded-[24px] font-black tracking-widest shadow-xl shadow-[#0071e3]/20">
+                                        <button type="submit" disabled={isUpdatingProfile} className="w-full h-10 rounded-xl bg-[#1d1d1f] text-white font-black tracking-widest text-[10px] mt-2">
                                             {isUpdatingProfile ? 'UPDATING...' : 'SAVE CHANGES'}
-                                        </Button>
+                                        </button>
                                     </form>
                                 </Card>
 
-                                <Card className="p-6 lg:p-10 rounded-3xl lg:rounded-[40px]">
-                                    <h3 className="text-lg lg:text-xl font-black mb-6 lg:mb-10 text-[#1d1d1f] flex items-center gap-3">
-                                        <span className="w-8 h-8 rounded-xl bg-[#f5f5f7] flex items-center justify-center text-sm">🔒</span>
+                                <Card className="p-6 rounded-2xl border-[#eceef0]">
+                                    <h3 className="text-[10px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                                        <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">🔒</span>
                                         Security
                                     </h3>
-                                    <form onSubmit={handleChangePassword} className="space-y-6">
-                                        <div className="space-y-3 lg:space-y-4">
-                                            <label className="text-[10px] lg:text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">New Password</label>
-                                            <Input type="password" value={passwords.new} onChange={e => setPasswords({ ...passwords, new: e.target.value })} className="h-14 lg:h-16 rounded-2xl lg:rounded-[24px] bg-[#f5f5f7] border-none px-6 lg:px-8 text-base lg:text-lg font-bold" placeholder="••••••••" />
+                                    <form onSubmit={handleChangePassword} className="space-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">New Password</label>
+                                                <input type="password" value={passwords.new} onChange={e => setPasswords({ ...passwords, new: e.target.value })} className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" placeholder="••••••••" />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Confirm</label>
+                                                <input type="password" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" placeholder="••••••••" />
+                                            </div>
                                         </div>
-                                        <div className="space-y-3 lg:space-y-4">
-                                            <label className="text-[10px] lg:text-[11px] font-black uppercase tracking-widest text-[#86868b] ml-4">Confirm Password</label>
-                                            <Input type="password" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} className="h-14 lg:h-16 rounded-2xl lg:rounded-[24px] bg-[#f5f5f7] border-none px-6 lg:px-8 text-base lg:text-lg font-bold" placeholder="••••••••" />
-                                        </div>
-                                        <Button type="submit" disabled={isUpdatingPassword} variant="secondary" className="w-full h-14 lg:h-16 rounded-2xl lg:rounded-[24px] font-black tracking-widest border-[#e5e5ea] hover:bg-[#f5f5f7]">
+                                        <button type="submit" disabled={isUpdatingPassword} className="w-full h-10 rounded-xl bg-[#f5f5f7] text-[#1d1d1f] font-black tracking-widest text-[10px] border border-[#e5e5ea] hover:bg-[#e5e5ea] transition-colors mt-2">
                                             {isUpdatingPassword ? 'UPDATING...' : 'CHANGE PASSWORD'}
-                                        </Button>
+                                        </button>
                                     </form>
                                 </Card>
                             </div>
@@ -1064,6 +987,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     subtasks={selectedTask.subtasks}
                     onClose={() => setSelectedTask(null)}
                     onUpdateStatus={handleUpdateStatusFromModal}
+                    onDeleteTask={handleDeleteTask}
                     isEditable={true}
                     currentUserId={userId}
                     isManager={true}
@@ -1107,37 +1031,76 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                 </div>
             )}
             {showTaskDeleteConfirm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
                     <div 
-                        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+                        className="absolute inset-0 bg-black/40 backdrop-blur-md transition-opacity animate-in fade-in duration-300"
                         onClick={cancelDeleteTask}
                     />
-                    <Card className="relative w-full max-w-[400px] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.3)] border-none bg-white/90 backdrop-blur-xl animate-in zoom-in-95 duration-200 rounded-[40px]">
+                    <Card className="relative w-full max-w-[360px] p-8 shadow-[0_32px_64px_rgba(0,0,0,0.3)] border-none bg-white rounded-3xl animate-in zoom-in-95 duration-200">
                         <div className="flex flex-col items-center text-center">
-                            <div className="w-16 h-16 bg-[#ff3b30]/10 rounded-full flex items-center justify-center mb-6">
-                                <Trash2 size={32} color="#ff3b30" strokeWidth={2.5} />
+                            <div className="w-14 h-14 bg-[#ff3b30]/10 rounded-2xl flex items-center justify-center mb-6">
+                                <Trash2 size={24} color="#ff3b30" strokeWidth={2.5} />
                             </div>
                             
-                            <h3 className="text-xl font-black text-[#1d1d1f] mb-2">Delete Task?</h3>
-                            <p className="text-sm text-[#86868b] font-medium leading-relaxed mb-8">
-                                Are you sure you want to delete <span className="text-[#1d1d1f] font-bold">"{taskToDelete?.name}"</span>? This action cannot be undone.
+                            <h3 className="text-lg font-black text-[#1d1d1f] tracking-tight mb-2 uppercase tracking-widest text-[11px]">Confirm Deletion</h3>
+                            <p className="text-[13px] text-[#86868b] font-medium leading-relaxed mb-8">
+                                Permanently delete <span className="text-[#1d1d1f] font-black underline decoration-[#ff3b30]/30">"{taskToDelete?.name}"</span>?
                             </p>
 
-                            <div className="flex gap-3 w-full">
+                            <div className="grid grid-cols-2 gap-3 w-full">
                                 <Button 
                                     variant="secondary" 
-                                    className="flex-1 h-12 rounded-2xl font-bold border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#1d1d1f]"
+                                    className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#86868b]"
                                     onClick={cancelDeleteTask}
                                     disabled={isDeletingTask}
                                 >
                                     Cancel
                                 </Button>
                                 <Button 
-                                    className="flex-1 h-12 rounded-2xl font-bold bg-[#ff3b30] hover:bg-[#ff3b30]/90 text-white shadow-[0_4px_20px_rgba(255,59,48,0.3)] border-none"
+                                    className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-[#ff3b30] hover:bg-[#e03126] text-white border-none shadow-lg shadow-[#ff3b30]/20"
                                     onClick={confirmDeleteTask}
                                     disabled={isDeletingTask}
                                 >
                                     {isDeletingTask ? 'Deleting...' : 'Delete Task'}
+                                </Button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
+            
+            {showEmployeeDeleteConfirm && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                    <div 
+                        className="absolute inset-0 bg-black/40 backdrop-blur-md transition-opacity animate-in fade-in duration-300"
+                        onClick={cancelDeleteEmployee}
+                    />
+                    <Card className="relative w-full max-w-[360px] p-8 shadow-[0_32px_64px_rgba(0,0,0,0.3)] border-none bg-white rounded-3xl animate-in zoom-in-95 duration-200">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-14 h-14 bg-[#ff3b30]/10 rounded-2xl flex items-center justify-center mb-6">
+                                <Trash2 size={24} color="#ff3b30" strokeWidth={2.5} />
+                            </div>
+                            
+                            <h3 className="text-lg font-black text-[#1d1d1f] tracking-tight mb-2 uppercase tracking-widest text-[11px]">Remove Member</h3>
+                            <p className="text-[13px] text-[#86868b] font-medium leading-relaxed mb-8">
+                                Permanently remove <span className="text-[#1d1d1f] font-black underline decoration-[#ff3b30]/30">"{employeeToDelete?.name}"</span>?
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-3 w-full">
+                                <Button 
+                                    variant="secondary" 
+                                    className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#86868b]"
+                                    onClick={cancelDeleteEmployee}
+                                    disabled={deletingEmpId !== null}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button 
+                                    className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-[#ff3b30] hover:bg-[#e03126] text-white border-none shadow-lg shadow-[#ff3b30]/20"
+                                    onClick={confirmDeleteEmployee}
+                                    disabled={deletingEmpId !== null}
+                                >
+                                    {deletingEmpId !== null ? 'Removing...' : 'Remove Member'}
                                 </Button>
                             </div>
                         </div>
@@ -1179,62 +1142,100 @@ function NavItem({ icon, label, active = false, onClick }: { icon: string, label
     );
 }
 
+const formatTaskDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    const taskDate = new Date(date);
+    taskDate.setHours(0, 0, 0, 0);
+
+    if (taskDate.getTime() === today.getTime()) return { label: 'TODAY', color: 'bg-[#ff3b30]/10 text-[#ff3b30]' };
+    if (taskDate.getTime() === tomorrow.getTime()) return { label: 'TOMORROW', color: 'bg-[#ff9500]/10 text-[#ff9500]' };
+    if (taskDate.getTime() === yesterday.getTime()) return { label: 'YESTERDAY', color: 'bg-[#86868b]/10 text-[#86868b]' };
+
+    return { 
+        label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase(), 
+        color: 'bg-[#f5f5f7] text-[#86868b]' 
+    };
+};
+
 function BoardColumn({ title, tasks, employees, onTaskClick, onDeleteTask }: { title: string, tasks: Task[], employees: Profile[], onTaskClick: (task: Task) => void, onDeleteTask: (taskId: string, taskName: string) => void }) {
     return (
-        <div className="space-y-8 flex flex-col h-full">
-            <div className="flex items-center justify-between px-2">
-                <h3 className="text-[10px] font-black text-[#1d1d1f] tracking-[0.2em] uppercase">{title}</h3>
-                <span className="w-5 h-5 rounded-full bg-[#f0f0f2] flex items-center justify-center text-[10px] font-black text-[#86868b]">{tasks.length}</span>
+        <div className="space-y-4 flex flex-col h-full">
+            <div className="flex items-center justify-between px-1">
+                <h3 className="text-[9px] font-black text-[#86868b] tracking-widest uppercase">{title}</h3>
+                <span className="w-4 h-4 rounded-md bg-[#f0f0f2] flex items-center justify-center text-[9px] font-black text-[#1d1d1f]">{tasks.length}</span>
             </div>
-            <div className="space-y-4 flex-1">
+            <div className="space-y-3 flex-1">
                 {tasks.length === 0 ? (
-                    <div className="h-32 border-2 border-dashed border-[#e5e5ea] rounded-[32px] flex items-center justify-center">
-                        <span className="text-[8px] font-black text-[#d2d2d7] uppercase tracking-widest">No Items</span>
+                    <div className="h-24 border-2 border-dashed border-[#e5e5ea] rounded-2xl flex items-center justify-center bg-white/30">
+                        <span className="text-[8px] font-black text-[#d2d2d7] uppercase tracking-widest">Empty</span>
                     </div>
                 ) : (
-                    tasks.map(task => (
-                        <div 
-                            key={task.id} 
-                            onClick={() => onTaskClick(task)}
-                            className="bg-white p-6 rounded-[32px] shadow-sm border border-[#eceef0] hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 group cursor-pointer relative overflow-hidden"
-                        >
-                            <div className="absolute top-0 left-0 w-1 h-full bg-[#f0f0f2] group-hover:bg-[#0071e3] transition-colors"></div>
-                             <div className="flex justify-between items-start mb-6">
-                                <h4 className="text-xs font-black text-[#1d1d1f] leading-relaxed pr-4 flex-1">{task.name || 'Main Project'}</h4>
-                                <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full shrink-0 ${task.priority === 'Urgent' ? 'bg-[#ff3b30]' : task.priority === 'High' ? 'bg-[#ff9500]' : 'bg-[#0071e3]'}`}></div>
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDeleteTask(task.id, task.name);
-                                        }}
-                                        className="p-1.5 hover:bg-[#ff3b30]/10 text-[#86868b] hover:text-[#ff3b30] rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                        title="Delete Task"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center justify-between mt-auto pt-6 border-t border-[#f0f0f2]">
-                                <div className="flex -space-x-2 overflow-hidden">
-                                    {[task.employee_id, ...(task.assignee_ids || [])].map((id, idx) => {
-                                        const emp = employees.find(e => e.id === id);
-                                        if (!emp) return null;
-                                        return (
-                                            <div key={`${task.id}-assignee-${id}`} className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] border-2 border-white flex items-center justify-center text-[10px] font-black text-white shadow-sm ring-1 ring-black/5" title={emp.name}>
-                                                {emp.name?.charAt(0) || '?'}
+                    tasks.map(task => {
+                        const dateInfo = formatTaskDate(task.deadline);
+                        return (
+                            <div 
+                                key={task.id} 
+                                onClick={() => onTaskClick(task)}
+                                className="bg-white p-4 rounded-2xl shadow-sm border border-[#eceef0] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 left-0 w-0.5 h-full bg-[#f0f0f2] group-hover:bg-[#0071e3] transition-colors"></div>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex-1 pr-4">
+                                        <h4 className="text-[11px] font-bold text-[#1d1d1f] leading-snug mb-1.5">{task.name || 'Untitled Task'}</h4>
+                                        {dateInfo && (
+                                            <div className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[7px] font-black tracking-widest ${dateInfo.color}`}>
+                                                {dateInfo.label}
                                             </div>
-                                        );
-                                    })}
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <div className={`w-1.5 h-1.5 rounded-full ${task.priority === 'Urgent' ? 'bg-[#ff3b30]' : task.priority === 'High' ? 'bg-[#ff9500]' : 'bg-[#0071e3]'}`}></div>
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteTask(task.id, task.name);
+                                            }}
+                                            className="p-1 hover:bg-[#ff3b30]/10 text-[#86868b] hover:text-[#ff3b30] rounded transition-all opacity-0 group-hover:opacity-100"
+                                            title="Delete Task"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-3 text-[9px] font-black text-[#d2d2d7]">
-                                    <span className="group-hover:text-[#1d1d1f] transition-colors">💬 0</span>
-                                    <span className="group-hover:text-[#1d1d1f] transition-colors">📎 0</span>
+                                
+                                <div className="flex items-center justify-between mt-auto pt-3 border-t border-[#f5f5f7]">
+                                    <div className="flex -space-x-1.5 overflow-hidden">
+                                        {[task.employee_id, ...(task.assignee_ids || [])].slice(0, 3).map((id, idx) => {
+                                            const emp = employees.find(e => e.id === id);
+                                            if (!emp) return null;
+                                            return (
+                                                <div key={`${task.id}-assignee-${id}`} className="w-6 h-6 rounded-full bg-white border border-[#e5e5ea] flex items-center justify-center text-[9px] font-bold text-[#1d1d1f] shadow-sm shrink-0" title={emp.name}>
+                                                    {emp.name?.charAt(0) || '?'}
+                                                </div>
+                                            );
+                                        })}
+                                        {[task.employee_id, ...(task.assignee_ids || [])].length > 3 && (
+                                            <div className="w-6 h-6 rounded-full bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center text-[8px] font-black text-[#86868b] shrink-0">
+                                                +{[task.employee_id, ...(task.assignee_ids || [])].length - 3}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[8px] font-bold text-[#d2d2d7]">
+                                        <span className="flex items-center gap-1 group-hover:text-[#1d1d1f] transition-colors">💬 0</span>
+                                        <span className="flex items-center gap-1 group-hover:text-[#1d1d1f] transition-colors">📎 0</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
         </div>
