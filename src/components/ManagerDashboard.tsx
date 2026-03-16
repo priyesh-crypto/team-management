@@ -754,8 +754,9 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         const completed = groupTasksByStatus('Completed').length;
         const inProgress = groupTasksByStatus('In Progress').length;
         const draft = groupTasksByStatus('To Do').length;
+        const inReview = groupTasksByStatus('In Review').length;
 
-        return { total, completed, inProgress, draft };
+        return { total, completed, inProgress, draft, inReview };
     }, [tasks, searchQuery, employees]);
 
     const heatmapData = useMemo(() => {
@@ -1161,6 +1162,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                 <div className="flex gap-8 h-full min-w-max pb-4">
                                     <BoardColumn title="TO DO" tasks={tasks.filter(t => t.status === 'To Do' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
                                     <BoardColumn title="IN PROGRESS" tasks={tasks.filter(t => t.status === 'In Progress' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
+                                    <BoardColumn title="IN REVIEW" tasks={tasks.filter(t => t.status === 'In Review' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
                                     <BoardColumn title="BLOCKED" tasks={tasks.filter(t => t.status === 'Blocked' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
                                     <BoardColumn title="COMPLETED" tasks={tasks.filter(t => t.status === 'Completed' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
                                 </div>
@@ -1429,6 +1431,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                                 >
                                                     <option value="To Do">To Do</option>
                                                     <option value="In Progress">In Progress</option>
+                                                    <option value="In Review">In Review</option>
                                                     <option value="Blocked">Blocked</option>
                                                     <option value="Completed">Completed</option>
                                                 </select>

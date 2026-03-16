@@ -14,7 +14,7 @@ export type Profile = {
 }
 
 export type Priority = 'Urgent' | 'High' | 'Medium' | 'Low'
-export type Status = 'To Do' | 'In Progress' | 'Completed' | 'Blocked'
+export type Status = 'To Do' | 'In Progress' | 'In Review' | 'Completed' | 'Blocked'
 
 export type Task = {
     id: string

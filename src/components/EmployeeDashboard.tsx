@@ -630,7 +630,8 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                     {showAssignee ? (
                                         <Badge variant={
                                             task.status === 'Completed' ? 'Low' :
-                                                task.status === 'Blocked' ? 'Urgent' : 'default'
+                                                task.status === 'In Review' ? 'Medium' :
+                                                    task.status === 'Blocked' ? 'Urgent' : 'default'
                                         }>
                                             {task.status}
                                         </Badge>
@@ -1521,6 +1522,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                     >
                                         <option>To Do</option>
                                         <option>In Progress</option>
+                                        <option>In Review</option>
                                         <option>Blocked</option>
                                         <option>Completed</option>
                                     </Select>

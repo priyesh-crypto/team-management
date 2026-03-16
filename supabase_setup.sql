@@ -48,7 +48,7 @@ create table public.tasks (
   deadline date not null,
   priority text check (priority in ('Urgent', 'High', 'Medium', 'Low')),
   hours_spent numeric default 0,
-  status text check (status in ('To Do', 'In Progress', 'Completed', 'Blocked')),
+  status text check (status in ('To Do', 'In Progress', 'In Review', 'Completed', 'Blocked')),
   notes text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

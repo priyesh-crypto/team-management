@@ -424,6 +424,7 @@ export function TaskDetailsModal({
                                     >
                                         <option>To Do</option>
                                         <option>In Progress</option>
+                                        <option>In Review</option>
                                         <option>Blocked</option>
                                         <option>Completed</option>
                                     </Select>
