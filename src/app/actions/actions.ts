@@ -48,6 +48,17 @@ export type Subtask = {
     created_at: string;
 }
 
+export type Attachment = {
+    id: string;
+    task_id: string;
+    uploader_id: string;
+    file_name: string;
+    file_url: string;
+    file_type?: string;
+    file_size?: number;
+    created_at: string;
+}
+
 export type Comment = {
     id: string;
     task_id: string;
@@ -1032,6 +1043,44 @@ export async function deleteComment(commentId: string) {
     }
 
     revalidatePath('/')
+}
+
+export async function getAttachments(taskId: string): Promise<Attachment[]> {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('attachments')
+        .select('*')
+        .eq('task_id', taskId)
+        .order('created_at', { ascending: true })
+
+    if (error) {
+        console.error("Error fetching attachments:", error)
+        return []
+    }
+    return data || []
+}
+
+export async function getBulkCounts(taskIds: string[]) {
+    if (!taskIds.length) return { comments: {}, attachments: {} }
+    const supabase = await createClient()
+
+    const [commentsRes, attachmentsRes] = await Promise.all([
+        supabase.from('comments').select('task_id').in('task_id', taskIds),
+        supabase.from('attachments').select('task_id').in('task_id', taskIds)
+    ])
+
+    const commentCounts: Record<string, number> = {}
+    const attachmentCounts: Record<string, number> = {}
+
+    commentsRes.data?.forEach(c => {
+        commentCounts[c.task_id] = (commentCounts[c.task_id] || 0) + 1
+    })
+
+    attachmentsRes.data?.forEach(a => {
+        attachmentCounts[a.task_id] = (attachmentCounts[a.task_id] || 0) + 1
+    })
+
+    return { comments: commentCounts, attachments: attachmentCounts }
 }
 
 export async function deleteEmployee(userId: string) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Button, Badge, Select, Input } from './components';
-import { Task, Subtask, Priority, Status, Comment, getComments, saveComment, deleteComment, updateTask, Profile, ActivityLog, getActivityLogs } from '@/app/actions/actions';
-import { Trash2, MessageSquare, Clock, Users, Calendar, X, ExternalLink, Pencil as PencilIcon, Save, History, CheckCircle2, PlusCircle, AlertCircle } from 'lucide-react';
+import { Task, Subtask, Priority, Status, Comment, getComments, saveComment, deleteComment, updateTask, Profile, ActivityLog, getActivityLogs, Attachment, getAttachments } from '@/app/actions/actions';
+import { Trash2, MessageSquare, Clock, Users, Calendar, X, ExternalLink, Pencil as PencilIcon, Save, History, CheckCircle2, PlusCircle, AlertCircle, Paperclip } from 'lucide-react';
 
 interface TaskDetailsModalProps {
     task: Task;
@@ -34,9 +34,11 @@ export function TaskDetailsModal({
         notes: task.notes,
         priority: task.priority,
         start_date: task.start_date,
-        deadline: task.deadline
+        deadline: task.deadline,
+        assignee_ids: task.assignee_ids || []
     });
     const [comments, setComments] = React.useState<Comment[]>([]);
+    const [attachments, setAttachments] = React.useState<Attachment[]>([]);
     const [activityLogs, setActivityLogs] = React.useState<ActivityLog[]>([]);
     const [newComment, setNewComment] = React.useState('');
     const [isSaving, setIsSaving] = React.useState(false);
@@ -44,19 +46,26 @@ export function TaskDetailsModal({
 
     React.useEffect(() => {
         loadComments();
+        loadAttachments();
         loadActivity();
         setEditData({
             name: task.name,
             notes: task.notes,
             priority: task.priority,
             start_date: task.start_date,
-            deadline: task.deadline
+            deadline: task.deadline,
+            assignee_ids: task.assignee_ids || []
         });
-    }, [task.id, task.name, task.notes, task.priority, task.start_date, task.deadline]);
+    }, [task.id, task.name, task.notes, task.priority, task.start_date, task.deadline, task.assignee_ids]);
 
     const loadComments = async () => {
         const data = await getComments(task.id);
         setComments(data);
+    };
+
+    const loadAttachments = async () => {
+        const data = await getAttachments(task.id);
+        setAttachments(data);
     };
 
     const loadActivity = async () => {
@@ -159,6 +168,32 @@ export function TaskDetailsModal({
                                                 className="w-full min-h-[120px] rounded-2xl bg-[#f5f5f7] border-none p-5 text-sm font-medium resize-none focus:ring-1 ring-[#0071e3]"
                                             />
                                         </div>
+
+                                        {/* Contributor Selection */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Add Contributors</label>
+                                            <div className="flex flex-wrap gap-2 p-4 bg-[#f5f5f7] rounded-2xl border border-[#e5e5ea]">
+                                                {employees.filter(e => e.id !== task.employee_id).map(emp => {
+                                                    const isSelected = editData.assignee_ids?.includes(emp.id);
+                                                    return (
+                                                        <button
+                                                            key={emp.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const current = editData.assignee_ids || [];
+                                                                const next = isSelected 
+                                                                    ? current.filter(id => id !== emp.id)
+                                                                    : [...current, emp.id];
+                                                                setEditData({ ...editData, assignee_ids: next });
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${isSelected ? 'bg-[#0071e3] text-white shadow-md' : 'bg-white text-[#86868b] hover:bg-[#e5e5ea] border border-[#e5e5ea]'}`}
+                                                        >
+                                                            {emp.name}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
                                         <Button onClick={handleSaveEdit} disabled={isSaving} className="w-full h-11 rounded-xl bg-[#1d1d1f] hover:bg-black font-black tracking-widest text-[10px]">
                                             <Save size={14} className="mr-2" /> {isSaving ? 'SAVING...' : 'SAVE CHANGES'}
                                         </Button>
@@ -224,6 +259,41 @@ export function TaskDetailsModal({
                                     ) : (
                                         <div className="text-center py-6">
                                             <p className="text-[9px] font-black text-[#c7c7cc] uppercase tracking-widest">Beginning of records</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
+
+                            {/* Activity Timeline Section ... */}
+
+                            {/* Attachments Section */}
+                            <section>
+                                <h3 className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
+                                    <Paperclip size={12} className="text-[#34c759]" />
+                                    <span>Attachments</span>
+                                    <div className="flex-1 h-[1px] bg-[#f0f0f2]"></div>
+                                    <Badge variant="secondary" className="bg-[#34c759]/10 text-[#34c759] text-[9px] px-1.5 h-5 flex items-center justify-center tabular-nums">{attachments.length}</Badge>
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {attachments.map((file) => (
+                                        <div key={file.id} className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] flex items-center justify-between group/file hover:border-[#34c759] transition-all">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="w-8 h-8 rounded-lg bg-white border border-[#e5e5ea] flex items-center justify-center text-[#34c759]">
+                                                    <ExternalLink size={14} />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-[11px] font-bold text-[#1d1d1f] truncate">{file.file_name}</p>
+                                                    <p className="text-[8px] font-medium text-[#86868b] uppercase tracking-widest">Added {new Date(file.created_at).toLocaleDateString()}</p>
+                                                </div>
+                                            </div>
+                                            <a href={file.file_url} target="_blank" rel="noopener noreferrer" className="p-2 text-[#86868b] hover:text-[#0071e3] transition-colors">
+                                                <ExternalLink size={14} />
+                                            </a>
+                                        </div>
+                                    ))}
+                                    {attachments.length === 0 && (
+                                        <div className="col-span-2 text-center py-6 bg-[#f5f5f7]/50 rounded-2xl border border-dashed border-[#e5e5ea]">
+                                            <p className="text-[9px] font-black text-[#86868b] uppercase tracking-[0.2em] opacity-40">No attachments found</p>
                                         </div>
                                     )}
                                 </div>

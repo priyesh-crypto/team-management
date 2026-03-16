@@ -7,24 +7,29 @@ if (!supabaseUrl || !supabaseKey) {
   process.exit(1);
 }
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+const supabaseAdmin = createClient(supabaseUrl!, supabaseKey!);
 
 async function checkSchema() {
-    // Check tables and columns
-    console.log("Checking tables...");
+    console.log("Checking column types for 'tasks'...");
     
-    // We can't easily check 'all' tables with RPC if it's not set up, 
-    // but we can try to query profiles to see if the columns we expect are there.
-    const { data: cols, error: colError } = await supabaseAdmin.from('tasks').select('*').limit(1);
-    if (colError) console.error("Tasks Error:", colError);
-    else console.log("Tasks Columns:", Object.keys(cols?.[0] || {}));
+    // We can use a raw SQL query if we have an exec_sql RPC,
+    // or we can try to guess by looking at the data or using a clever query.
+    // Let's try to use RPC 'exec_sql' if it exists.
+    
+    const { data, error } = await supabaseAdmin.rpc('exec_sql', { sql_query: `
+        SELECT column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'tasks';
+    `});
 
-    const { data: subcols, error: subError } = await supabaseAdmin.from('subtasks').select('*').limit(1);
-    if (subError) console.error("Subtasks Error:", subError);
-    else console.log("Subtasks Columns:", Object.keys(subcols?.[0] || {}));
-
-    // Check if RLS is effectively blocking something by trying to insert a task without org_id (as admin)
-    // Wait, admin bypasses RLS, so that's not a good test for RLS.
+    if (error) {
+        console.error("RPC Error (exec_sql might not exist):", error.message);
+        // Fallback: Just select one row and check types if possible (limited in JS)
+        const { data: rows } = await supabaseAdmin.from('tasks').select('*').limit(1);
+        console.log("Tasks sample row keys:", Object.keys(rows?.[0] || {}));
+    } else {
+        console.table(data);
+    }
 }
 
 checkSchema();

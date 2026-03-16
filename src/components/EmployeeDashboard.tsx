@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
 import TimelineSchedule from '@/components/ui/TimelineSchedule';
 import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, updateTaskStatus, deleteTask, updateTask, getSubtasks, getBulkSubtasks, saveSubtask, updateSubtaskStatus, updateSubtaskHours, deleteSubtask, updateSubtask, updateProfile, changePassword, updateOwnPassword, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification } from '@/app/actions/actions';
@@ -121,6 +121,23 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+
+    // Notification Click-Outside Ref
+    const notificationRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+                setShowNotifications(false);
+            }
+        }
+        if (showNotifications) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showNotifications]);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeTimers, setActiveTimers] = useState<Record<string, string>>({}); // taskId -> ISO startTime
     const [now, setNow] = useState(new Date());
@@ -1199,7 +1216,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                 className="pl-10 pr-4 py-2 bg-[#f5f5f7] border-none rounded-2xl text-[11px] font-bold text-[#1d1d1f] outline-none w-40 lg:w-64 focus:ring-2 focus:ring-[#0071e3]/20 transition-all placeholder-[#86868b]"
                             />
                         </div>
-                        <div className="relative">
+                        <div className="relative" ref={notificationRef}>
                             <button
                                 onClick={() => setShowNotifications(!showNotifications)}
                                 className="p-2.5 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] rounded-2xl transition-all relative"

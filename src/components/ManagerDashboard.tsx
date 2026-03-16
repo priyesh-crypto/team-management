@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, inviteMember, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert } from '@/app/actions/actions';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, inviteMember, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, getBulkCounts, getAttachments, Attachment } from '@/app/actions/actions';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
 import TimelineSchedule from '@/components/ui/TimelineSchedule';
-import { Pencil, Trash2, Menu, X, Calendar } from 'lucide-react';
+import { Pencil, Trash2, Menu, X, Calendar, Clock } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
 export default function ManagerDashboard({ userId, userName }: { userId: string, userName: string }) {
-    const [activeTab, setActiveTab] = useState<'board' | 'planning' | 'team' | 'settings'>('board');
+    const [activeTab, setActiveTab] = useState<'board' | 'mine' | 'planning' | 'team' | 'settings'>('board');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTask, setSelectedTask] = useState<{ task: Task, subtasks: Subtask[] } | null>(null);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -21,6 +21,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const [employees, setEmployees] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [subtasksMap, setSubtasksMap] = useState<Record<string, Subtask[]>>({});
+    const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+    const [attachmentCounts, setAttachmentCounts] = useState<Record<string, number>>({});
 
     // Profile State
     const [profileName, setProfileName] = useState(userName);
@@ -48,6 +50,23 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
     // Custom Task Delete State
     const [isDeletingTask, setIsDeletingTask] = useState(false);
+
+    // Notification Click-Outside Ref
+    const notificationRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+                setShowNotifications(false);
+            }
+        }
+        if (showNotifications) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showNotifications]);
     const [showTaskDeleteConfirm, setShowTaskDeleteConfirm] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState<{ id: string, name: string } | null>(null);
 
@@ -64,6 +83,49 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         notes: ''
     });
 
+    // Personal Task Logging State (from EmployeeDashboard)
+    const [logForm, setLogForm] = useState({
+        name: '',
+        start_date: new Date().toISOString().split('T')[0],
+        deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+        priority: 'Medium' as Priority,
+        status: 'To Do' as Status,
+        notes: '',
+        hours_spent: 0,
+        assignee_ids: [] as string[]
+    });
+    const [activeTimers, setActiveTimers] = useState<Record<string, string>>({});
+    const [now, setNow] = useState(new Date());
+    const [isSavingLog, setIsSavingLog] = useState(false);
+    const [logError, setLogError] = useState<string | null>(null);
+
+    // Editing State (for personal tasks)
+    const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+    const [editTaskData, setEditTaskData] = useState<Partial<Task>>({});
+    const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+    const [editSubtaskData, setEditSubtaskData] = useState<Partial<Subtask>>({});
+    const [newSubtaskData, setNewSubtaskData] = useState<Record<string, { name: string, hours: number, date_logged: string, start_time: string, end_time: string }>>({});
+
+    useEffect(() => {
+        const saved = localStorage.getItem('activeTimers');
+        if (saved) {
+            try {
+                setActiveTimers(JSON.parse(saved));
+            } catch (e) {
+                console.error("Error loading timers:", e);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('activeTimers', JSON.stringify(activeTimers));
+    }, [activeTimers]);
+
+    useEffect(() => {
+        const interval = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(interval);
+    }, []);
+
     useEffect(() => {
         refreshData();
 
@@ -77,6 +139,8 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             .on('postgres_changes', { event: '*', schema: 'public', table: 'subtasks' }, () => refreshData(true))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => refreshData(true))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => refreshData(true))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => refreshData(true))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attachments' }, () => refreshData(true))
             .subscribe();
 
         return () => {
@@ -91,6 +155,15 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             setTasks(fetchedTasks);
             setEmployees(fetchedProfiles);
             
+            // Sync selected task if it's open
+            if (selectedTask) {
+                const refreshedTask = fetchedTasks.find(t => t.id === selectedTask.task.id);
+                if (refreshedTask) {
+                    const subtasks = await getSubtasks(refreshedTask.id);
+                    setSelectedTask({ task: refreshedTask, subtasks });
+                }
+            }
+
             // Fetch all subtasks in bulk for better performance
             const taskIds = fetchedTasks.map(t => t.id);
             const allSubtasks = await getBulkSubtasks(taskIds);
@@ -101,6 +174,11 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                 newMap[st.task_id].push(st);
             });
             setSubtasksMap(newMap);
+
+            // Fetch counts for comments and attachments
+            const counts = await getBulkCounts(taskIds);
+            setCommentCounts(counts.comments);
+            setAttachmentCounts(counts.attachments);
 
             // Fetch notifications
             const notifs = await getNotifications(userId);
@@ -154,6 +232,198 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         setSelectedTask({ task, subtasks });
     };
 
+    const handleLogSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLogError(null);
+        setIsSavingLog(true);
+
+        const newTaskData = {
+            ...logForm,
+            employee_id: userId,
+            hours_spent: Number(logForm.hours_spent),
+        };
+
+        try {
+            const result = await saveTask(newTaskData);
+            if (result.success) {
+                setLogForm({
+                    name: '',
+                    start_date: new Date().toISOString().split('T')[0],
+                    deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+                    priority: 'Medium',
+                    status: 'To Do',
+                    notes: '',
+                    hours_spent: 0,
+                    assignee_ids: []
+                });
+                refreshData();
+            } else {
+                setLogError(result.error || 'Failed to save task.');
+            }
+        } catch (err: any) {
+            setLogError(err.message || 'An unexpected error occurred.');
+        } finally {
+            setIsSavingLog(false);
+        }
+    };
+
+    const formatElapsed = (startTimeIso: string) => {
+        const start = new Date(startTimeIso);
+        const diff = Math.floor((now.getTime() - start.getTime()) / 1000);
+        if (diff < 0) return "00:00:00";
+        const h = Math.floor(diff / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        const s = diff % 60;
+        return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
+    };
+
+    const handleStartTimer = (subtaskId: string, taskId: string) => {
+        setActiveTimers(prev => ({ ...prev, [subtaskId]: new Date().toISOString() }));
+    };
+
+    const handleStopTimer = async (subtaskId: string, taskId: string) => {
+        const startTimeIso = activeTimers[subtaskId];
+        if (!startTimeIso) return;
+
+        const start = new Date(startTimeIso);
+        const end = new Date();
+        const diffHrs = Number(((end.getTime() - start.getTime()) / (1000 * 3600)).toFixed(2));
+
+        const formatTime = (date: Date) => {
+            return date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+        };
+
+        if (subtaskId.startsWith('new-')) {
+            // Timer for a new work log entry
+            setNewSubtaskData(prev => {
+                const current = prev[taskId] || { 
+                    name: '', 
+                    hours: 0, 
+                    start_time: formatTime(start), 
+                    end_time: formatTime(end), 
+                    date_logged: new Date().toISOString().split('T')[0] 
+                };
+                return {
+                    ...prev,
+                    [taskId]: {
+                        ...current,
+                        start_time: formatTime(start),
+                        end_time: formatTime(end),
+                        hours: Number((current.hours + diffHrs).toFixed(2))
+                    }
+                };
+            });
+        } else {
+            // Timer for an existing subtask
+            const currentSubtasks = subtasksMap[taskId] || [];
+            const subtask = currentSubtasks.find(s => s.id === subtaskId);
+            if (subtask) {
+                const totalHours = Number(((subtask.hours_spent || 0) + diffHrs).toFixed(2));
+                try {
+                    await updateSubtask({
+                        id: subtaskId,
+                        task_id: taskId,
+                        hours_spent: totalHours,
+                        start_time: subtask.start_time || formatTime(start),
+                        end_time: formatTime(end)
+                    });
+                    refreshData(true);
+                } catch (err) {
+                    console.error("Failed to update subtask via timer:", err);
+                }
+            }
+        }
+
+        setActiveTimers(prev => {
+            const next = { ...prev };
+            delete next[subtaskId];
+            return next;
+        });
+    };
+
+    const handleUpdateTask = async (taskId: string) => {
+        try {
+            await updateTask(taskId, editTaskData);
+            setEditingTaskId(null);
+            refreshData(true);
+        } catch (err: any) {
+            alert(err.message || "Failed to update task.");
+        }
+    };
+
+    const handleToggleSubtask = async (taskId: string, subtaskId: string, is_completed: boolean) => {
+        try {
+            // Optimistic update
+            setSubtasksMap(prev => ({
+                ...prev,
+                [taskId]: (prev[taskId] || []).map(s => s.id === subtaskId ? { ...s, is_completed } : s)
+            }));
+            
+            await updateSubtaskStatus(subtaskId, taskId, is_completed);
+            refreshData(true);
+        } catch (err: any) {
+            console.error("Failed to toggle subtask:", err);
+            refreshData(true);
+        }
+    };
+
+    const handleAddSubtask = async (taskId: string) => {
+        const data = newSubtaskData[taskId];
+        if (!data || !data.name) return;
+
+        try {
+            await saveTask({
+                task_id: taskId,
+                name: data.name,
+                hours_spent: Number(data.hours),
+                date_logged: data.date_logged,
+                start_time: data.start_time,
+                end_time: data.end_time,
+                employee_id: userId,
+                is_subtask: true
+            } as any);
+
+            setNewSubtaskData(prev => ({ ...prev, [taskId]: { name: '', hours: 8, date_logged: new Date().toISOString().split('T')[0], start_time: '09:00', end_time: '17:00' } }));
+            refreshData(true);
+        } catch (err: any) {
+            alert(err.message || "Failed to add work log.");
+        }
+    };
+
+    const handleDeleteSubtask = async (taskId: string, subtaskId: string) => {
+        if (!confirm("Are you sure you want to delete this work log?")) return;
+        try {
+            await deleteTask(subtaskId);
+            refreshData(true);
+        } catch (err: any) {
+            alert(err.message || "Failed to delete subtask.");
+        }
+    };
+
+    const handleSaveSubtaskEdit = async (taskId: string) => {
+        if (!editingSubtaskId) return;
+        try {
+            await updateSubtask({
+                id: editingSubtaskId,
+                task_id: taskId,
+                name: editSubtaskData.name,
+                hours_spent: Number(editSubtaskData.hours_spent),
+                date_logged: editSubtaskData.date_logged,
+                start_time: editSubtaskData.start_time,
+                end_time: editSubtaskData.end_time
+            });
+            setEditingSubtaskId(null);
+            setEditSubtaskData({});
+            refreshData(true);
+        } catch (err: any) {
+            alert(err.message || "Failed to update work log.");
+        }
+    };
+
+    const getEmployeeName = (id: string) => {
+        return employees.find(e => e.id === id)?.name || 'Unknown';
+    };
+
     const handleUpdateStatusFromModal = async (taskId: string, status: Status) => {
         setIsUpdatingStatus(true);
         try {
@@ -171,6 +441,303 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         } finally {
             setIsUpdatingStatus(false);
         }
+    };
+
+    const renderPersonalTaskList = (tasksList: Task[]) => {
+        return (
+            <div className="space-y-4">
+                {tasksList.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[32px] border-2 border-dashed border-[#eceef0]">
+                        <div className="text-4xl mb-4">🎈</div>
+                        <p className="text-[11px] font-black text-[#86868b] uppercase tracking-widest">No tasks found in this section</p>
+                    </div>
+                ) : (
+                    tasksList.map(task => (
+                        <Card key={task.id} className="p-6 rounded-[32px] border-[#eceef0] shadow-sm bg-white overflow-hidden group/task">
+                            <div className="flex flex-col gap-6">
+                                {/* Task Header */}
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            {editingTaskId === task.id ? (
+                                                <input 
+                                                    value={editTaskData.name || ''} 
+                                                    onChange={e => setEditTaskData({ ...editTaskData, name: e.target.value })}
+                                                    onBlur={() => handleUpdateTask(task.id)}
+                                                    onKeyDown={e => e.key === 'Enter' && handleUpdateTask(task.id)}
+                                                    autoFocus
+                                                    className="text-base font-black text-[#1d1d1f] tracking-tight bg-[#f5f5f7] rounded-lg px-2 py-1 outline-none w-full"
+                                                />
+                                            ) : (
+                                                <h4 className="text-base font-black text-[#1d1d1f] tracking-tight group-hover/task:text-[#0071e3] transition-colors flex items-center gap-2">
+                                                    {task.name}
+                                                    <button onClick={() => { setEditingTaskId(task.id); setEditTaskData(task); }} className="opacity-0 group-hover/task:opacity-100 text-[#d2d2d7] hover:text-[#0071e3] transition-all">
+                                                        <Pencil size={12} />
+                                                    </button>
+                                                </h4>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <Badge className={`${task.priority === 'Urgent' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : task.priority === 'High' ? 'bg-[#ff9500]/10 text-[#ff9500]' : 'bg-[#0071e3]/10 text-[#0071e3]'} border-none px-2 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-widest`}>
+                                                {task.priority}
+                                            </Badge>
+                                            <Badge className="bg-[#f5f5f7] text-[#86868b] border-none px-2 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-widest">
+                                                {task.status}
+                                            </Badge>
+                                            <div className="flex items-center gap-1.5 ml-2 text-[9px] font-black text-[#86868b]">
+                                                <span>⏱️</span>
+                                                <span className="tabular-nums">{(task.hours_spent || 0).toFixed(2)} HRS LOGGED</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={() => setSelectedTask({ task, subtasks: subtasksMap[task.id] || [] })}
+                                            className="p-2.5 rounded-2xl bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#0071e3] hover:text-white transition-all shadow-sm"
+                                        >
+                                            <Menu size={16} strokeWidth={2.5} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Work Log / Subtasks Section */}
+                                <div className="space-y-4">
+                                    <h5 className="text-[9px] font-black text-[#86868b] uppercase tracking-widest flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-[#0071e3]"></div>
+                                        Work History & Daily Logs
+                                    </h5>
+                                    
+                                    <div className="space-y-2">
+                                        {(subtasksMap[task.id] || []).map(subtask => (
+                                            <div key={subtask.id} className="group/sub relative flex items-center justify-between p-4 bg-[#f5f5f7]/50 hover:bg-[#f5f5f7] rounded-2xl transition-all border border-transparent hover:border-[#eceef0]">
+                                                <div className="flex items-center gap-4 flex-1">
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={subtask.is_completed}
+                                                        onChange={(e) => handleToggleSubtask(task.id, subtask.id, e.target.checked)}
+                                                        className="w-5 h-5 rounded-lg border-2 border-[#d2d2d7] text-[#34c759] focus:ring-[#34c759] transition-all cursor-pointer accent-[#34c759]"
+                                                    />
+                                                    <div className="flex-1">
+                                                        {editingSubtaskId === subtask.id ? (
+                                                            <div className="flex flex-col gap-3 p-2 bg-white rounded-xl shadow-sm border border-[#e5e5ea]">
+                                                                <input 
+                                                                    value={editSubtaskData.name || ''} 
+                                                                    onChange={e => setEditSubtaskData({ ...editSubtaskData, name: e.target.value })}
+                                                                    className="text-[11px] font-bold text-[#1d1d1f] bg-white rounded-lg px-2 py-1 outline-none flex-1 border border-[#eceef0]"
+                                                                    placeholder="Subtask name..."
+                                                                />
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex-1 flex flex-col items-center bg-[#f5f5f7] px-2 py-1 rounded-lg">
+                                                                        <span className="text-[8px] font-black text-[#86868b] uppercase">Hours</span>
+                                                                        <input 
+                                                                            type="number"
+                                                                            step="0.25"
+                                                                            value={editSubtaskData.hours_spent || 0} 
+                                                                            onChange={e => setEditSubtaskData({ ...editSubtaskData, hours_spent: Number(e.target.value) })}
+                                                                            className="text-[11px] font-black text-[#1d1d1f] bg-transparent outline-none w-12 text-center"
+                                                                        />
+                                                                    </div>
+                                                                    <button 
+                                                                        onClick={() => handleSaveSubtaskEdit(task.id)} 
+                                                                        className="px-4 py-2 bg-[#0071e3] text-white text-[9px] font-black rounded-lg hover:bg-[#005bb7] transition-colors"
+                                                                    >
+                                                                        SAVE
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={() => setEditingSubtaskId(null)}
+                                                                        className="px-4 py-2 bg-[#f5f5f7] text-[#1d1d1f] text-[9px] font-black rounded-lg hover:bg-[#e5e5ea] transition-colors"
+                                                                    >
+                                                                        X
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-3">
+                                                                <span className={`text-[11px] font-bold ${subtask.is_completed ? 'text-[#86868b] line-through decoration-2' : 'text-[#1d1d1f]'}`}>
+                                                                    {subtask.name}
+                                                                </span>
+                                                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/80 rounded-md border border-[#eceef0] shadow-sm">
+                                                                    <span className="text-[10px] font-black text-[#0071e3]">{subtask.hours_spent}h</span>
+                                                                    <div className="w-[1px] h-2 bg-[#eceef0]"></div>
+                                                                    <span className="text-[9px] font-bold text-[#86868b] uppercase tabular-nums">{subtask.date_logged || '2026-03-16'}</span>
+                                                                </div>
+                                                                {subtask.start_time && (
+                                                                    <span className="text-[9px] font-bold text-[#86868b] opacity-40 tabular-nums">
+                                                                        {subtask.start_time} - {subtask.end_time}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex items-center gap-2">
+                                                    {activeTimers[subtask.id] ? (
+                                                        <button 
+                                                            onClick={() => handleStopTimer(subtask.id, task.id)}
+                                                            className="flex items-center gap-2 px-3 py-1.5 bg-[#ff3b30] text-white rounded-xl text-[9px] font-black animate-pulse shadow-lg shadow-[#ff3b30]/20"
+                                                        >
+                                                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
+                                                            {formatElapsed(activeTimers[subtask.id])}
+                                                        </button>
+                                                    ) : (
+                                                        <button 
+                                                            onClick={() => handleStartTimer(subtask.id, task.id)}
+                                                            className="opacity-0 group-hover/sub:opacity-100 text-[#86868b] hover:text-[#0071e3] transition-all p-1"
+                                                            title="Start Timer"
+                                                        >
+                                                            <Clock size={14} strokeWidth={2.5} />
+                                                        </button>
+                                                    )}
+                                                    <button 
+                                                        onClick={() => { setEditingSubtaskId(subtask.id); setEditSubtaskData(subtask); }}
+                                                        className="opacity-0 group-hover/sub:opacity-100 text-[#86868b] hover:text-[#0071e3] transition-all p-1"
+                                                    >
+                                                        <Pencil size={12} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeleteSubtask(task.id, subtask.id)}
+                                                        className="opacity-0 group-hover/sub:opacity-100 text-[#86868b] hover:text-[#ff3b30] transition-all p-1"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {/* Rich Work Log Editor (Ported from Employee) */}
+                                        <div className="mt-4 p-5 bg-[#f5f5f7] rounded-3xl border border-[#eceef0] shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                            <div className="flex flex-col gap-4">
+                                                <div className="flex flex-col sm:flex-row items-center gap-3">
+                                                    <div className="flex-1 w-full">
+                                                        <Input 
+                                                            placeholder="What did you achieve today?"
+                                                            value={newSubtaskData[task.id]?.name || ''}
+                                                            onChange={e => {
+                                                                const name = e.target.value;
+                                                                setNewSubtaskData(prev => ({
+                                                                    ...prev,
+                                                                    [task.id]: {
+                                                                         ...(prev[task.id] || { 
+                                                                            name: '', 
+                                                                            hours: 8, 
+                                                                            start_time: '09:00', 
+                                                                            end_time: '17:00', 
+                                                                            date_logged: new Date().toISOString().split('T')[0] 
+                                                                        }),
+                                                                        name
+                                                                    }
+                                                                }));
+                                                            }}
+                                                            onKeyDown={e => e.key === 'Enter' && handleAddSubtask(task.id)}
+                                                            className="h-10 text-[11px] font-bold w-full bg-white border-none shadow-none ring-1 ring-[#eceef0]"
+                                                        />
+                                                    </div>
+                                                    <div className="w-full sm:w-36">
+                                                        <Input 
+                                                            type="date"
+                                                            value={newSubtaskData[task.id]?.date_logged || new Date().toISOString().split('T')[0]}
+                                                            onChange={e => {
+                                                                const date = e.target.value;
+                                                                setNewSubtaskData(prev => ({
+                                                                    ...prev,
+                                                                    [task.id]: {
+                                                                        ...(prev[task.id] || { name: '', hours: 8, start_time: '09:00', end_time: '17:00', date_logged: new Date().toISOString().split('T')[0] }),
+                                                                        date_logged: date
+                                                                    }
+                                                                }));
+                                                            }}
+                                                            className="h-10 text-[10px] font-bold w-full bg-white border-none shadow-none ring-1 ring-[#eceef0]"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col sm:flex-row items-center gap-3">
+                                                    <div className="flex-1 w-full flex items-center gap-3 bg-white px-4 py-1.5 rounded-xl border border-[#eceef0]">
+                                                        <div className="flex-1 flex flex-col min-w-0">
+                                                            <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest">Start Time</span>
+                                                            <Input 
+                                                                type="time"
+                                                                value={newSubtaskData[task.id]?.start_time || '09:00'}
+                                                                onChange={e => {
+                                                                    const start_time = e.target.value;
+                                                                    setNewSubtaskData(prev => {
+                                                                        const current = prev[task.id] || { name: '', hours: 8, start_time: '09:00', end_time: '17:00', date_logged: new Date().toISOString().split('T')[0] };
+                                                                        const start = start_time.split(':').map(Number);
+                                                                        const end = current.end_time.split(':').map(Number);
+                                                                        let diff = (end[0] + end[1] / 60) - (start[0] + start[1] / 60);
+                                                                        if (diff < 0) diff += 24;
+                                                                        return { ...prev, [task.id]: { ...current, start_time, hours: Number(diff.toFixed(2)) } };
+                                                                    });
+                                                                }}
+                                                                className="h-6 border-none p-0 text-[11px] font-black focus-visible:ring-0 tabular-nums"
+                                                            />
+                                                        </div>
+                                                        <div className="text-[#eceef0]">→</div>
+                                                        <div className="flex-1 flex flex-col min-w-0">
+                                                            <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest">End Time</span>
+                                                            <Input 
+                                                                type="time"
+                                                                value={newSubtaskData[task.id]?.end_time || '17:00'}
+                                                                onChange={e => {
+                                                                    const end_time = e.target.value;
+                                                                    setNewSubtaskData(prev => {
+                                                                        const current = prev[task.id] || { name: '', hours: 8, start_time: '09:00', end_time: '17:00', date_logged: new Date().toISOString().split('T')[0] };
+                                                                        const start = current.start_time.split(':').map(Number);
+                                                                        const end = end_time.split(':').map(Number);
+                                                                        let diff = (end[0] + end[1] / 60) - (start[0] + start[1] / 60);
+                                                                        if (diff < 0) diff += 24;
+                                                                        return { ...prev, [task.id]: { ...current, end_time, hours: Number(diff.toFixed(2)) } };
+                                                                    });
+                                                                }}
+                                                                className="h-6 border-none p-0 text-[11px] font-black focus-visible:ring-0 tabular-nums"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-3 bg-white px-4 rounded-xl border border-[#eceef0] h-12 w-full sm:w-auto">
+                                                        <div className="flex flex-col items-center">
+                                                            <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest">LOGGED</span>
+                                                            <div className="text-sm font-black text-[#0071e3] tabular-nums">
+                                                                {newSubtaskData[task.id]?.hours || 0}
+                                                                <span className="ml-1 text-[8px] uppercase">Hrs</span>
+                                                            </div>
+                                                        </div>
+                                                        {activeTimers[`new-${task.id}`] ? (
+                                                            <button 
+                                                                onClick={() => handleStopTimer(`new-${task.id}`, task.id)}
+                                                                className="h-8 px-4 bg-[#ff3b30] text-white text-[9px] font-black rounded-lg hover:bg-[#e03126] transition-all flex items-center gap-2 animate-pulse shadow-lg shadow-[#ff3b30]/20"
+                                                            >
+                                                                <div className="w-1 h-1 bg-white rounded-full animate-ping"></div>
+                                                                STOP ({formatElapsed(activeTimers[`new-${task.id}`])})
+                                                            </button>
+                                                        ) : (
+                                                            <button 
+                                                                onClick={() => handleStartTimer(`new-${task.id}`, task.id)}
+                                                                className="h-8 px-4 bg-[#f5f5f7] text-[#1d1d1f] text-[9px] font-black rounded-lg hover:bg-[#e5e5ea] transition-all flex items-center gap-2"
+                                                            >
+                                                                <Clock size={12} />
+                                                                TIMER
+                                                            </button>
+                                                        )}
+                                                        <button 
+                                                            onClick={() => handleAddSubtask(task.id)}
+                                                            className="h-8 px-4 bg-[#0071e3] text-white text-[9px] font-black rounded-lg hover:bg-[#005bb7] transition-all shadow-sm hover:shadow-lg shadow-[#0071e3]/20"
+                                                        >
+                                                            LOG WORK
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
+                    ))
+                )}
+            </div>
+        );
     };
 
     // --- Board Stats ---
@@ -386,6 +953,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
                         <nav className="flex-1 space-y-2">
                             <NavItem icon="📊" label="DASHBOARD" active={activeTab === 'board'} onClick={() => { setActiveTab('board'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon="🎯" label="MY TASKS" active={activeTab === 'mine'} onClick={() => { setActiveTab('mine'); setIsMobileMenuOpen(false); }} />
                             <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => { setActiveTab('planning'); setIsMobileMenuOpen(false); }} />
                             <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
                             <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
@@ -419,23 +987,27 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
                 <nav className="flex-1 space-y-1.5">
                     <NavItem icon="📊" label="DASHBOARD" active={activeTab === 'board'} onClick={() => setActiveTab('board')} />
+                    <NavItem icon="🎯" label="MY TASKS" active={activeTab === 'mine'} onClick={() => setActiveTab('mine')} />
                     <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => setActiveTab('planning')} />
                     <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
                     <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
                 </nav>
 
-                <div className="mt-auto p-4 bg-[#f5f5f7] rounded-2xl border border-[#e5e5ea]">
-                    <div className="flex items-center gap-2.5 mb-3">
-                        <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[10px] font-bold border border-[#d2d2d7]">
+                <div className="mt-auto p-5 bg-[#f5f5f7]/50 rounded-[32px] border border-[#e5e5ea]/50 shadow-sm">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-2xl bg-[#0071e3] flex items-center justify-center text-xs font-black text-white shadow-lg shadow-[#0071e3]/20">
                             {userName.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-[11px] font-bold truncate leading-tight">{userName}</p>
-                            <p className="text-[9px] text-[#86868b] font-medium uppercase tracking-tighter">Admin</p>
+                            <p className="text-[11px] font-black text-[#1d1d1f] truncate leading-tight uppercase tracking-wider">{userName}</p>
+                            <p className="text-[9px] text-[#86868b] font-black uppercase tracking-widest mt-0.5">Administrator</p>
                         </div>
                     </div>
-                    <button onClick={() => window.location.href = '/'} className="w-full py-1.5 text-[10px] font-black uppercase tracking-widest text-[#86868b] hover:text-[#1d1d1f] transition-colors border border-[#d2d2d7] rounded-lg bg-white/50">
-                        Logout
+                    <button 
+                        onClick={() => window.location.href = '/'} 
+                        className="w-full py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#86868b] hover:text-[#ff3b30] transition-all border border-[#e5e5ea] rounded-xl bg-white hover:bg-[#fee2e2]/50 hover:border-[#fecaca] shadow-sm active:scale-95"
+                    >
+                        Sign Out
                     </button>
                 </div>
             </div>
@@ -451,32 +1023,38 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                         >
                             <Menu size={18} />
                         </button>
-                        <div>
-                            <div className="flex items-center gap-1.5 text-[9px] font-bold text-[#86868b] uppercase tracking-wider mb-0.5">
-                                <span className="hidden sm:inline">Portal</span>
-                                <span className="hidden sm:inline opacity-30">/</span>
-                                <span className="text-[#000]">{activeTab.toUpperCase()}</span>
-                            </div>
-                            <h1 className="text-sm font-black text-[#1d1d1f] tracking-tight truncate max-w-[150px] sm:max-w-none">
-                                {activeTab === 'board' ? 'Organization Overview' : activeTab === 'planning' ? 'Project Timeline' : activeTab === 'team' ? 'Team Management' : 'My Account'}
+                        <div className="hidden lg:block">
+                            <h1 className="text-xs font-black text-[#1d1d1f] tracking-tight uppercase mb-0.5">
+                                Welcome, {userName}
                             </h1>
+                            <p className="text-[9px] font-black text-[#86868b] uppercase tracking-widest">
+                                {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', weekday: 'long' })}
+                            </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-6">
+                        <div className="hidden md:flex items-center gap-6 text-[10px] font-black tracking-[0.2em] text-[#86868b]">
+                            <button className={`hover:text-[#1d1d1f] transition-colors ${activeTab === 'board' ? 'text-[#0071e3]' : ''}`} onClick={() => setActiveTab('board')}>BOARD</button>
+                            <span className="opacity-20">•</span>
+                            <button className="hover:text-[#1d1d1f] transition-colors" onClick={() => setActiveTab('planning')}>DAILY TASKS ▾</button>
+                        </div>
                         <div className="relative group hidden sm:block">
                             <input 
-                                placeholder="Search everything..." 
+                                placeholder="Find something..." 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-48 lg:w-56 bg-[#f5f5f7] border-none rounded-lg h-8 px-8 text-[11px] font-medium placeholder:text-[#86868b] focus:ring-1 ring-[#0071e3] transition-all" 
+                                className="w-48 lg:w-64 bg-[#f5f5f7] border-none rounded-xl h-9 px-10 text-[11px] font-bold placeholder:text-[#86868b] placeholder:font-black focus:ring-2 ring-[#0071e3]/10 transition-all shadow-inner" 
                             />
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] opacity-40">🔍</span>
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] opacity-40 group-focus-within:opacity-100 transition-opacity">🔍</span>
                         </div>
-                        <button className="rounded-lg h-8 px-3 bg-[#0071e3] text-white font-bold text-[10px] tracking-tight shadow-sm hover:bg-[#005bb7] transition-colors" onClick={() => setShowAssignModal(true)}>
-                            + NEW TASK
+                        <button 
+                            className="rounded-xl h-9 px-5 bg-black text-white font-black text-[9px] tracking-[0.2em] shadow-lg shadow-black/10 hover:bg-[#1d1d1f] transition-all hover:-translate-y-0.5 active:scale-95 uppercase" 
+                            onClick={() => setShowAssignModal(true)}
+                        >
+                            + Create task
                         </button>
-                        <div className="relative">
+                        <div className="relative" ref={notificationRef}>
                             <div 
                                 onClick={() => setShowNotifications(!showNotifications)}
                                 className={`w-8 h-8 rounded-lg flex items-center justify-center text-base cursor-pointer transition-colors relative ${showNotifications ? 'bg-[#0071e3] text-white' : 'bg-[#f5f5f7] hover:bg-[#e5e5ea]'}`}
@@ -580,11 +1158,11 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                         <div className="flex flex-col lg:flex-row gap-8">
                             {/* Board View */}
                             <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 min-w-full sm:min-w-[800px] xl:min-w-none">
-                                    <BoardColumn title="TO DO" tasks={tasks.filter(t => t.status === 'To Do' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
-                                    <BoardColumn title="IN PROGRESS" tasks={tasks.filter(t => t.status === 'In Progress' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
-                                    <BoardColumn title="BLOCKED" tasks={tasks.filter(t => t.status === 'Blocked' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
-                                    <BoardColumn title="COMPLETED" tasks={tasks.filter(t => t.status === 'Completed' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
+                                <div className="flex gap-8 h-full min-w-max pb-4">
+                                    <BoardColumn title="TO DO" tasks={tasks.filter(t => t.status === 'To Do' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
+                                    <BoardColumn title="IN PROGRESS" tasks={tasks.filter(t => t.status === 'In Progress' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
+                                    <BoardColumn title="BLOCKED" tasks={tasks.filter(t => t.status === 'Blocked' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
+                                    <BoardColumn title="COMPLETED" tasks={tasks.filter(t => t.status === 'Completed' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
                                 </div>
                             </div>
 
@@ -803,6 +1381,118 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                         </div>
                     )}
 
+                    {activeTab === 'mine' && (
+                        <div className="flex flex-col xl:flex-row gap-8 max-w-7xl mx-auto">
+                            {/* Left: Log Activity */}
+                            <div className="w-full xl:w-[400px]">
+                                <Card className="p-8 rounded-[32px] border-[#eceef0] shadow-sm bg-white sticky top-8">
+                                    <div className="flex items-center gap-3 mb-8">
+                                        <div className="w-10 h-10 bg-[#0071e3] rounded-2xl flex items-center justify-center text-white text-xl shadow-lg ring-4 ring-[#0071e3]/10">🎯</div>
+                                        <div>
+                                            <h3 className="text-base font-black text-[#1d1d1f] tracking-tight">LOG NEW TASK</h3>
+                                            <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-[0.2em] mt-0.5">Manager Activity</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <form onSubmit={handleLogSubmit} className="space-y-6">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Task Name</label>
+                                            <input 
+                                                required 
+                                                value={logForm.name} 
+                                                onChange={e => setLogForm({ ...logForm, name: e.target.value })} 
+                                                placeholder="What are you working on?" 
+                                                className="w-full h-12 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[11px] font-bold outline-none focus:ring-2 ring-[#0071e3]/20 transition-all placeholder:text-[#86868b]/50" 
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Priority</label>
+                                                <select 
+                                                    value={logForm.priority} 
+                                                    onChange={e => setLogForm({ ...logForm, priority: e.target.value as Priority })}
+                                                    className="w-full h-12 rounded-2xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold appearance-none cursor-pointer focus:ring-2 ring-[#0071e3]/20 outline-none"
+                                                >
+                                                    <option value="Low">Low</option>
+                                                    <option value="Medium">Medium</option>
+                                                    <option value="High">High</option>
+                                                    <option value="Urgent">Urgent</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Status</label>
+                                                <select 
+                                                    value={logForm.status} 
+                                                    onChange={e => setLogForm({ ...logForm, status: e.target.value as Status })}
+                                                    className="w-full h-12 rounded-2xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold appearance-none cursor-pointer focus:ring-2 ring-[#0071e3]/20 outline-none"
+                                                >
+                                                    <option value="To Do">To Do</option>
+                                                    <option value="In Progress">In Progress</option>
+                                                    <option value="Blocked">Blocked</option>
+                                                    <option value="Completed">Completed</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Notes</label>
+                                            <textarea 
+                                                value={logForm.notes} 
+                                                onChange={e => setLogForm({ ...logForm, notes: e.target.value })} 
+                                                placeholder="Add some details..." 
+                                                className="w-full h-24 rounded-2xl bg-[#f5f5f7] border-none p-5 text-[11px] font-bold outline-none focus:ring-2 ring-[#0071e3]/20 transition-all resize-none placeholder:text-[#86868b]/50" 
+                                            />
+                                        </div>
+
+                                        {logError && <p className="text-[10px] font-bold text-[#ff3b30] px-4">{logError}</p>}
+                                        
+                                        <button 
+                                            type="submit" 
+                                            disabled={isSavingLog} 
+                                            className="w-full h-12 rounded-2xl bg-[#1d1d1f] text-white font-black tracking-[0.1em] text-[10px] shadow-xl shadow-black/10 hover:translate-y-[-2px] hover:shadow-2xl hover:shadow-black/20 transition-all active:translate-y-0 disabled:opacity-50"
+                                        >
+                                            {isSavingLog ? 'LOGGING...' : 'CREATE & LOG ACTIVITY'}
+                                        </button>
+                                    </form>
+                                </Card>
+                            </div>
+
+                            {/* Right: Personal Tasks List */}
+                            <div className="flex-1 space-y-10">
+                                {/* Active Tasks */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-6 px-4">
+                                        <div className="flex items-center gap-3">
+                                            <h3 className="text-sm font-black text-[#1d1d1f] uppercase tracking-widest">Active Workspace</h3>
+                                            <Badge className="bg-[#0071e3]/10 text-[#0071e3] border-none px-2.5 rounded-full font-bold text-[9px]">
+                                                {tasks.filter(t => t.employee_id === userId && t.status !== 'Completed').length} ACTIVE
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                    {renderPersonalTaskList(tasks.filter(t => (t.employee_id === userId || (t.assignee_ids && t.assignee_ids.includes(userId))) && t.status !== 'Completed'))}
+                                </div>
+
+                                {/* Completed Tasks */}
+                                {tasks.some(t => t.employee_id === userId && t.status === 'Completed') && (
+                                    <div className="pt-10 border-t border-[#eceef0]">
+                                        <div className="flex items-center justify-between mb-6 px-4">
+                                            <div className="flex items-center gap-3">
+                                                <h3 className="text-sm font-black text-[#86868b] uppercase tracking-widest">Completion History</h3>
+                                                <Badge className="bg-[#f5f5f7] text-[#86868b] border-none px-2.5 rounded-full font-bold text-[9px]">
+                                                    {tasks.filter(t => t.employee_id === userId && t.status === 'Completed').length} DONE
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                        <div className="opacity-75 grayscale-[0.2] hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+                                            {renderPersonalTaskList(tasks.filter(t => (t.employee_id === userId || (t.assignee_ids && t.assignee_ids.includes(userId))) && t.status === 'Completed'))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'settings' && (
                         <div className="max-w-2xl mx-auto space-y-6">
                             <div className="flex items-center gap-6 mb-10 pb-8 border-b border-[#f0f0f2]">
@@ -909,10 +1599,9 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             <div className="space-y-6">
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Primary Owner</label>
                                         <Select required value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
                                             <option value="">Select owner</option>
-                                            {employees.filter(e => e.role === 'employee').map(emp => (
+                                            {employees.map(emp => (
                                                 <option key={emp.id} value={emp.id}>{emp.name}</option>
                                             ))}
                                         </Select>
@@ -921,7 +1610,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Additional Collaborators</label>
                                         <div className="flex flex-wrap gap-2 p-4 bg-[#f5f5f7] rounded-[24px]">
-                                            {employees.filter(e => e.role === 'employee' && e.id !== assignForm.employee_id).map(emp => {
+                                            {employees.filter(e => e.id !== assignForm.employee_id).map(emp => {
                                                 const isSelected = assignForm.assignee_ids?.includes(emp.id);
                                                 return (
                                                     <button
@@ -1124,6 +1813,39 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     background: #d2d2d7;
                 }
             `}</style>
+
+            {/* Global Floating Timer Bar */}
+            {Object.keys(activeTimers).length > 0 && (
+                <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-bottom-8 duration-500">
+                    <div className="bg-[#1d1d1f] text-white px-6 py-4 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-6 border border-white/10 backdrop-blur-xl group/timer">
+                        <div className="flex items-center gap-4">
+                            <div className="relative">
+                                <div className="w-3 h-3 bg-[#ff3b30] rounded-full animate-ping absolute inset-0"></div>
+                                <div className="w-3 h-3 bg-[#ff3b30] rounded-full relative"></div>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[#86868b] leading-none mb-1">Active Timer</span>
+                                <span className="text-xl font-black tabular-nums tracking-tight">
+                                    {formatElapsed(Object.values(activeTimers)[0])}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="h-10 w-[1px] bg-white/10"></div>
+                        <button 
+                            onClick={() => {
+                                const [subtaskId, startTime] = Object.entries(activeTimers)[0];
+                                const taskId = subtaskId.startsWith('new-') 
+                                    ? subtaskId.replace('new-', '') 
+                                    : Object.keys(subtasksMap).find(tId => subtasksMap[tId].some(s => s.id === subtaskId));
+                                if (taskId) handleStopTimer(subtaskId, taskId);
+                            }}
+                            className="px-5 py-2.5 bg-white text-[#1d1d1f] rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#ff3b30] hover:text-white transition-all shadow-lg active:scale-95"
+                        >
+                            STOP TIMER
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -1134,10 +1856,11 @@ function NavItem({ icon, label, active = false, onClick }: { icon: string, label
     return (
         <button 
             onClick={onClick}
-            className={`w-full flex items-center gap-4 px-4 py-4 rounded-3xl transition-all duration-300 group ${active ? 'bg-[#0071e3] shadow-xl shadow-[#0071e3]/20 text-white' : 'hover:bg-[#f5f5f7] text-[#86868b]'}`}
+            className={`w-full flex items-center gap-4 px-5 py-4 rounded-[28px] transition-all duration-400 group relative ${active ? 'bg-[#0071e3] shadow-xl shadow-[#0071e3]/25 text-white' : 'hover:bg-[#f5f5f7] text-[#86868b]'}`}
         >
-            <span className={`text-xl ${active ? '' : 'filter grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100'}`}>{icon}</span>
-            <span className={`text-[10px] font-black tracking-[0.2em] ${active ? 'text-white' : 'group-hover:text-[#1d1d1f]'}`}>{label}</span>
+            <span className={`text-xl transition-transform duration-300 ${active ? 'scale-110' : 'filter grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110'}`}>{icon}</span>
+            <span className={`text-[10px] font-black tracking-[0.2em] transition-colors ${active ? 'text-white' : 'group-hover:text-[#1d1d1f]'}`}>{label}</span>
+            {active && <div className="absolute right-4 w-1.5 h-1.5 rounded-full bg-white/50 animate-pulse" />}
         </button>
     );
 }
@@ -1149,88 +1872,169 @@ const formatTaskDate = (dateStr: string) => {
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-
+    
     const taskDate = new Date(date);
     taskDate.setHours(0, 0, 0, 0);
 
-    if (taskDate.getTime() === today.getTime()) return { label: 'TODAY', color: 'bg-[#ff3b30]/10 text-[#ff3b30]' };
-    if (taskDate.getTime() === tomorrow.getTime()) return { label: 'TOMORROW', color: 'bg-[#ff9500]/10 text-[#ff9500]' };
-    if (taskDate.getTime() === yesterday.getTime()) return { label: 'YESTERDAY', color: 'bg-[#86868b]/10 text-[#86868b]' };
+    if (taskDate.getTime() === today.getTime()) return { label: 'TODAY', color: 'bg-white/40 text-inherit' };
+    if (taskDate.getTime() === tomorrow.getTime()) return { label: 'TOMORROW', color: 'bg-white/40 text-inherit' };
 
     return { 
         label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase(), 
-        color: 'bg-[#f5f5f7] text-[#86868b]' 
+        color: 'bg-white/40 text-inherit' 
     };
 };
 
-function BoardColumn({ title, tasks, employees, onTaskClick, onDeleteTask }: { title: string, tasks: Task[], employees: Profile[], onTaskClick: (task: Task) => void, onDeleteTask: (taskId: string, taskName: string) => void }) {
+function BoardColumn({ title, tasks, subtasksMap, commentCounts, attachmentCounts, employees, onTaskClick, onDeleteTask }: { title: string, tasks: Task[], subtasksMap: Record<string, Subtask[]>, commentCounts: Record<string, number>, attachmentCounts: Record<string, number>, employees: Profile[], onTaskClick: (task: Task) => void, onDeleteTask: (taskId: string, taskName: string) => void }) {
     return (
-        <div className="space-y-4 flex flex-col h-full">
-            <div className="flex items-center justify-between px-1">
-                <h3 className="text-[9px] font-black text-[#86868b] tracking-widest uppercase">{title}</h3>
-                <span className="w-4 h-4 rounded-md bg-[#f0f0f2] flex items-center justify-center text-[9px] font-black text-[#1d1d1f]">{tasks.length}</span>
+        <div className="flex flex-col h-full min-w-[320px] max-w-[320px] flex-shrink-0">
+            <div className="flex items-center justify-between px-2 mb-6">
+                <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${
+                        title.toUpperCase().includes('TO DO') ? 'bg-[#0071e3]' : 
+                        title.toUpperCase().includes('IN PROGRESS') ? 'bg-[#ff9500]' : 
+                        title.toUpperCase().includes('BLOCKED') ? 'bg-[#ff3b30]' : 'bg-[#34c759]'
+                    }`} />
+                    <h3 className="text-[11px] font-black text-[#1d1d1f] tracking-widest uppercase">{title}</h3>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[10px] font-black text-[#86868b] tabular-nums">{tasks.length}</span>
             </div>
-            <div className="space-y-3 flex-1">
+            
+            <div className="space-y-4 flex-1 pb-4 custom-scrollbar overflow-y-auto pr-2">
                 {tasks.length === 0 ? (
-                    <div className="h-24 border-2 border-dashed border-[#e5e5ea] rounded-2xl flex items-center justify-center bg-white/30">
-                        <span className="text-[8px] font-black text-[#d2d2d7] uppercase tracking-widest">Empty</span>
+                    <div className="h-32 border-2 border-dashed border-[#e5e5ea] rounded-[32px] flex items-center justify-center bg-[#f5f5f7]/50 transition-colors hover:bg-[#f5f5f7]">
+                        <span className="text-[10px] font-black text-[#d2d2d7] uppercase tracking-[0.2em]">Empty</span>
                     </div>
                 ) : (
                     tasks.map(task => {
-                        const dateInfo = formatTaskDate(task.deadline);
+                        const dateInfo = formatTaskDate(task.deadline || task.start_date);
+                        
+                        // Time-Based Progress Calculation
+                        const now = new Date();
+                        const startDate = new Date(task.start_date);
+                        const deadlineDate = new Date(task.deadline);
+                        const totalDuration = deadlineDate.getTime() - startDate.getTime();
+                        const elapsedDuration = now.getTime() - startDate.getTime();
+                        
+                        let progress = 0;
+                        let isOverdue = false;
+
+                        if (task.status === 'Completed') {
+                            progress = 100;
+                        } else {
+                            if (totalDuration > 0) {
+                                progress = Math.min(100, Math.max(0, Math.round((elapsedDuration / totalDuration) * 100)));
+                            } else {
+                                progress = now >= startDate ? 100 : 0;
+                            }
+                            
+                            // Identify Overdue
+                            if (now > deadlineDate) {
+                                isOverdue = true;
+                            }
+                        }
+
+                        // User-Specific Card Colors
+                        const userColors = [
+                            'bg-[#fee2e2] text-[#991b1b] border-[#fecaca]', // Soft Red
+                            'bg-[#ffedd5] text-[#9a3412] border-[#fed7aa]', // Soft Orange
+                            'bg-[#ecfdf5] text-[#065f46] border-[#d1fae5]', // Soft Emerald
+                            'bg-[#e0f2fe] text-[#075985] border-[#bae6fd]', // Soft Blue
+                            'bg-[#f5f3ff] text-[#5b21b6] border-[#ddd6fe]', // Soft Purple
+                            'bg-[#fdf2f8] text-[#9d174d] border-[#fbcfe8]', // Soft Pink
+                            'bg-[#eef2ff] text-[#3730a3] border-[#e0e7ff]', // Soft Indigo
+                            'bg-[#f0fdfa] text-[#115e59] border-[#ccfbf1]'  // Soft Teal
+                        ];
+
+                        // Simple hash function for consistent color mapping
+                        const userHash = (task.employee_id || '').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                        const colorClass = userColors[userHash % userColors.length];
+
                         return (
                             <div 
                                 key={task.id} 
                                 onClick={() => onTaskClick(task)}
-                                className="bg-white p-4 rounded-2xl shadow-sm border border-[#eceef0] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer relative overflow-hidden"
+                                className={`${colorClass} p-6 rounded-[32px] border shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-500 group cursor-pointer relative flex flex-col min-h-[180px]`}
                             >
-                                <div className="absolute top-0 left-0 w-0.5 h-full bg-[#f0f0f2] group-hover:bg-[#0071e3] transition-colors"></div>
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex-1 pr-4">
-                                        <h4 className="text-[11px] font-bold text-[#1d1d1f] leading-snug mb-1.5">{task.name || 'Untitled Task'}</h4>
-                                        {dateInfo && (
-                                            <div className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[7px] font-black tracking-widest ${dateInfo.color}`}>
-                                                {dateInfo.label}
-                                            </div>
-                                        )}
+                                {/* Header Tags */}
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    <div className={`px-2.5 py-1 rounded-full text-[8px] font-black tracking-widest uppercase bg-white/50 backdrop-blur-sm border border-black/5`}>
+                                        #{task.priority.toLowerCase()}
                                     </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <div className={`w-1.5 h-1.5 rounded-full ${task.priority === 'Urgent' ? 'bg-[#ff3b30]' : task.priority === 'High' ? 'bg-[#ff9500]' : 'bg-[#0071e3]'}`}></div>
-                                        <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onDeleteTask(task.id, task.name);
-                                            }}
-                                            className="p-1 hover:bg-[#ff3b30]/10 text-[#86868b] hover:text-[#ff3b30] rounded transition-all opacity-0 group-hover:opacity-100"
-                                            title="Delete Task"
-                                        >
-                                            <Trash2 size={12} />
-                                        </button>
-                                    </div>
+                                    {dateInfo && (
+                                        <div className={`px-2.5 py-1 rounded-full text-[8px] font-black tracking-widest uppercase ${dateInfo.color} backdrop-blur-sm border border-black/5`}>
+                                            {dateInfo.label}
+                                        </div>
+                                    )}
                                 </div>
-                                
-                                <div className="flex items-center justify-between mt-auto pt-3 border-t border-[#f5f5f7]">
-                                    <div className="flex -space-x-1.5 overflow-hidden">
-                                        {[task.employee_id, ...(task.assignee_ids || [])].slice(0, 3).map((id, idx) => {
-                                            const emp = employees.find(e => e.id === id);
-                                            if (!emp) return null;
-                                            return (
-                                                <div key={`${task.id}-assignee-${id}`} className="w-6 h-6 rounded-full bg-white border border-[#e5e5ea] flex items-center justify-center text-[9px] font-bold text-[#1d1d1f] shadow-sm shrink-0" title={emp.name}>
-                                                    {emp.name?.charAt(0) || '?'}
-                                                </div>
-                                            );
-                                        })}
-                                        {[task.employee_id, ...(task.assignee_ids || [])].length > 3 && (
-                                            <div className="w-6 h-6 rounded-full bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center text-[8px] font-black text-[#86868b] shrink-0">
-                                                +{[task.employee_id, ...(task.assignee_ids || [])].length - 3}
-                                            </div>
+
+                                {/* Title */}
+                                <h4 className="text-[13px] font-extrabold leading-[1.4] mb-4 text-inherit opacity-90 group-hover:opacity-100 transition-opacity">
+                                    {task.name || 'Untitled Task'}
+                                </h4>
+
+                                {/* Progress Indicator */}
+                                <div className="mt-auto space-y-3">
+                                    <div className="flex items-center gap-1.5">
+                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
+                                            <div 
+                                                key={i} 
+                                                className={`h-1.5 w-1.5 rounded-full transition-all duration-500 ${i <= Math.round((progress / 100) * 12) ? 'bg-current opacity-60 scale-110' : 'bg-current opacity-10'}`} 
+                                            />
+                                        ))}
+                                        {isOverdue ? (
+                                            <span className="text-[9px] font-black ml-1 text-[#ff3b30] animate-pulse uppercase tracking-widest">OVERDUE</span>
+                                        ) : (
+                                            <span className="text-[9px] font-black ml-1 opacity-60 tabular-nums">{progress}%</span>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2 text-[8px] font-bold text-[#d2d2d7]">
-                                        <span className="flex items-center gap-1 group-hover:text-[#1d1d1f] transition-colors">💬 0</span>
-                                        <span className="flex items-center gap-1 group-hover:text-[#1d1d1f] transition-colors">📎 0</span>
+
+                                    {/* Footer */}
+                                    <div className="flex items-center justify-between pt-4 border-t border-black/5">
+                                        <div className="flex -space-x-2">
+                                            {[task.employee_id, ...(task.assignee_ids || [])].slice(0, 4).map((id, idx) => {
+                                                const emp = employees.find(e => e.id === id);
+                                                if (!emp) return null;
+                                                return (
+                                                    <div 
+                                                        key={`${task.id}-avatar-${id}`} 
+                                                        className="w-7 h-7 rounded-full bg-white border-2 border-current flex items-center justify-center text-[10px] font-black shadow-sm ring-1 ring-black/5"
+                                                        title={emp.name}
+                                                    >
+                                                        {emp.name?.charAt(0) || '?'}
+                                                    </div>
+                                                );
+                                            })}
+                                            {[task.employee_id, ...(task.assignee_ids || [])].length > 4 && (
+                                                <div className="w-7 h-7 rounded-full bg-white/80 border-2 border-current flex items-center justify-center text-[9px] font-black opacity-60 backdrop-blur-sm">
+                                                    +{[task.employee_id, ...(task.assignee_ids || [])].length - 4}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); onTaskClick(task); }}
+                                                className="flex items-center gap-1 text-[9px] font-black opacity-40 hover:opacity-100 transition-opacity"
+                                            >
+                                                <span className="text-xs transition-transform group-hover:scale-110">💬</span> {commentCounts[task.id] || 0}
+                                            </button>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); onTaskClick(task); }}
+                                                className="flex items-center gap-1 text-[9px] font-black opacity-40 hover:opacity-100 transition-opacity"
+                                            >
+                                                <span className="text-xs transition-transform group-hover:scale-110">📎</span> {attachmentCounts[task.id] || 0}
+                                            </button>
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDeleteTask(task.id, task.name);
+                                                }}
+                                                className="p-1.5 hover:bg-white/50 rounded-xl transition-all opacity-0 group-hover:opacity-100 text-inherit"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
