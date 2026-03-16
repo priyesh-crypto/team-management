@@ -271,8 +271,10 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                 newSubtasksMap[st.task_id].push(st);
             });
             setSubtasksMap(newSubtasksMap);
+            return { tasks, profiles };
         } catch (error) {
             console.error("Error refreshing employee dashboard data:", error);
+            return { tasks: [], profiles: [] };
         } finally {
             setLoading(false);
         }
@@ -287,10 +289,10 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         setIsUpdatingStatus(true);
         try {
             await updateTaskStatus(taskId, status);
-            await refreshData();
+            const { tasks: refreshedTasks } = await refreshData();
             
             if (selectedTask && selectedTask.task.id === taskId) {
-                const updatedTask = allTasks.find(t => t.id === taskId);
+                const updatedTask = (refreshedTasks as Task[]).find((t: Task) => t.id === taskId);
                 if (updatedTask) {
                     const subtasks = await getSubtasks(taskId);
                     setSelectedTask({ task: updatedTask, subtasks: subtasks });

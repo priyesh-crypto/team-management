@@ -184,8 +184,10 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             const notifs = await getNotifications(userId);
             setNotifications(notifs);
             setUnreadCount(notifs.filter(n => !n.is_read).length);
+            return { tasks: fetchedTasks, profiles: fetchedProfiles };
         } catch (error) {
             console.error("Error refreshing dashboard data:", error);
+            return { tasks: [], profiles: [] };
         } finally {
             setLoading(false);
         }
@@ -428,11 +430,11 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         setIsUpdatingStatus(true);
         try {
             await updateTaskStatus(taskId, status);
-            await refreshData(); // Refresh all data to get updated tasks and subtasks
+            const { tasks: refreshedTasks } = await refreshData();
             
             // Update selected task in modal if it's the same one
             if (selectedTask && selectedTask.task.id === taskId) {
-                const updatedTask = tasks.find(t => t.id === taskId); // Find from the refreshed tasks
+                const updatedTask = (refreshedTasks as Task[]).find((t: Task) => t.id === taskId); // Use the freshly fetched tasks
                 if (updatedTask) {
                     const subtasks = await getSubtasks(taskId); // Re-fetch subtasks for the updated task
                     setSelectedTask({ task: updatedTask, subtasks: subtasks });
