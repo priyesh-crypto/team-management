@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { Resend } from 'resend'
+import { formatDistanceToNow, format } from 'date-fns'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -89,6 +90,49 @@ export type ActivityLog = {
     metadata?: Record<string, any>;
     created_at: string;
 }
+
+export type WorkloadDayData = {
+    tasks: number;
+    hours: number;
+    urgency: number;
+}
+
+export type WorkloadMemberData = {
+    name: string;
+    days: {
+        [date: string]: WorkloadDayData;
+    };
+}
+
+export type WorkloadMap = {
+    [userId: string]: WorkloadMemberData;
+};
+
+export type DigestPreferences = {
+    user_id: string;
+    channel: 'email' | 'slack' | 'both' | 'none';
+    send_time: string;
+    timezone: string;
+    slack_user_id?: string;
+    send_on_weekends: boolean;
+    is_active: boolean;
+};
+
+export type AuditLog = {
+  id: string;
+  org_id: string;
+  table_name: string;
+  record_id: string;
+  action: 'INSERT' | 'UPDATE' | 'DELETE';
+  old_data: any;
+  new_data: any;
+  changed_fields: string[] | null;
+  actor_id: string | null;
+  actor_name: string | null;
+  target_name: string | null;
+  ip_address: string | null;
+  created_at: string;
+};
 
 
 export async function requireOrgContext() {
@@ -1216,4 +1260,127 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
     }
 
     revalidatePath('/')
+}
+export async function getWorkloadHeatmap(): Promise<WorkloadMap> {
+    const { orgId } = await requireOrgContext();
+    const supabase = await createClient();
+
+    try {
+        const { data, error } = await supabase
+            .from('workload_heatmap')
+            .select('*')
+            .eq('org_id', orgId);
+
+        if (error) {
+            console.error("[getWorkloadHeatmap] Supabase Error:", {
+                code: error.code,
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+            });
+            return {};
+        }
+
+        if (!data) return {};
+
+        // Reshape: { [userId]: { name, days: { [date]: { tasks, hours, urgency } } } }
+        return (data as any[]).reduce((acc, row) => {
+            if (!acc[row.user_id]) {
+                acc[row.user_id] = { name: row.full_name, days: {} };
+            }
+            
+            // Map snake_case database fields to camelCase component keys
+            acc[row.user_id].days[row.day] = {
+                tasks: Number(row.task_count) || 0,
+                hours: Number(row.hours_logged) || 0,
+                urgency: Number(row.urgency_score) || 0,
+            };
+            return acc;
+        }, {} as WorkloadMap);
+    } catch (err: any) {
+        console.error("[getWorkloadHeatmap] Fatal Error:", err);
+        return {};
+    }
+}
+
+// --- Audit Log Actions ---
+
+export async function getTaskAuditLog(taskId: string): Promise<AuditLog[]> {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .eq('record_id', taskId)
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error("Error fetching task audit log:", error)
+        return []
+    }
+    return data || []
+}
+
+export async function getMemberActivity(userId: string, limit = 50): Promise<AuditLog[]> {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .eq('actor_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+    if (error) {
+        console.error("Error fetching member activity:", error)
+        return []
+    }
+    return data || []
+}
+
+export async function getOrgActivityFeed(orgId: string, limit = 100): Promise<AuditLog[]> {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .eq('org_id', orgId)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+    if (error) {
+        console.error("Error fetching org activity feed:", error)
+        return []
+    }
+    return data || []
+}
+
+
+export async function getDigestPreferences(): Promise<DigestPreferences | null> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase
+        .from('digest_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+}
+
+export async function updateDigestPreferences(prefs: Partial<DigestPreferences>) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Auth required");
+
+    const { error } = await supabase
+        .from('digest_preferences')
+        .upsert({
+            user_id: user.id,
+            ...prefs,
+            updated_at: new Date().toISOString()
+        });
+
+    if (error) throw error;
+    return { success: true };
 }

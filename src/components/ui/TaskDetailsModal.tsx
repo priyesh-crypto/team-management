@@ -43,6 +43,8 @@ export function TaskDetailsModal({
     const [newComment, setNewComment] = React.useState('');
     const [isSaving, setIsSaving] = React.useState(false);
     const [isCommenting, setIsCommenting] = React.useState(false);
+    const [commentToDelete, setCommentToDelete] = React.useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = React.useState(false);
 
     React.useEffect(() => {
         loadComments();
@@ -106,8 +108,25 @@ export function TaskDetailsModal({
         }
     };
 
+    const handleDeleteComment = async () => {
+        if (!commentToDelete) return;
+        setIsDeleting(true);
+        try {
+            await deleteComment(commentToDelete);
+            setCommentToDelete(null);
+            loadComments();
+            loadActivity();
+        } catch (err) {
+            console.error("Error deleting comment:", err);
+            alert("Failed to delete comment.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1d1d1f]/40 backdrop-blur-md animate-in fade-in duration-200">
+        <>
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1d1d1f]/40 backdrop-blur-md animate-in fade-in duration-200">
             <Card className="w-full max-w-5xl h-[85vh] overflow-hidden flex flex-col p-0 shadow-[0_32px_64px_rgba(0,0,0,0.2)] animate-in zoom-in-95 duration-200 border-none bg-white rounded-3xl">
                 {/* Modal Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e5ea] bg-[#f5f5f7]/30">
@@ -357,16 +376,14 @@ export function TaskDetailsModal({
                                                             {new Date(comment.created_at).toLocaleDateString()}
                                                         </span>
                                                     </div>
-                                                    {comment.author_id === currentUserId && (
+                                                    {(isManager || comment.author_id === currentUserId) && (
                                                         <button 
-                                                            onClick={async () => {
-                                                                if (confirm("Delete this comment?")) {
-                                                                    await deleteComment(comment.id);
-                                                                    loadComments();
-                                                                    loadActivity();
-                                                                }
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                setCommentToDelete(comment.id);
                                                             }}
-                                                            className="opacity-0 group-hover:opacity-100 p-1 text-[#ff3b30] hover:bg-[#ff3b30]/10 rounded-lg transition-all"
+                                                            className="opacity-0 group-hover:opacity-100 p-1 text-[#ff3b30] hover:bg-[#ff3b30]/10 rounded-lg transition-all cursor-pointer"
+                                                            title="Delete comment"
                                                         >
                                                             <Trash2 size={12} strokeWidth={2.5} />
                                                         </button>
@@ -528,5 +545,41 @@ export function TaskDetailsModal({
                 </div>
             </Card>
         </div>
+        
+        {/* Delete Confirmation Popup */}
+        {commentToDelete && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                <Card className="w-full max-w-sm p-8 rounded-[32px] bg-white shadow-2xl animate-in zoom-in-95 duration-200 border-none">
+                    <div className="text-center space-y-4">
+                        <div className="w-16 h-16 bg-[#ff3b30]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Trash2 size={32} className="text-[#ff3b30]" strokeWidth={2.5} />
+                        </div>
+                        <h3 className="text-xl font-black text-[#1d1d1f] tracking-tight">Delete Comment?</h3>
+                        <p className="text-xs text-[#86868b] font-medium leading-relaxed">
+                            This action cannot be undone. The activity log will record who deleted this comment.
+                        </p>
+                        <div className="grid grid-cols-2 gap-3 pt-6">
+                            <Button 
+                                onClick={() => setCommentToDelete(null)}
+                                variant="secondary"
+                                className="h-11 text-[10px] font-black uppercase tracking-widest rounded-xl"
+                                disabled={isDeleting}
+                            >
+                                Cancel
+                            </Button>
+                            <Button 
+                                onClick={handleDeleteComment}
+                                variant="danger"
+                                className="h-11 text-[10px] font-black uppercase tracking-widest rounded-xl bg-[#ff3b30] hover:bg-[#d73228]"
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? 'Deleting...' : 'Confirm'}
+                            </Button>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        )}
+        </>
     );
 }

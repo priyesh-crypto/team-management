@@ -13,17 +13,19 @@ import {
     CheckCircle2,
     Users,
     Clock,
-    Search
+    Search,
+    ArrowRight
 } from 'lucide-react';
 
 interface TimelineScheduleProps {
     tasks: Task[];
     employees: Profile[];
     onTaskClick: (task: Task) => void;
+    onEmployeeClick: (employee: Profile) => void;
     refreshData: () => void;
 }
 
-export default function TimelineSchedule({ tasks, employees, onTaskClick, refreshData }: TimelineScheduleProps) {
+export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmployeeClick, refreshData }: TimelineScheduleProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
     const [searchQuery, setSearchQuery] = useState('');
@@ -457,8 +459,13 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, refres
                                             </div>
                                         </td>
                                         <td className="px-8 py-4 border-b border-[#f5f5f7] text-right">
-                                            <Button variant="secondary" className="h-8 px-3 text-[9px] font-black tracking-widest hover:bg-[#0071e3] hover:text-white border-none bg-[#f5f5f7] transition-all">
+                                            <Button 
+                                                variant="secondary" 
+                                                onClick={() => onEmployeeClick(emp)}
+                                                className="h-9 px-4 text-[9px] font-black tracking-[0.2em] hover:bg-[#1d1d1f] hover:text-white border-none bg-[#f5f5f7] transition-all duration-300 rounded-xl flex items-center gap-2 ml-auto group/btn shadow-sm hover:shadow-md hover:scale-105"
+                                            >
                                                 VIEW ACTIVITY
+                                                <ChevronRight size={14} className="transition-transform group-hover/btn:translate-x-1" />
                                             </Button>
                                         </td>
                                     </tr>

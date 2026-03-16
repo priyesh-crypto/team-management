@@ -1,14 +1,19 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, inviteMember, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, getBulkCounts, getAttachments, Attachment } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, inviteMember, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, getBulkCounts, getAttachments, Attachment, getWorkloadHeatmap, WorkloadMap, AuditLog, getTaskAuditLog, getMemberActivity, getOrgActivityFeed } from '@/app/actions/actions';
+import { formatAuditEntry } from '@/utils/audit-formatters';
+import { useRouter } from 'next/navigation';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
 import TimelineSchedule from '@/components/ui/TimelineSchedule';
+import { WorkloadHeatmap } from '@/components/WorkloadHeatmap';
+import { DigestSettings } from '@/components/DigestSettings';
 import { Pencil, Trash2, Menu, X, Calendar, Clock } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
 export default function ManagerDashboard({ userId, userName }: { userId: string, userName: string }) {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<'board' | 'mine' | 'planning' | 'team' | 'settings'>('board');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTask, setSelectedTask] = useState<{ task: Task, subtasks: Subtask[] } | null>(null);
@@ -23,6 +28,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const [subtasksMap, setSubtasksMap] = useState<Record<string, Subtask[]>>({});
     const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
     const [attachmentCounts, setAttachmentCounts] = useState<Record<string, number>>({});
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
     // Profile State
     const [profileName, setProfileName] = useState(userName);
@@ -39,6 +45,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [showNotifications, setShowNotifications] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [workloadData, setWorkloadData] = useState<WorkloadMap>({});
     const [showBroadcastModal, setShowBroadcastModal] = useState(false);
     const [broadcastForm, setBroadcastForm] = useState({ message: '', type: 'system' as 'urgent' | 'system' });
     const [isBroadcasting, setIsBroadcasting] = useState(false);
@@ -135,12 +142,33 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         // Subscribe to tasks, subtasks, profiles, and notifications
         const taskChannel = supabase
             .channel('manager-dashboard-realtime')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => refreshData(true))
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'subtasks' }, () => refreshData(true))
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => refreshData(true))
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => refreshData(true))
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => refreshData(true))
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'attachments' }, () => refreshData(true))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
+                refreshData(true);
+                router.refresh();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'subtasks' }, () => {
+                refreshData(true);
+                router.refresh();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+                refreshData(true);
+                router.refresh();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+                refreshData(true);
+                router.refresh();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => {
+                refreshData(true);
+                router.refresh();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'attachments' }, () => {
+                refreshData(true);
+                router.refresh();
+            })
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_logs' }, () => {
+                refreshAuditLogs();
+            })
             .subscribe();
 
         return () => {
@@ -148,12 +176,39 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         };
     }, []);
 
+    const refreshAuditLogs = async () => {
+        try {
+            // Use existing tasks to get orgId if possible
+            const targetOrgId = tasks[0]?.org_id;
+            if (targetOrgId) {
+                const logs = await getOrgActivityFeed(targetOrgId);
+                setAuditLogs(logs);
+                return;
+            }
+            
+            // Fallback to fetching tasks if state is empty
+            const fetchedTasks = await getTasks();
+            if (fetchedTasks.length > 0) {
+                const logs = await getOrgActivityFeed(fetchedTasks[0].org_id);
+                setAuditLogs(logs);
+            }
+        } catch (error) {
+            console.error("Error fetching audit logs:", error);
+        }
+    };
+
     const refreshData = async (silent = true) => {
         if (!silent) setLoading(true);
         try {
             const [fetchedTasks, fetchedProfiles] = await Promise.all([getTasks(), getProfiles()]);
             setTasks(fetchedTasks);
             setEmployees(fetchedProfiles);
+
+            // Fetch Audit Logs
+            if (fetchedTasks.length > 0) {
+                const logs = await getOrgActivityFeed(fetchedTasks[0].org_id);
+                setAuditLogs(logs);
+            }
             
             // Sync selected task if it's open
             if (selectedTask) {
@@ -180,10 +235,10 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             setCommentCounts(counts.comments);
             setAttachmentCounts(counts.attachments);
 
-            // Fetch notifications
-            const notifs = await getNotifications(userId);
-            setNotifications(notifs);
-            setUnreadCount(notifs.filter(n => !n.is_read).length);
+            // Fetch workload data
+            const workload = await getWorkloadHeatmap();
+            setWorkloadData(workload);
+
             return { tasks: fetchedTasks, profiles: fetchedProfiles };
         } catch (error) {
             console.error("Error refreshing dashboard data:", error);
@@ -228,6 +283,13 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         return { days, employeeTasks, startDate: start, endDate: end };
     }, [tasks, employees, viewMode]);
 
+
+    const handleEmployeeActivityClick = (employee: Profile) => {
+        setSearchQuery(employee.name);
+        setActiveTab('board');
+        // Scroll to top to ensure the search results are visible
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const handleTaskClick = async (task: Task) => {
         const subtasks = await getSubtasks(task.id);
@@ -1162,11 +1224,76 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             {/* Board View */}
                             <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
                                 <div className="flex gap-8 h-full min-w-max pb-4">
-                                    <BoardColumn title="TO DO" tasks={tasks.filter(t => t.status === 'To Do' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
-                                    <BoardColumn title="IN PROGRESS" tasks={tasks.filter(t => t.status === 'In Progress' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
-                                    <BoardColumn title="IN REVIEW" tasks={tasks.filter(t => t.status === 'In Review' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
-                                    <BoardColumn title="BLOCKED" tasks={tasks.filter(t => t.status === 'Blocked' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
-                                    <BoardColumn title="COMPLETED" tasks={tasks.filter(t => t.status === 'Completed' && (t.name.toLowerCase().includes(searchQuery.toLowerCase()) || (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase())))} subtasksMap={subtasksMap} commentCounts={commentCounts} attachmentCounts={attachmentCounts} employees={employees} onTaskClick={handleTaskClick} onDeleteTask={handleDeleteTask} />
+                                    <BoardColumn 
+                                        title="TO DO" 
+                                        tasks={tasks.filter(t => t.status === 'To Do' && (
+                                            t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                            employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+                                        ))} 
+                                        subtasksMap={subtasksMap} 
+                                        commentCounts={commentCounts} 
+                                        attachmentCounts={attachmentCounts} 
+                                        employees={employees} 
+                                        onTaskClick={handleTaskClick} 
+                                        onDeleteTask={handleDeleteTask} 
+                                    />
+                                    <BoardColumn 
+                                        title="IN PROGRESS" 
+                                        tasks={tasks.filter(t => t.status === 'In Progress' && (
+                                            t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                            employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+                                        ))} 
+                                        subtasksMap={subtasksMap} 
+                                        commentCounts={commentCounts} 
+                                        attachmentCounts={attachmentCounts} 
+                                        employees={employees} 
+                                        onTaskClick={handleTaskClick} 
+                                        onDeleteTask={handleDeleteTask} 
+                                    />
+                                    <BoardColumn 
+                                        title="IN REVIEW" 
+                                        tasks={tasks.filter(t => t.status === 'In Review' && (
+                                            t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                            employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+                                        ))} 
+                                        subtasksMap={subtasksMap} 
+                                        commentCounts={commentCounts} 
+                                        attachmentCounts={attachmentCounts} 
+                                        employees={employees} 
+                                        onTaskClick={handleTaskClick} 
+                                        onDeleteTask={handleDeleteTask} 
+                                    />
+                                    <BoardColumn 
+                                        title="BLOCKED" 
+                                        tasks={tasks.filter(t => t.status === 'Blocked' && (
+                                            t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                            employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+                                        ))} 
+                                        subtasksMap={subtasksMap} 
+                                        commentCounts={commentCounts} 
+                                        attachmentCounts={attachmentCounts} 
+                                        employees={employees} 
+                                        onTaskClick={handleTaskClick} 
+                                        onDeleteTask={handleDeleteTask} 
+                                    />
+                                    <BoardColumn 
+                                        title="COMPLETED" 
+                                        tasks={tasks.filter(t => t.status === 'Completed' && (
+                                            t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                            (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                            employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+                                        ))} 
+                                        subtasksMap={subtasksMap} 
+                                        commentCounts={commentCounts} 
+                                        attachmentCounts={attachmentCounts} 
+                                        employees={employees} 
+                                        onTaskClick={handleTaskClick} 
+                                        onDeleteTask={handleDeleteTask} 
+                                    />
                                 </div>
                             </div>
 
@@ -1286,13 +1413,65 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     )}
 
                     {activeTab === 'planning' && (
-                        <div className="h-[calc(100vh-180px)] min-h-[600px]">
-                            <TimelineSchedule 
-                                tasks={tasks} 
-                                employees={employees} 
-                                onTaskClick={handleTaskClick}
-                                refreshData={refreshData}
-                            />
+                        <div className="space-y-8 h-[calc(100vh-140px)] overflow-y-auto pr-2 pb-10">
+                            <WorkloadHeatmap data={workloadData || {}} />
+                            
+                            <div className="bg-white rounded-[32px] border border-[#e5e5ea] overflow-hidden flex-1 min-h-[600px] shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
+                                <TimelineSchedule 
+                                    tasks={tasks} 
+                                    employees={employees} 
+                                    onTaskClick={handleTaskClick}
+                                    onEmployeeClick={handleEmployeeActivityClick}
+                                    refreshData={refreshData}
+                                />
+                            </div>
+
+                            {/* Team Activity Feed */}
+                            <div className="bg-white rounded-[32px] border border-[#e5e5ea] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div>
+                                        <h3 className="text-xl font-black text-[#1d1d1f] tracking-tight">Team Activity Feed</h3>
+                                        <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">Real-time system updates</p>
+                                    </div>
+                                    <div className="p-3 rounded-2xl bg-[#f5f5f7] text-[#86868b] border border-[#e5e5ea]">
+                                        <Clock size={20} strokeWidth={2.5} />
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {auditLogs.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-20 bg-[#f5f5f7]/50 rounded-[24px] border-2 border-dashed border-[#eceef0]">
+                                            <div className="text-4xl mb-4">📜</div>
+                                            <p className="text-[11px] font-black text-[#86868b] uppercase tracking-widest">No activity recorded yet</p>
+                                        </div>
+                                    ) : (
+                                        auditLogs.map((log) => (
+                                            <div key={log.id} className="flex gap-4 p-4 rounded-2xl hover:bg-[#f5f5f7] transition-all border border-transparent hover:border-[#eceef0] group/log">
+                                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 font-black text-[12px] text-[#1d1d1f] border border-[#eceef0] shadow-sm group-hover/log:border-[#0071e3] group-hover/log:text-[#0071e3] transition-colors">
+                                                    {log.actor_name?.charAt(0) || 'S'}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[13px] font-medium text-[#1d1d1f] leading-relaxed group-hover/log:text-black transition-colors">
+                                                        {formatAuditEntry(log)}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-1.5">
+                                                        <span className="text-[9px] font-black text-[#86868b] uppercase tracking-widest bg-[#f5f5f7] px-2 py-0.5 rounded-md border border-[#eceef0]">
+                                                            {log.table_name}
+                                                        </span>
+                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${
+                                                            log.action === 'INSERT' ? 'bg-[#34c759]/10 text-[#34c759] border-[#34c759]/20' : 
+                                                            log.action === 'UPDATE' ? 'bg-[#ff9500]/10 text-[#ff9500] border-[#ff9500]/20' : 
+                                                            'bg-[#ff3b30]/10 text-[#ff3b30] border-[#ff3b30]/20'
+                                                        }`}>
+                                                            {log.action}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
 
@@ -1510,7 +1689,12 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-6">
+                            <div className="grid grid-cols-1 gap-12">
+                                <section>
+                                    <h3 className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.3em] mb-6">Task Digest</h3>
+                                    <DigestSettings />
+                                </section>
+                                
                                 <Card className="p-6 rounded-2xl border-[#eceef0]">
                                     <h3 className="text-[10px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
                                         <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">👤</span>
