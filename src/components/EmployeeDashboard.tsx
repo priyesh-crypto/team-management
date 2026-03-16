@@ -1416,6 +1416,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                                 tasks={allTasks} 
                                 employees={employees} 
                                 onTaskClick={(task) => setSelectedTask({ task, subtasks: [] })} 
+                                onEmployeeClick={() => {}} // Not needed in employee view
                                 refreshData={refreshData}
                             />
                         </div>
