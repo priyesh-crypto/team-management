@@ -148,7 +148,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         };
     }, []);
 
-    const refreshData = async (silent = false) => {
+    const refreshData = async (silent = true) => {
         if (!silent) setLoading(true);
         try {
             const [fetchedTasks, fetchedProfiles] = await Promise.all([getTasks(), getProfiles()]);

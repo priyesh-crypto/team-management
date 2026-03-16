@@ -237,8 +237,8 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         refreshData();
     }, [userId]);
 
-    const refreshData = async () => {
-        setLoading(true);
+    const refreshData = async (silent = true) => {
+        if (!silent) setLoading(true);
         try {
             const [tasks, profiles] = await Promise.all([getTasks(), getProfiles()]);
 
