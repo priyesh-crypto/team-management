@@ -63,6 +63,9 @@ BEGIN
     ELSIF TG_TABLE_NAME = 'profiles' THEN
       SELECT org_id INTO v_org_id FROM public.organization_members WHERE user_id = OLD.id LIMIT 1;
       v_target_name := OLD.name;
+    ELSIF TG_TABLE_NAME = 'projects' THEN
+      v_org_id      := OLD.org_id;
+      v_target_name := OLD.name;
     END IF;
     
   ELSIF TG_OP = 'INSERT' THEN
@@ -78,6 +81,9 @@ BEGIN
     ELSIF TG_TABLE_NAME = 'profiles' THEN
       SELECT org_id INTO v_org_id FROM public.organization_members WHERE user_id = NEW.id LIMIT 1;
       v_target_name := NEW.name;
+    ELSIF TG_TABLE_NAME = 'projects' THEN
+      v_org_id      := NEW.org_id;
+      v_target_name := NEW.name;
     END IF;
     
   ELSE -- UPDATE
@@ -92,6 +98,9 @@ BEGIN
       SELECT org_id, name INTO v_org_id, v_target_name FROM public.tasks WHERE id = NEW.task_id;
     ELSIF TG_TABLE_NAME = 'profiles' THEN
       SELECT org_id INTO v_org_id FROM public.organization_members WHERE user_id = NEW.id LIMIT 1;
+      v_target_name := NEW.name;
+    ELSIF TG_TABLE_NAME = 'projects' THEN
+      v_org_id      := NEW.org_id;
       v_target_name := NEW.name;
     END IF;
 
@@ -147,9 +156,14 @@ CREATE TRIGGER audit_comments
   FOR EACH ROW EXECUTE FUNCTION public.log_audit_event();
 
 -- Profiles
-DROP TRIGGER IF EXISTS audit_profiles ON public.profiles;
 CREATE TRIGGER audit_profiles
   AFTER UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.log_audit_event();
+
+-- Projects
+DROP TRIGGER IF EXISTS audit_projects ON public.projects;
+CREATE TRIGGER audit_projects
+  AFTER INSERT OR UPDATE OR DELETE ON public.projects
   FOR EACH ROW EXECUTE FUNCTION public.log_audit_event();
 
 -- 4. RLS Policies

@@ -21,6 +21,7 @@ export type Task = {
     id: string
     org_id: string
     workspace_id: string
+    project_id?: string
     employee_id: string // Owner
     assignee_ids?: string[] // Collaborators
     name: string
@@ -134,6 +135,29 @@ export type AuditLog = {
   created_at: string;
 };
 
+export type Project = {
+    id: string
+    org_id: string
+    name: string
+    description?: string
+    color: string
+    icon: string
+    status: 'active' | 'archived'
+    created_by: string
+    created_at: string
+    updated_at: string
+    // Virtual fields
+    task_count?: number
+    member_count?: number
+}
+
+export type ProjectMember = {
+    project_id: string
+    user_id: string
+    role: 'lead' | 'member' | 'viewer'
+    joined_at: string
+}
+
 
 export async function requireOrgContext() {
     const supabase = await createClient()
@@ -165,7 +189,7 @@ export async function requireOrgContext() {
     }
 }
 
-export async function getProfiles(): Promise<Profile[]> {
+export async function getProfiles(projectId?: string): Promise<Profile[]> {
     const supabase = await createClient()
     
     let orgId;
@@ -178,40 +202,32 @@ export async function getProfiles(): Promise<Profile[]> {
         return []; // If not logged in or no org, return empty
     }
 
-    const { data: members, error: memError } = await supabase
-        .from('organization_members')
+    // 1. Get members (Either organization-wide or project-specific)
+    let query = supabase
+        .from(projectId ? 'project_members' : 'organization_members')
         .select('user_id, role')
-        .eq('org_id', orgId);
+        .eq(projectId ? 'project_id' : 'org_id', projectId || orgId);
 
-    if (memError || !members) return [];
+    const { data: members, error: memError } = await query;
 
+    if (memError || !members) {
+        console.error("[getProfiles] error:", memError);
+        return [];
+    }
+    
+    console.log(`[getProfiles] found ${members.length} members for project ${projectId || 'org'}`);
+    
     const userIds = members.map(m => m.user_id);
+    if (userIds.length === 0) {
+        console.log("[getProfiles] userIds is empty");
+        return [];
+    }
 
     const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
         .in('id', userIds);
     
-    let finalProfiles: Profile[] = profiles || [];
-    
-    // Fallback: If some members don't have profiles yet, create synthetic ones
-    if (finalProfiles.length < userIds.length) {
-        const missingUserIds = userIds.filter(id => !finalProfiles.find(p => p.id === id));
-        for (const missingId of missingUserIds) {
-            const memberInfo = members.find(m => m.user_id === missingId);
-            finalProfiles.push({
-                id: missingId,
-                name: 'Unknown Member', // Will be enriched by auth users below if possible
-                role: (memberInfo?.role as any) || 'employee'
-            });
-        }
-    }
-
-    if (error && finalProfiles.length === 0) {
-        console.error("Error fetching profiles:", error)
-        return []
-    }
-
     // Fetch Auth Users for emails and fallback names (requires Admin API)
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
     let authUsers: any[] = [];
@@ -274,14 +290,204 @@ export async function getBulkSubtasks(taskIds: string[]): Promise<Subtask[]> {
     return data || []
 }
 
-export async function getTasks(): Promise<Task[]> {
-    const supabase = await createClient()
-    const { data, error } = await supabase.from('tasks').select('*')
-    if (error) {
-        console.error("Error fetching tasks:", error)
-        return []
+export async function getTasks(projectId?: string): Promise<Task[]> {
+    try {
+        const supabase = await createClient()
+        const context = await requireOrgContext().catch(() => null);
+        
+        // If no context, return empty (likely not logged in)
+        if (!context) {
+            console.warn("[getTasks] No organization context found.");
+            return [];
+        }
+
+        // We query the tasks table directly to be robust against view creation failures
+        let query = supabase
+            .from('tasks')
+            .select(`
+                *,
+                project:projects(name, color, icon),
+                profiles:profiles(name)
+            `)
+            .eq('org_id', context.orgId);
+        
+        if (projectId && projectId !== 'all') {
+            query = query.eq('project_id', projectId);
+        }
+
+        const { data, error } = await query;
+        
+        if (error) {
+            console.error("[getTasks] Supabase Error:", error);
+            // Fallback: try without the join if projects table is missing
+            if (error.code === '42P01') { // relation does not exist
+                console.log("[getTasks] Projects table not found, falling back to simple task query");
+                const { data: simpleData, error: simpleError } = await supabase
+                    .from('tasks')
+                    .select('*')
+                    .eq('org_id', context.orgId);
+                
+                if (simpleError) {
+                    console.error("[getTasks] Fallback Error:", simpleError);
+                    return [];
+                }
+                return simpleData || [];
+            }
+            return [];
+        }
+
+        console.log(`[getTasks] Fetched ${(data || []).length} tasks for org ${context.orgId} (Project: ${projectId || 'all'})`);
+
+        // Map join data to expected format if needed
+        const tasks = (data || []).map((t: any) => ({
+            ...t,
+            project_name: t.project?.name,
+            project_color: t.project?.color,
+            project_icon: t.project?.icon,
+            assignee_name: t.profiles?.name
+        })) as Task[];
+
+        return tasks;
+    } catch (err) {
+        console.error("[getTasks] Unexpected Error:", err);
+        return [];
     }
-    return data || []
+}
+
+export async function getProjects(): Promise<Project[]> {
+    const supabase = await createClient()
+    const context = await requireOrgContext().catch(() => null);
+    if (!context) return [];
+
+    const { data, error } = await supabase
+        .from('projects')
+        .select(`
+            *,
+            project_members(count),
+            tasks(count)
+        `)
+        .eq('org_id', context.orgId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error("Error fetching projects:", error);
+        return [];
+    }
+    
+    return (data || []).map((p: any) => ({
+        ...p,
+        member_count: p.project_members?.[0]?.count || 0,
+        task_count: p.tasks?.[0]?.count || 0
+    })) as Project[];
+}
+
+export async function getProject(projectId: string): Promise<Project | null> {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single()
+
+    if (error) {
+        console.error("Error fetching project:", error)
+        return null
+    }
+    return data
+}
+
+export async function createProject(input: {
+    name: string
+    description?: string
+    color: string
+    memberIds: string[]
+}) {
+    const { userId, orgId } = await requireOrgContext();
+    const supabase = await createClient();
+
+    // Verify manager role
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+    
+    if (profile?.role !== 'manager') {
+        throw new Error("Unauthorized: Only managers can create projects.");
+    }
+
+    const { data: project, error } = await supabase
+        .from('projects')
+        .insert({
+            name: input.name,
+            description: input.description,
+            color: input.color,
+            org_id: orgId,
+            created_by: userId
+        })
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Error creating project:", error);
+        throw error;
+    }
+
+    // Add selected members
+    const members = [
+        { project_id: project.id, user_id: userId, role: 'lead' },
+        ...input.memberIds.filter(id => id !== userId).map(uid => ({
+            project_id: project.id,
+            user_id: uid,
+            role: 'member' as const
+        }))
+    ];
+
+    const { error: membersError } = await supabase.from('project_members').insert(members);
+    
+    if (membersError) {
+        console.error("Error adding project members:", membersError);
+        throw new Error("Project created but failed to add team members: " + membersError.message);
+    }
+    
+    revalidatePath('/dashboard');
+    return project;
+}
+
+export async function deleteProject(id: string) {
+    const supabase = await createClient();
+    const { orgId, userId } = await requireOrgContext();
+
+    // Verify manager role for security
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+    
+    if (profile?.role !== 'manager') {
+        throw new Error("Unauthorized: Only managers can delete projects.");
+    }
+
+    const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', id)
+        .eq('org_id', orgId);
+
+    if (error) {
+        console.error("Error deleting project:", error);
+        throw error;
+    }
+
+    revalidatePath('/dashboard');
+}
+
+export async function logout() {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+    revalidatePath('/');
 }
 
 export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_id" | "workspace_id">) {
@@ -291,21 +497,28 @@ export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_i
 
     const supabase = await createClient();
 
-    // Duplication Check
+    // Duplication Check (scoped to project)
     const { data: existingTask, error: checkError } = await supabase
       .from("tasks")
       .select("id")
       .ilike("name", taskData.name)
       .eq("org_id", orgId)
+      .filter('project_id', taskData.project_id ? 'eq' : 'is', taskData.project_id || null)
       .limit(1)
       .maybeSingle();
 
     if (checkError) console.error("Error checking for duplicate task:", checkError);
-    if (existingTask) return { success: false, error: `A task with the name "${taskData.name}" already exists.` };
+    if (existingTask) return { success: false, error: `A task with the name "${taskData.name}" already exists in this project.` };
+
+    const sanitizedData = {
+      ...taskData,
+      project_id: taskData.project_id && taskData.project_id !== "" ? taskData.project_id : null,
+      employee_id: taskData.employee_id && taskData.employee_id !== "" ? taskData.employee_id : null,
+    };
 
     const { data: task, error } = await supabase
       .from("tasks")
-      .insert([{ ...taskData, org_id: orgId, workspace_id: workspaceId }])
+      .insert([{ ...sanitizedData, org_id: orgId, workspace_id: workspaceId }])
       .select()
       .single();
 
@@ -357,7 +570,10 @@ export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'i
     const { userId, orgId } = await requireOrgContext();
     const supabase = await createClient()
 
-    const { id: _id, created_at: _created_at, ...sanitizedData } = taskData as any;
+    const { id: _id, created_at: _created_at, ...rawUpdateData } = taskData as any;
+    const sanitizedData = { ...rawUpdateData };
+    if (sanitizedData.project_id === "") sanitizedData.project_id = null;
+    if (sanitizedData.employee_id === "") sanitizedData.employee_id = null;
 
     const { data: task, error } = await supabase
         .from('tasks')
@@ -1261,23 +1477,34 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
 
     revalidatePath('/')
 }
-export async function getWorkloadHeatmap(): Promise<WorkloadMap> {
+export async function getWorkloadHeatmap(projectId?: string): Promise<WorkloadMap> {
     const { orgId } = await requireOrgContext();
     const supabase = await createClient();
 
     try {
-        const { data, error } = await supabase
+        let userIds: string[] = [];
+        if (projectId) {
+            const { data: members } = await supabase
+                .from('project_members')
+                .select('user_id')
+                .eq('project_id', projectId);
+            userIds = (members || []).map(m => m.user_id);
+            if (userIds.length === 0) return {};
+        }
+
+        let query = supabase
             .from('workload_heatmap')
             .select('*')
             .eq('org_id', orgId);
+        
+        if (projectId) {
+            query = query.in('user_id', userIds);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
-            console.error("[getWorkloadHeatmap] Supabase Error:", {
-                code: error.code,
-                message: error.message,
-                details: error.details,
-                hint: error.hint,
-            });
+            console.error("[getWorkloadHeatmap] Supabase Error:", error);
             return {};
         }
 
@@ -1289,7 +1516,6 @@ export async function getWorkloadHeatmap(): Promise<WorkloadMap> {
                 acc[row.user_id] = { name: row.full_name, days: {} };
             }
             
-            // Map snake_case database fields to camelCase component keys
             acc[row.user_id].days[row.day] = {
                 tasks: Number(row.task_count) || 0,
                 hours: Number(row.hours_logged) || 0,

@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
 import TimelineSchedule from '@/components/ui/TimelineSchedule';
-import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, updateTaskStatus, deleteTask, updateTask, getSubtasks, getBulkSubtasks, saveSubtask, updateSubtaskStatus, updateSubtaskHours, deleteSubtask, updateSubtask, updateProfile, changePassword, updateOwnPassword, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, Project, getTasks, getProjects, getProfiles, saveTask, updateTaskStatus, deleteTask, updateTask, getSubtasks, getBulkSubtasks, saveSubtask, updateSubtaskStatus, updateSubtaskHours, deleteSubtask, updateSubtask, updateProfile, changePassword, updateOwnPassword, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification } from '@/app/actions/actions';
 import { Card, Button, Input, Select, Badge } from '@/components/ui/components';
+import { ProjectSwitcher } from '@/components/ProjectSwitcher';
 import { Menu, X, Clock } from 'lucide-react';
 
 // Helper component for Sidebar items
@@ -60,7 +62,8 @@ const CircularProgress = ({ percentage, color = "#0071e3" }: { percentage: numbe
     );
 };
 
-export default function EmployeeDashboard({ userId, userName }: { userId: string, userName: string }) {
+export default function EmployeeDashboard({ userId, userName, projectId, userRole }: { userId: string, userName: string, projectId?: string, userRole: 'employee' | 'manager' }) {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<'mine' | 'team' | 'schedule' | 'settings'>('mine');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTask, setSelectedTask] = useState<{ task: Task, subtasks: Subtask[] } | null>(null);
@@ -70,31 +73,22 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
     const [allTasks, setAllTasks] = useState<Task[]>([]);
     const [myTasks, setMyTasks] = useState<Task[]>([]);
     const [employees, setEmployees] = useState<Profile[]>([]);
+    const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Form State
-    const [formData, setFormData] = useState<{
-        name: string,
-        start_date: string,
-        deadline: string,
-        priority: Priority,
-        hours_spent: number,
-        status: Status,
-        notes: string,
-        start_time: string,
-        end_time: string,
-        assignee_ids: string[]
-    }>({
+    const [formData, setFormData] = useState({
         name: '',
+        project_id: projectId || '',
         start_date: new Date().toISOString().split('T')[0],
         deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        priority: 'Medium',
+        priority: 'Medium' as Priority,
         hours_spent: 0,
-        status: 'To Do',
+        status: 'To Do' as Status,
         notes: '',
         start_time: '09:00',
         end_time: '17:00',
-        assignee_ids: []
+        assignee_ids: [] as string[]
     });
 
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -240,7 +234,12 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
     const refreshData = async (silent = true) => {
         if (!silent) setLoading(true);
         try {
-            const [tasks, profiles] = await Promise.all([getTasks(), getProfiles()]);
+            const [tasks, profiles, fetchedProjects] = await Promise.all([
+                getTasks(projectId), 
+                getProfiles(projectId), // Fetch only project members if projectId is present
+                getProjects()
+            ]);
+            setProjects(fetchedProjects);
 
             setAllTasks(tasks);
             const myTasksFiltered = tasks.filter(t => t.employee_id === userId || (t.assignee_ids && t.assignee_ids.includes(userId)));
@@ -332,6 +331,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                 setFormData(prev => ({
                     ...prev,
                     name: '',
+                    project_id: projectId || '',
                     hours_spent: 0,
                     notes: '',
                     assignee_ids: []
@@ -1096,6 +1096,10 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                             <NavItem icon="👥" label="TEAM STATUS" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
                             <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
                             
+                            <div className="mt-4 border-t border-[#f5f5f7] pt-2">
+                                <ProjectSwitcher projects={projects} userRole={userRole} />
+                            </div>
+                            
                             <div className="pt-6 pb-2">
                                 <h4 className="px-4 text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-4">Account</h4>
                                 <Button variant="secondary" className="w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl text-[11px] font-black tracking-widest h-auto border-none bg-transparent hover:bg-[#f5f5f7]" onClick={() => window.location.href = '/'}>
@@ -1162,6 +1166,10 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                         active={activeTab === 'settings'}
                         onClick={() => setActiveTab('settings')}
                     />
+
+                    <div className="mt-6 border-t border-[#f5f5f7] pt-4">
+                        <ProjectSwitcher projects={projects} userRole={userRole} />
+                    </div>
                 </nav>
 
                 <div className="px-6 mb-4">
@@ -1463,6 +1471,19 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
                     <Card className="border border-[#e5e5ea] p-6 shadow-sm">
                         <h3 className="text-sm font-black mb-4 text-[#1d1d1f] uppercase tracking-widest">Log New Task</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-bold mb-1 text-[#86868b] uppercase">Project</label>
+                                <Select 
+                                    value={formData.project_id} 
+                                    onChange={e => setFormData({ ...formData, project_id: e.target.value })}
+                                    className="h-10 text-xs"
+                                >
+                                    <option value="">No Project (General)</option>
+                                    {projects.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </Select>
+                            </div>
                             <div>
                                 <label className="block text-[10px] font-bold mb-1 text-[#86868b] uppercase">Task Name</label>
                                 <Input

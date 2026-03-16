@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Task, Subtask, Profile, Priority, Status, getTasks, getProfiles, saveTask, inviteMember, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, getBulkCounts, getAttachments, Attachment, getWorkloadHeatmap, WorkloadMap, AuditLog, getTaskAuditLog, getMemberActivity, getOrgActivityFeed } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, Project, getTasks, getProfiles, getProjects, saveTask, inviteMember, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskStatus, deleteTask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, getBulkCounts, getAttachments, Attachment, getWorkloadHeatmap, WorkloadMap, AuditLog, getTaskAuditLog, getMemberActivity, getOrgActivityFeed } from '@/app/actions/actions';
 import { formatAuditEntry } from '@/utils/audit-formatters';
 import { useRouter } from 'next/navigation';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
@@ -9,10 +9,11 @@ import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
 import TimelineSchedule from '@/components/ui/TimelineSchedule';
 import { WorkloadHeatmap } from '@/components/WorkloadHeatmap';
 import { DigestSettings } from '@/components/DigestSettings';
+import { ProjectSwitcher } from '@/components/ProjectSwitcher';
 import { Pencil, Trash2, Menu, X, Calendar, Clock } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
-export default function ManagerDashboard({ userId, userName }: { userId: string, userName: string }) {
+export default function ManagerDashboard({ userId, userName, projectId, userRole }: { userId: string, userName: string, projectId?: string, userRole: 'employee' | 'manager' }) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'board' | 'mine' | 'planning' | 'team' | 'settings'>('board');
     const [searchQuery, setSearchQuery] = useState('');
@@ -23,7 +24,9 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
 
     // Data State
     const [tasks, setTasks] = useState<Task[]>([]); // This will hold all tasks
-    const [employees, setEmployees] = useState<Profile[]>([]);
+    const [employees, setEmployees] = useState<Profile[]>([]); // organization wide
+    const [projectMembers, setProjectMembers] = useState<Profile[]>([]); // project specific
+    const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [subtasksMap, setSubtasksMap] = useState<Record<string, Subtask[]>>({});
     const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
@@ -83,6 +86,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
         name: '',
         employee_id: '',
         assignee_ids: [],
+        project_id: projectId || '',
         start_date: new Date().toISOString().split('T')[0],
         deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         priority: 'Medium',
@@ -93,6 +97,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     // Personal Task Logging State (from EmployeeDashboard)
     const [logForm, setLogForm] = useState({
         name: '',
+        project_id: projectId || '',
         start_date: new Date().toISOString().split('T')[0],
         deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         priority: 'Medium' as Priority,
@@ -200,9 +205,16 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
     const refreshData = async (silent = true) => {
         if (!silent) setLoading(true);
         try {
-            const [fetchedTasks, fetchedProfiles] = await Promise.all([getTasks(), getProfiles()]);
+            const [fetchedTasks, fetchedProfiles, fetchedProjects, fetchedProjectMembers] = await Promise.all([
+                getTasks(projectId), 
+                getProfiles(),
+                getProjects(),
+                projectId ? getProfiles(projectId) : Promise.resolve([])
+            ]);
             setTasks(fetchedTasks);
             setEmployees(fetchedProfiles);
+            setProjects(fetchedProjects);
+            setProjectMembers(fetchedProjectMembers);
 
             // Fetch Audit Logs
             if (fetchedTasks.length > 0) {
@@ -236,7 +248,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             setAttachmentCounts(counts.attachments);
 
             // Fetch workload data
-            const workload = await getWorkloadHeatmap();
+            const workload = await getWorkloadHeatmap(projectId);
             setWorkloadData(workload);
 
             return { tasks: fetchedTasks, profiles: fetchedProfiles };
@@ -312,6 +324,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             if (result.success) {
                 setLogForm({
                     name: '',
+                    project_id: projectId || '',
                     start_date: new Date().toISOString().split('T')[0],
                     deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0],
                     priority: 'Medium',
@@ -960,6 +973,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
             setShowAssignModal(false);
             setAssignForm({ 
                 name: '', 
+                project_id: projectId || '',
                 employee_id: '', 
                 assignee_ids: [],
                 start_date: new Date().toISOString().split('T')[0], 
@@ -1022,6 +1036,10 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => { setActiveTab('planning'); setIsMobileMenuOpen(false); }} />
                             <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
                             <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
+                            
+                            <div className="mt-4 border-t border-[#f5f5f7] pt-2">
+                                <ProjectSwitcher projects={projects} userRole={userRole} />
+                            </div>
                         </nav>
 
                         <div className="mt-10 p-4 bg-[#f5f5f7] rounded-[24px] border border-[#e5e5ea]">
@@ -1056,6 +1074,10 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                     <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => setActiveTab('planning')} />
                     <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
                     <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+                    
+                    <div className="mt-4 border-t border-[#f5f5f7] pt-2">
+                        <ProjectSwitcher projects={projects} userRole={userRole} />
+                    </div>
                 </nav>
 
                 <div className="mt-auto p-5 bg-[#f5f5f7]/50 rounded-[32px] border border-[#e5e5ea]/50 shadow-sm">
@@ -1419,7 +1441,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             <div className="bg-white rounded-[32px] border border-[#e5e5ea] overflow-hidden flex-1 min-h-[600px] shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
                                 <TimelineSchedule 
                                     tasks={tasks} 
-                                    employees={employees} 
+                                    employees={projectId ? projectMembers : employees} 
                                     onTaskClick={handleTaskClick}
                                     onEmployeeClick={handleEmployeeActivityClick}
                                     refreshData={refreshData}
@@ -1445,7 +1467,9 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                             <p className="text-[11px] font-black text-[#86868b] uppercase tracking-widest">No activity recorded yet</p>
                                         </div>
                                     ) : (
-                                        auditLogs.map((log) => (
+                                        auditLogs
+                                            .filter(log => !projectId || projectMembers.some(m => m.id === log.actor_id))
+                                            .map((log) => (
                                             <div key={log.id} className="flex gap-4 p-4 rounded-2xl hover:bg-[#f5f5f7] transition-all border border-transparent hover:border-[#eceef0] group/log">
                                                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 font-black text-[12px] text-[#1d1d1f] border border-[#eceef0] shadow-sm group-hover/log:border-[#0071e3] group-hover/log:text-[#0071e3] transition-colors">
                                                     {log.actor_name?.charAt(0) || 'S'}
@@ -1515,9 +1539,11 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             </Card>
 
                             <Card className="p-6 rounded-2xl border-[#eceef0]">
-                                <h3 className="text-base font-black mb-4 text-[#1d1d1f] tracking-tight">Active Members</h3>
+                                <h3 className="text-base font-black mb-4 text-[#1d1d1f] tracking-tight">
+                                    {projectId ? 'Project Members' : 'Active Members'}
+                                </h3>
                                 <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {employees.filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map(emp => (
+                                    {(projectId ? projectMembers : employees).filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map(emp => (
                                         <div key={emp.id} className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] flex items-center justify-between group hover:border-[#0071e3] transition-colors min-w-0">
                                             <div className="flex items-center gap-3 min-w-0 flex-1">
                                                 <div className="w-8 h-8 rounded-full bg-white border border-[#e5e5ea] flex items-center justify-center text-[10px] font-black shadow-sm group-hover:bg-[#0071e3] group-hover:text-white transition-all flex-shrink-0">
@@ -1587,6 +1613,20 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                                 placeholder="What are you working on?" 
                                                 className="w-full h-12 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[11px] font-bold outline-none focus:ring-2 ring-[#0071e3]/20 transition-all placeholder:text-[#86868b]/50" 
                                             />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Project</label>
+                                            <select 
+                                                value={logForm.project_id} 
+                                                onChange={e => setLogForm({ ...logForm, project_id: e.target.value })}
+                                                className="w-full h-12 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[11px] font-bold outline-none focus:ring-2 ring-[#0071e3]/20 transition-all appearance-none cursor-pointer"
+                                            >
+                                                <option value="">No Project (General)</option>
+                                                {projects.map(p => (
+                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                ))}
+                                            </select>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
@@ -1788,9 +1828,24 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                             <div className="space-y-6">
                                 <div className="space-y-4">
                                     <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Project</label>
+                                        <Select 
+                                            value={assignForm.project_id} 
+                                            onChange={e => setAssignForm({ ...assignForm, project_id: e.target.value })}
+                                            className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold"
+                                        >
+                                            <option value="">No Project (General)</option>
+                                            {projects.map(p => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                        </Select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Owner</label>
                                         <Select required value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
                                             <option value="">Select owner</option>
-                                            {employees.map(emp => (
+                                            {(projectId ? projectMembers : employees).map(emp => (
                                                 <option key={emp.id} value={emp.id}>{emp.name}</option>
                                             ))}
                                         </Select>
@@ -1799,7 +1854,7 @@ export default function ManagerDashboard({ userId, userName }: { userId: string,
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Additional Collaborators</label>
                                         <div className="flex flex-wrap gap-2 p-4 bg-[#f5f5f7] rounded-[24px]">
-                                            {employees.filter(e => e.id !== assignForm.employee_id).map(emp => {
+                                            {(projectId ? projectMembers : employees).filter(e => e.id !== assignForm.employee_id).map(emp => {
                                                 const isSelected = assignForm.assignee_ids?.includes(emp.id);
                                                 return (
                                                     <button
@@ -2181,12 +2236,12 @@ function BoardColumn({ title, tasks, subtasksMap, commentCounts, attachmentCount
                                     {/* Footer */}
                                     <div className="flex items-center justify-between pt-4 border-t border-black/5">
                                         <div className="flex -space-x-2">
-                                            {[task.employee_id, ...(task.assignee_ids || [])].slice(0, 4).map((id, idx) => {
+                                            {Array.from(new Set([task.employee_id, ...(task.assignee_ids || [])])).slice(0, 4).map((id, idx) => {
                                                 const emp = employees.find(e => e.id === id);
                                                 if (!emp) return null;
                                                 return (
                                                     <div 
-                                                        key={`${task.id}-avatar-${id}`} 
+                                                        key={`${task.id}-avatar-${id}-${idx}`} 
                                                         className="w-7 h-7 rounded-full bg-white border-2 border-current flex items-center justify-center text-[10px] font-black shadow-sm ring-1 ring-black/5"
                                                         title={emp.name}
                                                     >
@@ -2194,9 +2249,9 @@ function BoardColumn({ title, tasks, subtasksMap, commentCounts, attachmentCount
                                                     </div>
                                                 );
                                             })}
-                                            {[task.employee_id, ...(task.assignee_ids || [])].length > 4 && (
+                                            {Array.from(new Set([task.employee_id, ...(task.assignee_ids || [])])).length > 4 && (
                                                 <div className="w-7 h-7 rounded-full bg-white/80 border-2 border-current flex items-center justify-center text-[9px] font-black opacity-60 backdrop-blur-sm">
-                                                    +{[task.employee_id, ...(task.assignee_ids || [])].length - 4}
+                                                    +{Array.from(new Set([task.employee_id, ...(task.assignee_ids || [])])).length - 4}
                                                 </div>
                                             )}
                                         </div>

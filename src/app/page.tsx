@@ -197,36 +197,10 @@ export default async function Home() {
   }
 
   // --- RENDER AUTHENTICATED DASHBOARDS ---
-  return (
-    <div className="min-h-screen p-4 md:p-8">
-      <header className="max-w-7xl mx-auto mb-8 flex justify-between items-center bg-white/80 backdrop-blur-md rounded-2xl p-4 sticky top-4 z-50 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-[#e5e5ea]">
-        <div className="flex items-center gap-4">
-          <Logo showText={false} className="w-8 h-8" />
-          <div className="h-8 w-px bg-[#e5e5ea]" />
-          <div>
-            <h1 className="text-lg font-bold leading-none text-[#1d1d1f]">
-              {orgName}
-            </h1>
-            <span className="text-[10px] text-[#86868b] uppercase tracking-widest font-bold">
-              {profile?.role || 'employee'} portal
-            </span>
-          </div>
-        </div>
+  if (user && hasOrg) {
+    redirect('/dashboard');
+  }
 
-        <form action={logout}>
-          <Button variant="secondary" type="submit" className="text-sm">
-            Sign Out
-          </Button>
-        </form>
-      </header>
-
-      <main className="max-w-7xl mx-auto pb-20 fade-in">
-        {profile?.role === 'employee' ? (
-          <EmployeeDashboard userId={user.id} userName={profile?.name || ''} />
-        ) : (
-          <ManagerDashboard userId={user.id} userName={profile?.name || ''} />
-        )}
-      </main>
-    </div>
-  );
+  // Fallback for onboarding handled above
+  return null;
 }
