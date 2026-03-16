@@ -229,74 +229,73 @@ export async function getTasks(): Promise<Task[]> {
     return data || []
 }
 
-export async function saveTask(taskData: Omit<Task, 'id' | 'created_at' | 'org_id' | 'workspace_id'>) {
+export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_id" | "workspace_id">) {
+  try {
     const { userId, orgId, workspaceId } = await requireOrgContext();
-    if (!workspaceId) throw new Error("No default workspace found for organization.");
+    if (!workspaceId) return { success: false, error: "No default workspace found for organization." };
 
-    const supabase = await createClient()
+    const supabase = await createClient();
 
-    // Duplication Check: Check if a task with the same name already exists (case-insensitive)
+    // Duplication Check
     const { data: existingTask, error: checkError } = await supabase
-        .from('tasks')
-        .select('id')
-        .ilike('name', taskData.name)
-        .eq('org_id', orgId)
-        .limit(1)
-        .maybeSingle()
+      .from("tasks")
+      .select("id")
+      .ilike("name", taskData.name)
+      .eq("org_id", orgId)
+      .limit(1)
+      .maybeSingle();
 
-    if (checkError) {
-        console.error("Error checking for duplicate task:", checkError)
-    }
-
-    if (existingTask) {
-        throw new Error(`A task with the name "${taskData.name}" already exists. Please choose a unique name.`)
-    }
+    if (checkError) console.error("Error checking for duplicate task:", checkError);
+    if (existingTask) return { success: false, error: `A task with the name "${taskData.name}" already exists.` };
 
     const { data: task, error } = await supabase
-        .from('tasks')
-        .insert([{ ...taskData, org_id: orgId, workspace_id: workspaceId }])
-        .select()
-        .single()
+      .from("tasks")
+      .insert([{ ...taskData, org_id: orgId, workspace_id: workspaceId }])
+      .select()
+      .single();
 
     if (error) {
-        console.error("Error saving task:", error)
-        throw new Error(error.message)
+      console.error("Error saving task:", error);
+      return { success: false, error: error.message };
     }
 
     if (task) {
-        await logActivity({
-            org_id: orgId,
-            actor_id: userId,
-            task_id: task.id,
-            type: 'task_created',
-            description: `Created new task: "${task.name}"`,
-            metadata: { name: task.name }
-        });
+      await logActivity({
+        org_id: orgId,
+        actor_id: userId,
+        task_id: task.id,
+        type: "task_created",
+        description: `Created new task: "${task.name}"`,
+        metadata: { name: task.name },
+      });
 
-        // Notify owner
-        await createNotification({
-            user_id: task.employee_id,
-            type: 'system',
-            message: `New task assigned: ${task.name}`,
-            task_id: task.id
-        });
+      await createNotification({
+        user_id: task.employee_id,
+        type: "system",
+        message: `New task assigned: ${task.name}`,
+        task_id: task.id,
+      });
 
-        // Notify other assignees
-        if (task.assignee_ids && task.assignee_ids.length > 0) {
-            for (const assigneeId of task.assignee_ids) {
-                if (assigneeId !== task.employee_id) {
-                    await createNotification({
-                        user_id: assigneeId,
-                        type: 'system',
-                        message: `You were added as a collaborator to: ${task.name}`,
-                        task_id: task.id
-                    });
-                }
-            }
+      if (task.assignee_ids && task.assignee_ids.length > 0) {
+        for (const assigneeId of task.assignee_ids) {
+          if (assigneeId !== task.employee_id) {
+            await createNotification({
+              user_id: assigneeId,
+              type: "system",
+              message: `You were added as a collaborator to: ${task.name}`,
+              task_id: task.id,
+            });
+          }
         }
+      }
     }
 
-    revalidatePath('/')
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: any) {
+    console.error("Unexpected error in saveTask:", err);
+    return { success: false, error: err.message || "An unexpected error occurred" };
+  }
 }
 
 export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'id' | 'created_at' | 'org_id' | 'workspace_id'>>) {

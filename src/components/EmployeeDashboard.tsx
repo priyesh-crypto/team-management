@@ -288,7 +288,7 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
-
+        setLoading(true);
 
         const { start_time, end_time, ...taskData } = formData;
 
@@ -305,19 +305,25 @@ export default function EmployeeDashboard({ userId, userName }: { userId: string
         };
 
         try {
-            await saveTask(newTaskData);
-            refreshData();
-
-            // Reset form partially
-            setFormData(prev => ({
-                ...prev,
-                name: '',
-                hours_spent: 0,
-                notes: '',
-                assignee_ids: []
-            }));
+            const result = await saveTask(newTaskData);
+            
+            if (result.success) {
+                refreshData();
+                // Reset form partially
+                setFormData(prev => ({
+                    ...prev,
+                    name: '',
+                    hours_spent: 0,
+                    notes: '',
+                    assignee_ids: []
+                }));
+            } else {
+                setError(result.error || 'Failed to save task.');
+            }
         } catch (err: any) {
-            setError(err.message || 'Failed to save task.');
+            setError(err.message || 'An unexpected error occurred.');
+        } finally {
+            setLoading(false);
         }
     };
 
