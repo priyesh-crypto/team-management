@@ -53,10 +53,8 @@ export function EmployeeSidebar({
                     <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-6 shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
                         <div className="flex items-center justify-between mb-10 px-2 shrink-0">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-[#0071e3] to-[#00c6ff] rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg">
-                                    {userName.charAt(0)}
-                                </div>
-                                <span className="text-xl font-black tracking-tight text-[#1d1d1f]">Empower</span>
+                                <div className="w-10 h-10 bg-[#0071e3] rounded-xl flex items-center justify-center text-white font-black text-lg">MB</div>
+                                <span className="text-xl font-black tracking-tight text-[#1d1d1f]">Mindbird.ai</span>
                             </div>
                             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"><X size={20} /></button>
                         </div>
@@ -85,11 +83,12 @@ export function EmployeeSidebar({
 
             {/* DESKTOP SIDEBAR */}
             <aside className="w-56 bg-white border-r border-[#e5e5ea] flex flex-col p-5 hidden lg:flex shrink-0">
-                <div className="mb-8 flex items-center gap-3 px-2">
-                    <div className="w-8 h-8 bg-[#0071e3] rounded-lg flex items-center justify-center text-white">
-                        <Zap size={18} fill="currentColor" />
+                <div className="flex items-center gap-3 mb-8 px-1">
+                    <div className="w-8 h-8 bg-[#0071e3] rounded-lg flex items-center justify-center text-white font-black text-sm shadow-sm">MB</div>
+                    <div>
+                        <span className="text-sm font-black tracking-tight text-[#1d1d1f] leading-none block">Mindbird.ai</span>
+                        <span className="text-[10px] text-[#86868b] uppercase tracking-widest font-bold">Pro Edition</span>
                     </div>
-                    <span className="text-lg font-bold tracking-tight text-[#1d1d1f]">Lumina</span>
                 </div>
                 
                 <nav className="flex-1 space-y-1.5">

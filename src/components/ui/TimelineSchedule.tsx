@@ -387,68 +387,6 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                 </div>
             </div>
  
-            {/* Team Stats Summary */}
-            <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden">
-                <div className="px-8 py-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
-                    <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest">Resource Allocation</h3>
-                    <Badge className="bg-white text-slate-400 border-slate-100 font-bold text-[9px] px-3 py-1 uppercase tracking-widest">
-                        {employees.length} Team Members
-                    </Badge>
-                </div>
-                
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="border-b border-slate-50">
-                                <th className="px-8 py-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Member</th>
-                                <th className="px-8 py-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center">Active Tasks</th>
-                                <th className="px-8 py-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Distribution</th>
-                                <th className="px-8 py-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest text-right">Activity</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {employees.filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map((emp) => {
-                                const empTasks = tasks.filter(t => t.employee_id === emp.id);
-                                const activeCount = empTasks.filter(t => t.status !== 'Completed').length;
-                                const workload = Math.min((activeCount / 5) * 100, 100); 
-                                
-                                return (
-                                    <tr key={emp.id} className="group hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-8 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                                                    {emp.name.charAt(0)}
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-700">{emp.name}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-4 text-center">
-                                            <span className="text-xs font-bold text-slate-900">{activeCount}</span>
-                                        </td>
-                                        <td className="px-8 py-4">
-                                            <div className="w-32 h-1 bg-slate-100 rounded-full overflow-hidden">
-                                                <div 
-                                                    className={`h-full transition-all duration-1000 ${workload > 80 ? 'bg-rose-400' : workload > 40 ? 'bg-blue-400' : 'bg-emerald-400'}`}
-                                                    style={{ width: `${workload}%` }}
-                                                />
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-4 text-right">
-                                            <Button 
-                                                variant="ghost" 
-                                                onClick={() => onEmployeeClick(emp)}
-                                                className="h-8 px-4 text-[9px] font-bold tracking-widest text-slate-400 hover:text-slate-900 hover:bg-white transition-all rounded-lg"
-                                            >
-                                                VIEW STATS
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     );
 }

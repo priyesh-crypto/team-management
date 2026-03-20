@@ -21,13 +21,25 @@ function MorningBriefing({
     viewMode: 'today' | 'overview', 
     setViewMode: (mode: 'today' | 'overview') => void 
 }) {
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
     const criticalTasks = tasks.filter(t => t.priority === 'Urgent' || t.priority === 'High');
+    
     const greeting = React.useMemo(() => {
+        if (!mounted) return "...";
         const hour = new Date().getHours();
         if (hour < 12) return "Good morning";
         if (hour < 17) return "Good afternoon";
         return "Good evening";
-    }, []);
+    }, [mounted]);
+
+    const dateString = React.useMemo(() => {
+        if (!mounted) return "...";
+        return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    }, [mounted]);
 
     return (
         <motion.div 
@@ -42,7 +54,7 @@ function MorningBriefing({
                             Command Center
                         </div>
                         <span className="text-slate-400 text-[8px] font-bold uppercase tracking-widest">
-                            Live · {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                            Live · {dateString}
                         </span>
                     </div>
                     <h1 className="text-lg lg:text-xl font-black text-[#1d1d1f] tracking-tight">
@@ -201,7 +213,8 @@ function BoardColumn({
     setEditingTaskId,
     editTaskData,
     setEditTaskData,
-    handleUpdateTask
+    handleUpdateTask,
+    mounted
 }: { 
     title: string, 
     tasks: Task[], 
@@ -215,7 +228,8 @@ function BoardColumn({
     setEditingTaskId: (id: string | null) => void,
     editTaskData: Partial<Task>,
     setEditTaskData: (data: Partial<Task>) => void,
-    handleUpdateTask: (taskId: string) => Promise<void>
+    handleUpdateTask: (taskId: string) => Promise<void>,
+    mounted: boolean
 }) {
     return (
         <div className="flex flex-col h-full min-w-[280px] max-w-[280px] flex-shrink-0">
@@ -223,6 +237,7 @@ function BoardColumn({
                 <div className="flex items-center gap-2">
                     <div className={cn(
                         "w-2 h-2 rounded-full shadow-sm", 
+                        title.includes('Overdue') ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
                         title.includes('To Do') ? 'bg-[#0071e3]' : 
                         title.includes('Progress') ? 'bg-orange-400' : 
                         title.includes('Blocked') ? 'bg-red-400' : 'bg-emerald-400'
@@ -236,9 +251,9 @@ function BoardColumn({
                     <div className="h-32 border border-dashed border-slate-200 rounded-[24px] flex items-center justify-center bg-slate-50/50 text-[10px] font-bold text-slate-300 uppercase tracking-widest">No Tasks</div>
                 ) : (
                     tasks.map(task => {
-                        const startDateLabel = task.start_date ? new Date(task.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
-                        const deadlineLabel = task.deadline ? new Date(task.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
-                        const dateRangeLabel = `${startDateLabel} - ${deadlineLabel}`;
+                        const startDateLabel = mounted && task.start_date ? new Date(task.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : (mounted ? '' : '...');
+                        const deadlineLabel = mounted && task.deadline ? new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : (mounted ? '' : '...');
+                        const dateRangeLabel = mounted ? `${startDateLabel} - ${deadlineLabel}` : '...';
                         const dateInfo = { label: dateRangeLabel, color: 'bg-slate-50 text-slate-400' };
                         const subtasks = subtasksMap[task.id] || [];
                         const completedSubtasks = subtasks.filter(s => s.is_completed).length;
@@ -254,7 +269,7 @@ function BoardColumn({
                                 default: progress = 0;
                             }
                         }
-                        const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== 'Completed';
+                        const isOverdueTask = task.status === 'Overdue' || (task.deadline && new Date(task.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && task.status !== 'Completed');
                         
                         return (
                             <motion.div 
@@ -276,7 +291,7 @@ function BoardColumn({
                                                     {dateInfo.label}
                                                 </Badge>
                                             )}
-                                            {isOverdue && (
+                                            {isOverdueTask && (
                                                 <Badge className="bg-red-500 text-white border-none shadow-sm animate-pulse">
                                                     OVERDUE
                                                 </Badge>
@@ -441,6 +456,13 @@ export function EmployeeBoardView({
     editTaskData,
     setEditTaskData
 }: EmployeeBoardViewProps) {
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const isOverdue = (t: Task) => t.status === 'Overdue' || (t.deadline && new Date(t.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && t.status !== 'Completed');
+
     if (activeTab === 'settings' || activeTab === 'schedule') return null;
 
     if (viewMode === 'overview') {
@@ -483,11 +505,14 @@ export function EmployeeBoardView({
                     
                     <div className="flex-1 overflow-x-auto pb-6 custom-scrollbar -mx-6 px-6">
                         <div className="flex gap-4 h-full min-w-max">
-                            {['To Do', 'In Progress', 'Blocked', 'Completed'].map(status => (
+                            {['Overdue', 'To Do', 'In Progress', 'Blocked', 'Completed'].map(status => (
                                 <BoardColumn 
                                     key={status}
                                     title={status} 
-                                    tasks={myTasks.filter(t => t.status === status)} 
+                                    tasks={myTasks.filter(t => {
+                                        if (status === 'Overdue') return isOverdue(t);
+                                        return t.status === status && !isOverdue(t);
+                                    })} 
                                     subtasksMap={subtasksMap} 
                                     employees={employees} 
                                     onTaskClick={openTaskSheet} 
@@ -499,6 +524,7 @@ export function EmployeeBoardView({
                                     editTaskData={editTaskData}
                                     setEditTaskData={setEditTaskData}
                                     handleUpdateTask={handleUpdateTask}
+                                    mounted={mounted}
                                 />
                             ))}
                         </div>
@@ -511,11 +537,14 @@ export function EmployeeBoardView({
                         <p className="text-sm opacity-80">Real-time collaboration across the team.</p>
                     </Card>
                     <div className="flex overflow-x-auto pb-6 custom-scrollbar -mx-6 px-6 h-[calc(100vh-260px)] min-h-[400px]">
-                        {['To Do', 'In Progress', 'Blocked', 'Completed'].map(status => (
+                        {['Overdue', 'To Do', 'In Progress', 'Blocked', 'Completed'].map(status => (
                             <BoardColumn 
                                 key={status}
                                 title={status} 
-                                tasks={allTasks.filter(t => t.status === status && t.employee_id !== userId)} 
+                                tasks={allTasks.filter(t => {
+                                    const matchesStatus = (status === 'Overdue') ? isOverdue(t) : (t.status === status && !isOverdue(t));
+                                    return matchesStatus && t.employee_id !== userId;
+                                })} 
                                 subtasksMap={subtasksMap} 
                                 employees={employees} 
                                 onTaskClick={openTaskSheet} 
@@ -527,6 +556,7 @@ export function EmployeeBoardView({
                                 editTaskData={editTaskData} 
                                 setEditTaskData={setEditTaskData} 
                                 handleUpdateTask={handleUpdateTask} 
+                                mounted={mounted}
                             />
                         ))}
                     </div>

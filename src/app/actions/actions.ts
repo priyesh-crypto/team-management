@@ -3,9 +3,12 @@
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { headers } from "next/headers"
+import { applyRateLimit } from "@/utils/rate-limit"
 import { Resend } from 'resend'
 import { formatDistanceToNow, format } from 'date-fns'
 import crypto from 'crypto'
+import { sanitizeString, validateEmail, validateId, validatePasswordStrength, checkFileSecurity } from "@/utils/security"
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -17,7 +20,7 @@ export type Profile = {
 }
 
 export type Priority = 'Urgent' | 'High' | 'Medium' | 'Low'
-export type Status = 'To Do' | 'In Progress' | 'In Review' | 'Completed' | 'Blocked'
+export type Status = 'To Do' | 'In Progress' | 'In Review' | 'Completed' | 'Blocked' | 'Overdue'
 
 export type Task = {
     id: string
@@ -65,6 +68,7 @@ export type Attachment = {
 
 export type Comment = {
     id: string;
+    org_id: string; // Added for tenant isolation
     task_id: string;
     author_id: string;
     content: string;
@@ -74,6 +78,7 @@ export type Comment = {
 
 export type Notification = {
     id: string;
+    org_id: string; // Added for tenant isolation
     user_id: string;
     type: 'urgent' | 'overdue' | 'comment' | 'system';
     message: string;
@@ -88,7 +93,18 @@ export type ActivityLog = {
     actor_id: string;
     actor_name?: string; // Joined from profiles
     task_id?: string;
-    type: 'task_created' | 'task_updated' | 'task_deleted' | 'task_status_changed' | 'comment_added' | 'subtask_created' | 'subtask_updated' | 'subtask_deleted' | 'attachment_added' | 'attachment_deleted';
+    type: 'task_created' | 'task_updated' | 'task_deleted' | 'task_status_changed'
+    | 'task_priority_changed'
+    | 'comment_added'
+    | 'comment_deleted'
+    | 'subtask_created' | 'subtask_updated' | 'subtask_deleted'
+    | 'attachment_added'
+    | 'attachment_deleted'
+    | 'member_invited'
+    | 'member_joined'
+    | 'subtask_completed'
+    | 'system_error'
+    | 'security_event';
     description: string;
     metadata?: Record<string, any>;
     created_at: string;
@@ -161,6 +177,9 @@ export type ProjectMember = {
 }
 
 
+
+// Rate limiting helpers moved to @/utils/rate-limit.ts
+
 export async function requireOrgContext() {
     const supabase = await createClient()
     console.log("[requireOrgContext] Getting user...");
@@ -198,7 +217,7 @@ export async function requireOrgContext() {
     }
 }
 
-export async function getProfiles(projectId?: string): Promise<Profile[]> {
+export async function getProfiles(projectId?: string, providedAuthUsers?: any[]): Promise<Profile[]> {
     const supabase = await createClient()
     
     let orgId;
@@ -232,6 +251,7 @@ export async function getProfiles(projectId?: string): Promise<Profile[]> {
         return [];
     }
 
+    // 2. Fetch profiles from database
     const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*')
@@ -241,14 +261,33 @@ export async function getProfiles(projectId?: string): Promise<Profile[]> {
         console.error("[getProfiles] profiles error:", error);
     }
 
+    // 3. Fetch emails from Auth for these users (since profiles.email might be missing)
+    let authUsers: any[] = providedAuthUsers || [];
+    if (!providedAuthUsers && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        try {
+            const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+            const supabaseAdmin = createAdminClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY,
+                { auth: { autoRefreshToken: false, persistSession: false } }
+            )
+            // Note: listUsers() is feasible for smaller teams. For large scale, sync email to profiles table.
+            const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+            if (!authError) authUsers = users;
+        } catch (e) {
+            console.error("[getProfiles] Auth fetch error:", e);
+        }
+    }
+
     // Use MEMBERS as the source of truth to ensure everyone is listed
     return members.map(m => {
         const p = (profiles || []).find(prof => prof.id === m.user_id);
+        const a = authUsers.find(au => au.id === m.user_id);
         
         return {
             id: m.user_id,
             name: p?.name || 'Team Member',
-            email: p?.email || '',
+            email: p?.email || a?.email || '',
             role: p?.role || m.role || 'employee'
         } as Profile;
     });
@@ -256,11 +295,13 @@ export async function getProfiles(projectId?: string): Promise<Profile[]> {
 
 
 export async function getSubtasks(taskId: string): Promise<Subtask[]> {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('subtasks')
         .select('*')
         .eq('task_id', taskId)
+        .eq('org_id', orgId)
         .order('created_at', { ascending: true })
         
     if (error) {
@@ -272,8 +313,13 @@ export async function getSubtasks(taskId: string): Promise<Subtask[]> {
 
 export async function getBulkSubtasks(taskIds: string[]): Promise<Subtask[]> {
     if (!taskIds.length) return []
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
-    const { data, error } = await supabase.from('subtasks').select('*').in('task_id', taskIds)
+    const { data, error } = await supabase
+        .from('subtasks')
+        .select('*')
+        .in('task_id', taskIds)
+        .eq('org_id', orgId)
     if (error) {
         console.error("Error fetching bulk subtasks:", error)
         return []
@@ -370,11 +416,13 @@ export async function getProjects(): Promise<Project[]> {
 }
 
 export async function getProject(projectId: string): Promise<Project | null> {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('projects')
         .select('*')
         .eq('id', projectId)
+        .eq('org_id', orgId)
         .single()
 
     if (error) {
@@ -479,6 +527,7 @@ export async function logout() {
 
 export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_id" | "workspace_id">) {
   try {
+    await applyRateLimit('saveTask', 50, 60 * 60 * 1000);
     const { userId, orgId, workspaceId } = await requireOrgContext();
     console.log("[saveTask] Context:", { userId, orgId, workspaceId });
     if (!workspaceId) return { success: false, error: "No default workspace found for organization." };
@@ -501,9 +550,15 @@ export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_i
 
     const sanitizedData = {
       ...taskData,
-      project_id: taskData.project_id && taskData.project_id !== "" ? taskData.project_id : null,
-      employee_id: taskData.employee_id && taskData.employee_id !== "" ? taskData.employee_id : null,
+      name: sanitizeString(taskData.name),
+      notes: sanitizeString(taskData.notes),
+      project_id: validateId(taskData.project_id) ? taskData.project_id : null,
+      employee_id: validateId(taskData.employee_id) ? taskData.employee_id : null,
     };
+
+    if (!sanitizedData.name) {
+      return { success: false, error: "Task name is required and cannot be only special characters." };
+    }
 
     const { data: task, error } = await supabase
       .from("tasks")
@@ -530,6 +585,7 @@ export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_i
           metadata: { name: task.name },
         }),
         createNotification({
+          org_id: orgId,
           user_id: task.employee_id,
           type: "system",
           message: `New task assigned: ${task.name}`,
@@ -560,6 +616,7 @@ export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_i
         task.assignee_ids.forEach((assigneeId: string) => {
           if (assigneeId !== task.employee_id) {
             operations.push(createNotification({
+              org_id: orgId,
               user_id: assigneeId,
               type: "system",
               message: `You were added as a collaborator to: ${task.name}`,
@@ -584,14 +641,22 @@ export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'i
     const supabase = await createClient()
 
     const { id: _id, created_at: _created_at, ...rawUpdateData } = taskData as any;
-    const sanitizedData = { ...rawUpdateData };
-    if (sanitizedData.project_id === "") sanitizedData.project_id = null;
-    if (sanitizedData.employee_id === "") sanitizedData.employee_id = null;
+    const sanitizedData = {
+        ...rawUpdateData,
+        name: rawUpdateData.name ? sanitizeString(rawUpdateData.name) : undefined,
+        notes: rawUpdateData.notes ? sanitizeString(rawUpdateData.notes) : undefined,
+        project_id: validateId(rawUpdateData.project_id) ? rawUpdateData.project_id : (rawUpdateData.project_id === "" ? null : undefined),
+        employee_id: validateId(rawUpdateData.employee_id) ? rawUpdateData.employee_id : (rawUpdateData.employee_id === "" ? null : undefined),
+    };
+
+    // Remove undefined fields to avoid accidental updates
+    Object.keys(sanitizedData).forEach(key => (sanitizedData as any)[key] === undefined && delete (sanitizedData as any)[key]);
 
     const { data: task, error } = await supabase
         .from('tasks')
         .update(sanitizedData)
         .eq('id', taskId)
+        .eq('org_id', orgId)
         .select()
         .single()
 
@@ -612,6 +677,7 @@ export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'i
 
         if (taskData.employee_id) {
             await createNotification({
+                org_id: orgId,
                 user_id: task.employee_id,
                 type: 'system',
                 message: `Task assignment updated: ${task.name}`,
@@ -625,20 +691,23 @@ export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'i
 
 export async function inviteMember(email: string, role: string): Promise<{ success: boolean; error?: string }> {
     try {
-        const { orgId, role: currentUserRole } = await requireOrgContext();
+        await applyRateLimit('inviteMember', 10, 60 * 60 * 1000);
+        if (!validateEmail(email)) return { success: false, error: "Invalid email address format." };
+        const sanitizedEmail = email.toLowerCase().trim();
+        const { userId, orgId, role: currentUserRole } = await requireOrgContext();
         if (currentUserRole !== 'owner' && currentUserRole !== 'admin' && currentUserRole !== 'manager') {
             return { success: false, error: "Unauthorized to invite members." };
         }
 
-        if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
-            console.error("Missing NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY");
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
             return { success: false, error: "Server configuration error: Missing Service Role Key." };
         }
 
         const { createClient: createAdminClient } = await import('@supabase/supabase-js')
         const supabaseAdmin = createAdminClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+            process.env.SUPABASE_SERVICE_ROLE_KEY,
             { auth: { autoRefreshToken: false, persistSession: false } }
         )
 
@@ -675,7 +744,7 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
             const orgName = org?.name || "an organization";
 
             try {
-                await resend.emails.send({
+                const { data, error } = await resend.emails.send({
                     from: fromEmail,
                     to: email,
                     subject: `You have been invited to join ${orgName}`,
@@ -692,6 +761,24 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
                         </div>
                     `
                 });
+
+                if (error) {
+                    console.error("Resend error detail:", error);
+                    let errorMsg = error.message;
+                    if (fromEmail.includes('onboarding@resend.dev') && !errorMsg.includes('authorized')) {
+                        errorMsg += " (Note: Using onboarding@resend.dev - ensure recipient is authorized in Resend dashboard)";
+                    }
+                    return { success: false, error: `Email failed: ${errorMsg}. MANUALLY: ${inviteUrl}` };
+                }
+
+                await logActivity({
+                    org_id: orgId,
+                    actor_id: userId,
+                    type: 'member_invited',
+                    description: `Invited ${email} as ${role}`,
+                    metadata: { email, role }
+                });
+
                 return { success: true };
             } catch (e: any) {
                 console.error("Failed to send invite email:", e);
@@ -702,24 +789,88 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
             console.warn("Resend is not configured. Invite URL:", inviteUrl);
             return { success: false, error: `Email service not configured. PLEASE SHARE MANUALLY: ${inviteUrl}` };
         }
-
-        revalidatePath('/dashboard')
-        return { success: true };
     } catch (err: any) {
         console.error("Unexpected error in inviteMember:", err);
         return { success: false, error: err.message || "An unexpected error occurred." };
     }
 }
 
+export async function addMemberDirectly(data: { name: string, email: string, role: string, password: string }): Promise<{ success: boolean; error?: string }> {
+    try {
+        await applyRateLimit('addMemberDirectly', 10, 60 * 60 * 1000);
+        if (!validateEmail(data.email)) return { success: false, error: "Invalid email address format." };
+        if (!validatePasswordStrength(data.password)) return { success: false, error: "Password does not meet strength requirements (min 8 chars, mixed case, and numbers)." };
+        
+        const { userId, orgId, role: currentUserRole } = await requireOrgContext();
+        if (currentUserRole !== 'owner' && currentUserRole !== 'admin' && currentUserRole !== 'manager') {
+            return { success: false, error: "Unauthorized to add members." };
+        }
+
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
+            return { success: false, error: "Server configuration error: Missing Service Role Key." };
+        }
+
+        const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+        const supabaseAdmin = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY,
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        )
+
+        // 1. Create Auth User
+        const { data: userObj, error: createError } = await supabaseAdmin.auth.admin.createUser({
+            email: data.email,
+            password: data.password,
+            user_metadata: { name: data.name, role: data.role }
+        });
+
+        if (createError) {
+            console.error("Error creating user admin:", createError);
+            if (createError.message.includes("already registered")) {
+                return { success: false, error: "User already exists." };
+            }
+            return { success: false, error: createError.message };
+        }
+
+        const newUserId = userObj?.user?.id;
+        if (!newUserId) return { success: false, error: "Failed to create user account." };
+
+        // 2. Link to Organization
+        const { error: memberError } = await supabaseAdmin
+            .from('organization_members')
+            .insert({ org_id: orgId, user_id: newUserId, role: data.role });
+
+        if (memberError) {
+            console.error("Error linking member:", memberError);
+            return { success: false, error: "User created, but failed to link to organization." };
+        }
+
+        await logActivity({
+            org_id: orgId,
+            actor_id: userId,
+            type: 'member_joined', // Using 'member_joined' for direct add as well
+            description: `Added ${data.email} (${data.name}) directly as ${data.role}`,
+            metadata: { email: data.email, name: data.name, role: data.role, newUserId }
+        });
+
+        revalidatePath('/dashboard')
+        return { success: true };
+    } catch (err: any) {
+        console.error("Unexpected error in addMemberDirectly:", err);
+        return { success: false, error: err.message || "An unexpected error occurred." };
+    }
+}
+
 export async function acceptInvitation(token: string, name: string, password: string) {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
         throw new Error("Missing Supabase Service Role Key.");
     }
 
     const { createClient: createAdminClient } = await import('@supabase/supabase-js')
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
         { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
@@ -742,7 +893,6 @@ export async function acceptInvitation(token: string, name: string, password: st
     const { data: userObj, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: invite.email,
         password: password,
-        email_confirm: true,
         user_metadata: { name, role: invite.role } // Use the role from the invitation
     });
 
@@ -780,11 +930,19 @@ export async function acceptInvitation(token: string, name: string, password: st
         role: invite.role // Use the role from the invitation
     });
 
+    await logActivity({
+        org_id: invite.org_id,
+        actor_id: userId, // The new user is the actor
+        type: 'member_joined',
+        description: `User ${name} (${invite.email}) accepted invitation and joined as ${invite.role}`,
+        metadata: { email: invite.email, name, role: invite.role }
+    });
+
     return { email: invite.email }
 }
 
-export async function updateEmployeeProfile(userId: string, name: string, role: string) {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+export async function updateEmployeeProfile(userId: string, name: string, role: string, email?: string) {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
         throw new Error("Missing Supabase Service Role Key.");
     }
 
@@ -792,32 +950,44 @@ export async function updateEmployeeProfile(userId: string, name: string, role: 
     const { createClient: createAdminClient } = await import('@supabase/supabase-js')
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
         { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Update their Supabase Auth metadata
-    await supabaseAdmin.auth.admin.updateUserById(userId, { user_metadata: { name, role } })
+    // Update their Supabase Auth metadata and email if provided
+    const updateData: any = { user_metadata: { name, role } };
+    if (email) {
+        updateData.email = email;
+        // Optionally confirm email automatically
+        updateData.email_confirm = true;
+    }
+    
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, updateData);
+    if (authError) {
+        console.error("Error updating auth user:", authError);
+        throw new Error(authError.message);
+    }
 
     // Update the public profiles table
-    const { error } = await supabaseAdmin.from('profiles').update({ name, role }).eq('id', userId)
+    const { error: profileError } = await supabaseAdmin.from('profiles').update({ name, role }).eq('id', userId)
 
-    if (error) {
-        throw new Error(error.message);
+    if (profileError) {
+        console.error("Error updating profile:", profileError);
+        throw new Error(profileError.message);
     }
 
     revalidatePath('/dashboard')
 }
 
 export async function updateUserPassword(userId: string, newPassword: string) {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
         throw new Error("Missing Supabase Service Role Key.");
     }
 
     const { createClient: createAdminClient } = await import('@supabase/supabase-js')
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
         { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
@@ -829,17 +999,68 @@ export async function updateUserPassword(userId: string, newPassword: string) {
     }
 }
 
-export async function updateOwnPassword(newPassword: string) {
+export async function updateOwnPassword(password: string) {
+    await applyRateLimit('updateOwnPassword', 5, 24 * 60 * 60 * 1000);
+    if (!validatePasswordStrength(password)) throw new Error("Password does not meet strength requirements (min 8 chars, mixed case, and numbers).");
+    
     // Standard authenticated client can change its own password
     const supabase = await createClient()
 
     const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: password
     })
 
     if (error) {
         throw new Error(error.message);
     }
+}
+
+export async function requestPasswordReset(email: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        await applyRateLimit('requestPasswordReset', 3, 60 * 60 * 1000); // Strict limit
+        if (!validateEmail(email)) return { success: false, error: "Invalid email address format." };
+        const sanitizedEmail = email.toLowerCase().trim();
+        
+        const supabase = await createClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/update-password`,
+    });
+
+    if (error) {
+        await logError("requestPasswordReset", error, { email });
+        return { success: false, error: "Failed to send reset email." };
+    }
+    return { success: true };
+    } catch (err: any) {
+        console.error("Unexpected error in requestPasswordReset:", err);
+        return { success: false, error: err.message || "An unexpected error occurred." };
+    }
+}
+
+export async function checkRateLimit(ip: string, email?: string): Promise<{ allowed: boolean; waitTime?: number }> {
+    const supabase = await createClient();
+    const { data: attempts, error } = await supabase
+        .from('login_attempts')
+        .select('attempted_at')
+        .or(`ip_address.eq."${ip}"${email ? `,email.eq."${email}"` : ''}`)
+        .gt('attempted_at', new Date(Date.now() - 15 * 60 * 1000).toISOString())
+        .eq('success', false);
+
+    if (error) {
+        console.error("Rate limit check error:", error);
+        return { allowed: true }; // Allow if check fails to avoid lockout
+    }
+
+    if (attempts && attempts.length >= 5) {
+        return { allowed: false, waitTime: 15 }; // Block for 15 minutes
+    }
+
+    return { allowed: true };
+}
+
+export async function logLoginAttempt(ip: string, email: string, success: boolean) {
+    const supabase = await createClient();
+    await supabase.from('login_attempts').insert({ ip_address: ip, email, success });
 }
 
 export async function updateTaskStatus(taskId: string, status: Status) {
@@ -849,6 +1070,7 @@ export async function updateTaskStatus(taskId: string, status: Status) {
         .from('tasks')
         .update({ status })
         .eq('id', taskId)
+        .eq('org_id', orgId)
         .select()
         .single();
 
@@ -870,6 +1092,7 @@ export async function updateTaskStatus(taskId: string, status: Status) {
 
         // Notify owner
         await createNotification({
+            org_id: orgId,
             user_id: task.employee_id,
             type: status === 'Blocked' ? 'urgent' : 'system',
             message: `Task status updated to ${status}: ${task.name}`,
@@ -881,6 +1104,7 @@ export async function updateTaskStatus(taskId: string, status: Status) {
             for (const assigneeId of task.assignee_ids) {
                 if (assigneeId !== task.employee_id) {
                     await createNotification({
+                        org_id: orgId,
                         user_id: assigneeId,
                         type: status === 'Blocked' ? 'urgent' : 'system',
                         message: `Collaborator task status updated to ${status}: ${task.name}`,
@@ -901,6 +1125,7 @@ export async function updateTaskPriority(taskId: string, priority: Priority) {
         .from('tasks')
         .update({ priority })
         .eq('id', taskId)
+        .eq('org_id', orgId)
         .select()
         .single();
 
@@ -914,7 +1139,7 @@ export async function updateTaskPriority(taskId: string, priority: Priority) {
             org_id: orgId,
             actor_id: userId,
             task_id: task.id,
-            type: 'task_updated',
+            type: 'task_priority_changed',
             description: `Changed priority of "${task.name}" to ${priority}`,
             metadata: { name: task.name, priority }
         });
@@ -965,6 +1190,7 @@ export async function saveSubtask(subtaskData: Omit<Subtask, 'id' | 'created_at'
 
     if (error) {
         console.error("Error saving subtask:", error)
+        await logError("saveSubtask", error, { subtaskData });
         throw new Error(error.message)
     }
 
@@ -984,10 +1210,12 @@ export async function saveSubtask(subtaskData: Omit<Subtask, 'id' | 'created_at'
         ]);
     } catch (postSaveErr) {
         console.warn("Post-save background operations had an error (non-critical):", postSaveErr);
+        await logError("saveSubtask:postSave", postSaveErr, { subtaskData });
     }
 }
 
 export async function updateSubtask(subtaskData: Partial<Omit<Subtask, 'org_id'>> & { id: string, task_id: string }) {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
 
     const { id, task_id, ...updateData } = subtaskData
@@ -996,9 +1224,11 @@ export async function updateSubtask(subtaskData: Partial<Omit<Subtask, 'org_id'>
         .from('subtasks')
         .update(updateData)
         .eq('id', id)
+        .eq('org_id', orgId)
 
     if (error) {
         console.error("Error updating subtask:", error)
+        await logError("updateSubtask", error, { subtaskData });
         throw new Error(error.message)
     }
 
@@ -1006,23 +1236,37 @@ export async function updateSubtask(subtaskData: Partial<Omit<Subtask, 'org_id'>
 }
 
 export async function updateSubtaskStatus(subtaskId: string, taskId: string, isCompleted: boolean) {
+    const { orgId, userId } = await requireOrgContext();
     const supabase = await createClient()
 
     const { data: subtask, error } = await supabase
         .from('subtasks')
         .update({ is_completed: isCompleted })
         .eq('id', subtaskId)
+        .eq('org_id', orgId)
         .select()
         .single()
 
     if (error) {
         console.error("Error updating subtask status:", error)
+        await logError("updateSubtaskStatus", error, { subtaskId, taskId, isCompleted });
         throw new Error(error.message)
     }
 
-    if (isCompleted && subtask) {
-        // Trigger email notification (fire and forget to not block UI)
-        sendSubtaskCompletionEmail(subtaskId, taskId).catch(err => console.error("Email notification failed:", err));
+    if (subtask) {
+        await logActivity({
+            org_id: orgId,
+            actor_id: userId,
+            task_id: taskId,
+            type: 'subtask_completed',
+            description: `Subtask "${subtask.name}" marked as ${isCompleted ? 'completed' : 'incomplete'}`,
+            metadata: { subtaskName: subtask.name, isCompleted }
+        });
+
+        if (isCompleted) {
+            // Trigger email notification (fire and forget to not block UI)
+            sendSubtaskCompletionEmail(subtaskId, taskId).catch(err => console.error("Email notification failed:", err));
+        }
     }
 
     revalidatePath('/dashboard')
@@ -1035,7 +1279,11 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
     const { data: task, error: taskError } = await supabase.from('tasks').select('*').eq('id', taskId).single();
     const { data: allSubtasks, error: subError } = await supabase.from('subtasks').select('*').eq('task_id', taskId);
     
-    if (taskError || !task || subError) return;
+    if (taskError || !task || subError) {
+        if (taskError) await logError("sendSubtaskCompletionEmail:fetchTask", taskError, { subtaskId, taskId });
+        if (subError) await logError("sendSubtaskCompletionEmail:fetchSubtasks", subError, { subtaskId, taskId });
+        return;
+    }
 
     // 2. Check if this was the last sub-task
     const completedCount = allSubtasks.filter(s => s.is_completed).length;
@@ -1121,27 +1369,35 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
     `;
 
     try {
-        await resend.emails.send({
+        const { error } = await resend.emails.send({
             from: process.env.RESEND_FROM_EMAIL || 'TaskHub <onboarding@resend.dev>',
             to: recipientEmails,
             subject: subject,
             html: html
         });
+        if (error) {
+            console.error("Resend error (subtask completion):", error);
+            await logError("sendSubtaskCompletionEmail:resend", error, { subtaskId, taskId, recipientEmails });
+        }
     } catch (e) {
         console.error("Error sending subtask completion email:", e);
+        await logError("sendSubtaskCompletionEmail:catch", e, { subtaskId, taskId, recipientEmails });
     }
 }
 
 export async function updateSubtaskHours(subtaskId: string, taskId: string, hours: number) {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
 
     const { error } = await supabase
         .from('subtasks')
         .update({ hours_spent: hours })
         .eq('id', subtaskId)
+        .eq('org_id', orgId)
 
     if (error) {
         console.error("Error updating subtask hours:", error)
+        await logError("updateSubtaskHours", error, { subtaskId, taskId, hours });
         throw new Error(error.message)
     }
 
@@ -1149,23 +1405,67 @@ export async function updateSubtaskHours(subtaskId: string, taskId: string, hour
 }
 
 export async function deleteSubtask(subtaskId: string, taskId: string) {
+    const { orgId, userId } = await requireOrgContext();
     const supabase = await createClient()
 
-    const { error } = await supabase
+    const { data: subtask, error } = await supabase
         .from('subtasks')
         .delete()
         .eq('id', subtaskId)
+        .eq('org_id', orgId)
+        .select('name')
+        .single();
 
     if (error) {
         console.error("Error deleting subtask:", error)
+        await logError("deleteSubtask", error, { subtaskId, taskId });
         throw new Error(error.message)
+    }
+
+    if (subtask) {
+        await logActivity({
+            org_id: orgId,
+            actor_id: userId,
+            task_id: taskId,
+            type: 'subtask_deleted',
+            description: `Deleted subtask: "${subtask.name}"`,
+            metadata: { subtaskName: subtask.name }
+        });
     }
 
     await recalculateTaskHours(taskId)
 }
 
 export async function updateProfile(userId: string, data: { name: string }) {
+    const { userId: currentUserId, orgId } = await requireOrgContext();
     const supabase = await createClient()
+
+    // 1. Verify that BOTH users are in the same organization
+    const { data: targetMember, error: memberError } = await supabase
+        .from('organization_members')
+        .select('org_id')
+        .eq('user_id', userId)
+        .eq('org_id', orgId)
+        .single();
+    
+    if (memberError || !targetMember) {
+        await logError("updateProfile:memberCheck", memberError, { targetUserId: userId, orgId, currentUserId });
+        throw new Error("Unauthorized: User not in your organization.");
+    }
+
+    // 2. Allow self-update OR update by manager
+    if (currentUserId !== userId) {
+        const { data: currentUserProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', currentUserId)
+            .single();
+        if (profileError || currentUserProfile?.role !== 'manager') {
+            await logError("updateProfile:roleCheck", profileError, { targetUserId: userId, orgId, currentUserId, currentRole: currentUserProfile?.role });
+            throw new Error("Unauthorized: Only managers can update other profiles.");
+        }
+    }
+
     const { error } = await supabase
         .from('profiles')
         .update(data)
@@ -1173,6 +1473,7 @@ export async function updateProfile(userId: string, data: { name: string }) {
 
     if (error) {
         console.error("Error updating profile:", error)
+        await logError("updateProfile:update", error, { targetUserId: userId, data });
         throw new Error(error.message)
     }
     revalidatePath('/dashboard')
@@ -1186,45 +1487,74 @@ export async function changePassword(newPassword: string) {
 
     if (error) {
         console.error("Error changing password:", error)
+        await logError("changePassword", error);
         throw new Error(error.message)
     }
 }
 
 // Notification Actions
 export async function getNotifications(userId: string): Promise<Notification[]> {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
 
     const { data, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', userId)
+        .eq('org_id', orgId)
         .order('created_at', { ascending: false })
 
     if (error) {
         console.error("Error fetching notifications:", error)
+        await logError("getNotifications", error, { userId });
         return []
     }
     return data || []
 }
 
 export async function markNotificationAsRead(notificationId: string) {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
-    const { error } = await supabase.from('notifications').update({ is_read: true }).eq('id', notificationId)
-    if (error) throw new Error(error.message)
+    const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId)
+        .eq('org_id', orgId)
+    if (error) {
+        await logError("markNotificationAsRead", error, { notificationId });
+        throw new Error(error.message)
+    }
     revalidatePath('/dashboard')
 }
 
 export async function markAllNotificationsAsRead(userId: string) {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
-    const { error } = await supabase.from('notifications').update({ is_read: true }).eq('user_id', userId).eq('is_read', false)
-    if (error) throw new Error(error.message)
+    const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', userId)
+        .eq('org_id', orgId)
+        .eq('is_read', false)
+    if (error) {
+        await logError("markAllNotificationsAsRead", error, { userId });
+        throw new Error(error.message)
+    }
     revalidatePath('/dashboard')
 }
 
 export async function clearNotifications(userId: string) {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
-    const { error } = await supabase.from('notifications').delete().eq('user_id', userId)
-    if (error) throw new Error(error.message)
+    const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', userId)
+        .eq('org_id', orgId)
+    if (error) {
+        await logError("clearNotifications", error, { userId });
+        throw new Error(error.message)
+    }
     revalidatePath('/dashboard')
 }
 
@@ -1232,21 +1562,77 @@ export async function deleteTask(taskId: string) {
     const { userId, orgId } = await requireOrgContext();
     const supabase = await createClient()
 
-    // Get task name for logging
-    const { data: task } = await supabase.from('tasks').select('name').eq('id', taskId).single();
+    // Get task name for logging (scoped to org)
+    const { data: task, error: fetchError } = await supabase.from('tasks').select('name').eq('id', taskId).eq('org_id', orgId).single();
 
-    const { error } = await supabase.from('tasks').delete().eq('id', taskId)
-    if (error) throw new Error(error.message)
+    if (fetchError || !task) {
+        await logError("deleteTask:fetch", fetchError, { taskId });
+        throw new Error("Task not found or unauthorized");
+    }
 
-    if (task) {
-        await logActivity({
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId).eq('org_id', orgId)
+    if (error) {
+        await logError("deleteTask:delete", error, { taskId });
+        throw new Error(error.message)
+    }
+
+    await logActivity({
+        org_id: orgId,
+        actor_id: userId,
+        task_id: taskId,
+        type: 'task_deleted',
+        description: `Deleted task: "${task.name}"`,
+        metadata: { name: task.name }
+    }).catch(err => console.warn("Delete logging failed:", err));
+
+    revalidatePath('/dashboard')
+}
+
+// --- Logging & Security Helpers ---
+
+export async function logError(context: string, error: any, metadata: any = {}) {
+    try {
+        const { userId, orgId } = await requireOrgContext().catch(() => ({ userId: 'system', orgId: null }));
+        const supabase = await createClient();
+        
+        console.error(`[ERROR][${context}]`, error);
+
+        await supabase.from('activity_logs').insert([{
             org_id: orgId,
-            actor_id: userId,
-            task_id: taskId,
-            type: 'task_deleted',
-            description: `Deleted task: "${task.name}"`,
-            metadata: { name: task.name }
-        }).catch(err => console.warn("Delete logging failed:", err));
+            actor_id: userId === 'system' ? null : userId,
+            type: 'system_error' as any,
+            description: `Error in ${context}: ${error?.message || 'Unknown error'}`,
+            metadata: {
+                ...metadata,
+                stack: error?.stack,
+                timestamp: new Date().toISOString(),
+                error_code: error?.code
+            }
+        }]);
+
+        // Basic "Suspicious Activity" Detection: 
+        // If 5+ errors happen for the same user/org in last 10 minutes, log a security event.
+        if (userId !== 'system') {
+            const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+            const { count } = await supabase
+                .from('activity_logs')
+                .select('*', { count: 'exact', head: true })
+                .eq('actor_id', userId)
+                .eq('type', 'system_error')
+                .gt('created_at', tenMinutesAgo);
+
+            if (count && count >= 5) {
+                await supabase.from('activity_logs').insert([{
+                    org_id: orgId,
+                    actor_id: userId,
+                    type: 'security_event' as any,
+                    description: `Suspicious Activity Detected: Multiple (${count}) system errors in 10 minutes.`,
+                    metadata: { last_context: context, count }
+                }]);
+            }
+        }
+    } catch (e) {
+        console.error("Critical: logError failed:", e);
     }
 }
 
@@ -1255,6 +1641,7 @@ export async function logActivity(activity: Omit<ActivityLog, 'id' | 'actor_name
     const { error } = await supabase.from('activity_logs').insert([activity])
     if (error) {
         console.error("Error logging activity:", error)
+        await logError("logActivity", error, { activity });
     }
 }
 
@@ -1276,6 +1663,7 @@ export async function getActivityLogs(taskId?: string): Promise<ActivityLog[]> {
 
     if (error) {
         console.error("Error fetching activity logs:", error)
+        await logError("getActivityLogs", error, { taskId });
         return []
     }
 
@@ -1294,6 +1682,7 @@ export async function createNotification(notificationData: Omit<Notification, 'i
 
     if (error) {
         console.error("Error creating notification:", error)
+        await logError("createNotification", error, { notificationData });
         throw new Error(error.message)
     }
 
@@ -1301,6 +1690,7 @@ export async function createNotification(notificationData: Omit<Notification, 'i
 }
 
 export async function getComments(taskId: string): Promise<Comment[]> {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -1310,10 +1700,12 @@ export async function getComments(taskId: string): Promise<Comment[]> {
             profiles:author_id (name)
         `)
         .eq('task_id', taskId)
+        .eq('org_id', orgId)
         .order('created_at', { ascending: true })
 
     if (error) {
         console.error("Error fetching comments:", error)
+        await logError("getComments", error, { taskId });
         return []
     }
 
@@ -1323,30 +1715,39 @@ export async function getComments(taskId: string): Promise<Comment[]> {
     }))
 }
 
-export async function saveComment(commentData: Omit<Comment, 'id' | 'created_at' | 'author_name'>) {
+export async function saveComment(commentData: Omit<Comment, 'id' | 'created_at' | 'author_name' | 'org_id'>) {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
 
     const { error } = await supabase
         .from('comments')
-        .insert([commentData])
+        .insert([{ ...commentData, org_id: orgId }])
 
     if (error) {
         console.error("Error saving comment:", error)
+        await logError("saveComment:insert", error, { commentData });
         throw new Error(error.message)
     }
 
     // Notify everyone involved
-    const { data: task } = await supabase
+    const { data: task, error: fetchTaskError } = await supabase
         .from('tasks')
         .select('employee_id, assignee_ids, name')
         .eq('id', commentData.task_id)
         .single();
 
+    if (fetchTaskError) {
+        await logError("saveComment:fetchTask", fetchTaskError, { taskId: commentData.task_id });
+    }
+
     if (task) {
+        // Need orgId for notification
+        const { orgId } = await requireOrgContext();
         const recipients = new Set([task.employee_id, ...(task.assignee_ids || [])]);
         for (const recipientId of recipients) {
             if (recipientId !== commentData.author_id) {
                 await createNotification({
+                    org_id: orgId,
                     user_id: recipientId,
                     type: 'comment',
                     message: `New comment on task: ${task.name}`,
@@ -1360,15 +1761,18 @@ export async function saveComment(commentData: Omit<Comment, 'id' | 'created_at'
 }
 
 export async function deleteComment(commentId: string) {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
 
     const { error } = await supabase
         .from('comments')
         .delete()
         .eq('id', commentId)
+        .eq('org_id', orgId)
 
     if (error) {
         console.error("Error deleting comment:", error)
+        await logError("deleteComment", error, { commentId });
         throw new Error(error.message)
     }
 
@@ -1376,19 +1780,25 @@ export async function deleteComment(commentId: string) {
 }
 
 export async function getAttachments(taskId: string): Promise<Attachment[]> {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('attachments')
         .select('*')
         .eq('task_id', taskId)
+        .eq('org_id', orgId)
         .order('created_at', { ascending: true })
 
     if (error) {
         console.error("Error fetching attachments:", error)
+        await logError("getAttachments", error, { taskId });
         return []
     }
     return data || []
 }
+
+// Helper to keep Attachments type-safe if we add org_id later to type
+type AttachmentWithOrg = Attachment & { org_id?: string };
 
 export async function uploadAttachment(formData: FormData): Promise<Attachment> {
     const { orgId, userId } = await requireOrgContext();
@@ -1397,18 +1807,35 @@ export async function uploadAttachment(formData: FormData): Promise<Attachment> 
     const file = formData.get('file') as File;
     const taskId = formData.get('taskId') as string;
 
-    console.log("[uploadAttachment] Starting upload for taskId:", taskId);
-    if (!file) console.log("[uploadAttachment] Error: No file found in FormData");
-    else console.log("[uploadAttachment] File info:", { name: file.name, size: file.size, type: file.type });
+    if (!file) throw new Error("No file found in FormData");
+    if (!validateId(taskId)) throw new Error("Invalid Task ID format");
 
-    if (!file || !taskId) throw new Error("File and taskId are required");
+    const fileCheck = checkFileSecurity(file);
+    if (!fileCheck.allowed) throw new Error(fileCheck.reason);
+
+    console.log("[uploadAttachment] Starting upload for taskId:", taskId);
+    // 1. Verify taskId ownership BEFORE upload
+    const { data: taskCheck, error: taskCheckError } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('id', taskId)
+        .eq('org_id', orgId)
+        .single();
+    
+    if (taskCheckError || !taskCheck) {
+        await logError("uploadAttachment:taskCheck", taskCheckError, { taskId, orgId, userId });
+        throw new Error("Unauthorized: Task not found in your organization.");
+    }
 
     // Use admin client for storage operations (bypasses storage RLS)
     const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     console.log("[uploadAttachment] Service key present:", !!serviceKey);
     
-    if (!serviceKey) throw new Error("Missing service role key for storage upload");
+    if (!serviceKey) {
+        await logError("uploadAttachment", new Error("Missing service role key for storage upload"), { taskId, orgId, userId });
+        throw new Error("Missing service role key for storage upload");
+    }
     const adminClient = createSupabaseClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         serviceKey
@@ -1428,6 +1855,7 @@ export async function uploadAttachment(formData: FormData): Promise<Attachment> 
 
     if (uploadError) {
         console.error("[uploadAttachment] Storage upload error:", uploadError);
+        await logError("uploadAttachment:storageUpload", uploadError, { taskId, orgId, userId, fileName });
         throw new Error("Failed to upload file: " + uploadError.message);
     }
     console.log("[uploadAttachment] Storage upload success:", uploadData);
@@ -1443,6 +1871,7 @@ export async function uploadAttachment(formData: FormData): Promise<Attachment> 
         .from('attachments')
         .insert([{
             task_id: taskId,
+            org_id: orgId, // Added for isolation
             uploader_id: userId,
             file_name: file.name,
             file_url: urlData.publicUrl,
@@ -1453,7 +1882,7 @@ export async function uploadAttachment(formData: FormData): Promise<Attachment> 
         .single();
 
     if (error) {
-        console.error("[uploadAttachment] DB insert error:", error);
+        await logError("uploadAttachment:dbInsert", error, { taskId, orgId, userId, fileName });
         // Clean up uploaded file
         await adminClient.storage.from('task-attachments').remove([fileName]);
         throw new Error("Failed to save attachment record: " + error.message);
@@ -1472,6 +1901,7 @@ export async function uploadAttachment(formData: FormData): Promise<Attachment> 
         });
     } catch (e) {
         console.warn("logActivity for attachment failed (non-critical):", e);
+        await logError("uploadAttachment:logActivity", e, { taskId, orgId, userId, fileName });
     }
 
     revalidatePath('/dashboard');
@@ -1487,15 +1917,17 @@ export async function deleteAttachment(attachmentId: string, taskId: string) {
         .from('attachments')
         .select('*')
         .eq('id', attachmentId)
+        .eq('org_id', orgId) // Ensure attachment belongs to org
         .single();
 
     if (fetchError || !attachment) {
-        throw new Error("Attachment not found");
+        await logError("deleteAttachment:fetch", fetchError, { attachmentId, taskId, orgId, userId });
+        throw new Error("Attachment not found or unauthorized");
     }
 
     // Use admin client for storage deletion
     const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (serviceKey) {
         const adminClient = createSupabaseClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -1506,18 +1938,26 @@ export async function deleteAttachment(attachmentId: string, taskId: string) {
         const pathParts = url.pathname.split('/task-attachments/');
         if (pathParts.length > 1) {
             const storagePath = decodeURIComponent(pathParts[1]);
-            await adminClient.storage.from('task-attachments').remove([storagePath]);
+            const { error: storageError } = await adminClient.storage.from('task-attachments').remove([storagePath]);
+            if (storageError) {
+                console.error("Error deleting file from storage:", storageError);
+                await logError("deleteAttachment:storageDelete", storageError, { attachmentId, taskId, orgId, userId, storagePath });
+            }
         }
+    } else {
+        await logError("deleteAttachment", new Error("Missing service role key for storage deletion"), { attachmentId, taskId, orgId, userId });
     }
 
-    // Delete from DB
+    // Delete from DB (scoped to org)
     const { error } = await supabase
         .from('attachments')
         .delete()
-        .eq('id', attachmentId);
+        .eq('id', attachmentId)
+        .eq('org_id', orgId);
 
     if (error) {
         console.error("Error deleting attachment:", error);
+        await logError("deleteAttachment:dbDelete", error, { attachmentId, taskId, orgId, userId });
         throw new Error("Failed to delete attachment");
     }
 
@@ -1526,11 +1966,12 @@ export async function deleteAttachment(attachmentId: string, taskId: string) {
 
 export async function getBulkCounts(taskIds: string[]) {
     if (!taskIds.length) return { comments: {}, attachments: {} }
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
 
     const [commentsRes, attachmentsRes] = await Promise.all([
-        supabase.from('comments').select('task_id').in('task_id', taskIds),
-        supabase.from('attachments').select('task_id').in('task_id', taskIds)
+        supabase.from('comments').select('task_id').in('task_id', taskIds).eq('org_id', orgId),
+        supabase.from('attachments').select('task_id').in('task_id', taskIds).eq('org_id', orgId)
     ])
 
     const commentCounts: Record<string, number> = {}
@@ -1548,7 +1989,7 @@ export async function getBulkCounts(taskIds: string[]) {
 }
 
 export async function deleteEmployee(userId: string) {
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!serviceKey) {
         console.error("[DeleteEmployee] Service Role Key is missing.");
@@ -1561,6 +2002,11 @@ export async function deleteEmployee(userId: string) {
         throw new Error("Invalid Service Role Key format. Please check your Supabase Dashboard > Project Settings > API.");
     }
 
+    const { orgId, role: currentRole } = await requireOrgContext();
+    if (currentRole !== 'owner' && currentRole !== 'admin' && currentRole !== 'manager') {
+        throw new Error("Unauthorized: Only managers/admins can delete employees.");
+    }
+
     const { createClient: createAdminClient } = await import('@supabase/supabase-js')
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -1568,7 +2014,17 @@ export async function deleteEmployee(userId: string) {
         { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    console.log(`[DeleteEmployee] Starting deletion for user: ${userId}`);
+    // 1. Verify target user is in the same organization
+    const { data: targetMember } = await supabaseAdmin
+        .from('organization_members')
+        .select('org_id')
+        .eq('user_id', userId)
+        .eq('org_id', orgId)
+        .single();
+    
+    if (!targetMember) throw new Error("Unauthorized: User not in your organization.");
+
+    console.log(`[DeleteEmployee] Starting deletion for user: ${userId} in org ${orgId}`);
 
     try {
         // 1. Cleanup assignee_ids arrays in tasks
@@ -1595,7 +2051,7 @@ export async function deleteEmployee(userId: string) {
         // This will cascade to profiles, tasks (owned), notifications, and comments via DB constraints
         const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
         if (authError) {
-            console.error("[DeleteEmployee] Auth deletion failed:", authError);
+            await logError("deleteEmployee:auth", authError, { userId });
             throw new Error(`Auth deletion failed: ${authError.message}`);
         }
 
@@ -1608,14 +2064,19 @@ export async function deleteEmployee(userId: string) {
 }
 
 export async function sendAlert(userId: string | 'all', message: string, type: 'urgent' | 'system' | 'overdue') {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+    const { orgId, role: currentRole } = await requireOrgContext();
+    if (currentRole !== 'owner' && currentRole !== 'admin' && currentRole !== 'manager') {
+        throw new Error("Unauthorized: Only managers/admins can send alerts.");
+    }
+
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
         throw new Error("Missing Supabase Service Role Key.");
     }
 
     const { createClient: createAdminClient } = await import('@supabase/supabase-js')
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
         { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
@@ -1625,15 +2086,29 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
         const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
         if (listError) throw new Error(listError.message);
         
-        // Fetch profiles to filter only employees
-        const { data: profiles } = await supabaseAdmin.from('profiles').select('id').eq('role', 'employee');
-        const employeeIds = new Set(profiles?.map(p => p.id) || []);
+        // Fetch profiles to filter only employees IN THIS ORG
+        const { data: orgMembers } = await supabaseAdmin
+            .from('organization_members')
+            .select('user_id')
+            .eq('org_id', orgId);
+        
+        const orgUserIds = new Set(orgMembers?.map(m => m.user_id) || []);
         
         targets = users.users
-            .filter(u => employeeIds.has(u.id))
+            .filter(u => orgUserIds.has(u.id))
             .map(u => ({ id: u.id, email: u.email || '' }))
             .filter(t => t.email);
     } else {
+        // Verify target is in same org
+        const { data: targetMember } = await supabaseAdmin
+            .from('organization_members')
+            .select('org_id')
+            .eq('user_id', userId)
+            .eq('org_id', orgId)
+            .single();
+        
+        if (!targetMember) throw new Error("Unauthorized: Target user not in your organization.");
+
         const { data: user, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
         if (userError) throw new Error(userError.message);
         if (user.user?.email) {
@@ -1659,7 +2134,7 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
         try {
             const subject = type === 'urgent' ? `URGENT: Task Management Alert` : `Notification: Task Management System`;
             
-            await resend.emails.send({
+            const { error } = await resend.emails.send({
                 from: process.env.RESEND_FROM_EMAIL || 'TaskHub <onboarding@resend.dev>',
                 to: targets.map(t => t.email),
                 subject: subject,
@@ -1672,6 +2147,7 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
                     </div>
                 `
             });
+            if (error) console.error("Resend error (bulk notification):", error);
         } catch (emailError) {
             console.error("Error sending emails:", emailError);
         }
@@ -1708,7 +2184,7 @@ export async function getWorkloadHeatmap(projectId?: string): Promise<WorkloadMa
         const { data, error } = await query;
 
         if (error) {
-            console.error("[getWorkloadHeatmap] Supabase Error:", error);
+            console.error("[getWorkloadHeatmap] Supabase Error detail:", JSON.stringify(error, null, 2));
             return {};
         }
 
@@ -1741,9 +2217,11 @@ export type WorkDetail = {
 }
 
 export async function getDailyWorkDetails(userId: string, date: string): Promise<WorkDetail[]> {
+    const contextPromise = requireOrgContext();
     const supabase = await createClient();
     
     try {
+        const { orgId } = await contextPromise;
         const { data, error } = await supabase
             .from('subtasks')
             .select(`
@@ -1756,6 +2234,7 @@ export async function getDailyWorkDetails(userId: string, date: string): Promise
             `)
             .eq('employee_id', userId)
             .eq('date_logged', date)
+            .eq('org_id', orgId)
             .gt('hours_spent', 0);
 
         if (error) {
@@ -1778,11 +2257,13 @@ export async function getDailyWorkDetails(userId: string, date: string): Promise
 // --- Audit Log Actions ---
 
 export async function getTaskAuditLog(taskId: string): Promise<ActivityLog[]> {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('activity_logs')
         .select('*, profiles:actor_id(name)')
         .eq('task_id', taskId)
+        .eq('org_id', orgId)
         .order('created_at', { ascending: false })
 
     if (error) {
@@ -1797,11 +2278,13 @@ export async function getTaskAuditLog(taskId: string): Promise<ActivityLog[]> {
 }
 
 export async function getMemberActivity(userId: string, limit = 50): Promise<ActivityLog[]> {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('activity_logs')
         .select('*, profiles:actor_id(name)')
         .eq('actor_id', userId)
+        .eq('org_id', orgId)
         .order('created_at', { ascending: false })
         .limit(limit)
 
@@ -1867,4 +2350,123 @@ export async function updateDigestPreferences(prefs: Partial<DigestPreferences>)
 
     if (error) throw error;
     return { success: true };
+}
+
+export async function syncOverdueTasks() {
+    try {
+        const context = await requireOrgContext().catch(() => null);
+        if (!context) return { success: false, error: "No context" };
+        const { orgId, userId } = context;
+        const supabase = await createClient();
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        // 1. Update tasks to 'Overdue' in the database
+        const { data, error } = await supabase
+            .from('tasks')
+            .update({ status: 'Overdue' })
+            .eq('org_id', orgId)
+            .lt('deadline', todayStr)
+            .neq('status', 'Completed')
+            .neq('status', 'Overdue')
+            .select('id, name');
+
+        if (error) {
+            console.error("[syncOverdueTasks] error:", error);
+            return { success: false, error: error.message };
+        }
+
+        if (data && data.length > 0) {
+            console.log(`[syncOverdueTasks] Automatically marked ${data.length} tasks as overdue.`);
+            
+            // Log activity for the first few (to avoid clutter)
+            const logPromises = data.slice(0, 5).map(task => 
+                logActivity({
+                    org_id: orgId,
+                    actor_id: userId,
+                    task_id: task.id,
+                    type: 'task_status_changed',
+                    description: `System automatically marked task "${task.name}" as Overdue.`,
+                    metadata: { name: task.name, status: 'Overdue' }
+                })
+            );
+            await Promise.all(logPromises);
+        }
+
+        return { success: true, count: data?.length || 0 };
+    } catch (err: any) {
+        console.error("[syncOverdueTasks] Unexpected error:", err);
+        return { success: false, error: err.message };
+    }
+}
+
+export async function getDashboardData(projectId?: string, providedOrgId?: string, providedUserId?: string) {
+    const startTime = Date.now();
+    console.log(`[getDashboardData] Starting fetch for project: ${projectId || 'all'}`);
+    const supabase = await createClient()
+    
+    let orgId = providedOrgId;
+    let userId = providedUserId;
+
+    if (!orgId || !userId) {
+        const context = await requireOrgContext().catch(() => null);
+        if (!context) return null;
+        orgId = context.orgId;
+        userId = context.userId;
+    }
+
+    // 1. Prepare Auth User Fetch (Don't await yet, run in parallel)
+    const authUsersPromise = (async () => {
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return [];
+        try {
+            const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+            const supabaseAdmin = createAdminClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY,
+                { auth: { autoRefreshToken: false, persistSession: false } }
+            )
+            const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+            return authError ? [] : users;
+        } catch (e) {
+            console.error("[getDashboardData] Auth fetch error:", e);
+            return [];
+        }
+    })();
+
+    // 2. Fetch Core Data Promise (Parallel including Auth Users)
+    const [tasks, profiles, projects, projectMembers, logs, workload, authUsers] = await Promise.all([
+        getTasks(projectId),
+        authUsersPromise.then(users => getProfiles(undefined, users)),
+        getProjects(),
+        authUsersPromise.then(users => projectId ? getProfiles(projectId, users) : Promise.resolve([])),
+        getOrgActivityFeed(orgId || ''),
+        getWorkloadHeatmap(projectId),
+        authUsersPromise
+    ]);
+
+    // 3. Secondary Data (Bulk fetches if tasks exist)
+    let subtasks: Subtask[] = [];
+    let counts = { comments: {} as Record<string, number>, attachments: {} as Record<string, number> };
+    if (tasks.length > 0) {
+        const ids = tasks.map(t => t.id);
+        const [st, c] = await Promise.all([
+            getBulkSubtasks(ids),
+            getBulkCounts(ids)
+        ]);
+        subtasks = st;
+        counts = c;
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(`[getDashboardData] Completed in ${duration}ms for project ${projectId || 'all'}`);
+
+    return {
+        tasks,
+        profiles,
+        projects,
+        projectMembers,
+        logs,
+        workload,
+        subtasks,
+        counts
+    };
 }

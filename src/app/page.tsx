@@ -2,6 +2,9 @@ import { createClient } from '@/utils/supabase/server';
 import { Card, Button, Input } from '@/components/ui/components';
 import Logo from '@/components/ui/Logo';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { checkActionRateLimit } from '@/utils/rate-limit';
+import { sanitizeString, validateEmail, validatePasswordStrength } from '@/utils/security';
 
 export default async function Home() {
   const supabase = await createClient();
@@ -33,51 +36,68 @@ export default async function Home() {
   // --- SERVER ACTIONS ---
   const login = async (formData: FormData) => {
     "use server"
-    const email = formData.get('email') as string;
+    const email = sanitizeString(formData.get('email') as string);
     const password = formData.get('password') as string;
+    
+    if (!validateEmail(email)) return redirect('/?error=invalid_credentials');
+    
     const supabase = await createClient();
+
+    // Rate Limiting: 10 attempts per 15 minutes per IP/Email
+    const ip = (await headers()).get('x-forwarded-for') || 'unknown';
+    const throttle = await checkActionRateLimit(`${ip}:${email}`, 'login', 10, 15 * 60 * 1000);
+    if (!throttle.allowed) return redirect(`/?error=rate_limited&msg=${encodeURIComponent(throttle.error || '')}`);
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) redirect('/?error=invalid_credentials');
+    
+    if (error) {
+        if (error.message.includes('Email not confirmed')) {
+            return redirect('/?error=email_not_verified');
+        }
+        return redirect('/?error=invalid_credentials');
+    }
     redirect('/');
   };
 
   const signup = async (formData: FormData) => {
     "use server"
-    const name = formData.get('name') as string;
-    const email = formData.get('email') as string;
+    const name = sanitizeString(formData.get('name') as string);
+    const email = sanitizeString(formData.get('email') as string);
     const password = formData.get('password') as string;
+
+    if (!name || name.length < 2) return redirect('/?error=signup_failed&msg=Name is too short.');
+    if (!validateEmail(email)) return redirect('/?error=signup_failed&msg=Invalid email format.');
+    if (!validatePasswordStrength(password)) return redirect('/?error=signup_failed&msg=Password must be at least 8 characters with mixed case and numbers.');
+
     const supabase = await createClient();
     
-    // 1. Create user with auto-confirm using Admin API
-    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
-    const supabaseAdmin = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        { auth: { autoRefreshToken: false, persistSession: false } }
-    )
+    // Rate Limiting: 3 signups per hour per IP
+    const ip = (await headers()).get('x-forwarded-for') || 'unknown';
+    const throttle = await checkActionRateLimit(ip, 'signup', 3, 60 * 60 * 1000);
+    if (!throttle.allowed) return redirect(`/?error=rate_limited&msg=${encodeURIComponent(throttle.error || '')}`);
 
-    const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+    // Use standard signUp - this automatically handles email verification
+    // and built-in Supabase rate limiting for signups.
+    const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        email_confirm: true,
-        user_metadata: { name, role: 'manager' }
+        options: {
+            data: { name, role: 'manager' },
+            emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`
+        }
     });
 
-    if (createError) {
-        // If user already exists, Supabase throws an error "User already registered"
-        // We could just try to log them in, but it's safer to show the error
-        console.error("Signup Data Error:", createError);
-        return redirect(`/?error=signup_failed&msg=${encodeURIComponent(createError.message)}`);
+    if (error) {
+        console.error("Signup Error:", error);
+        return redirect(`/?error=signup_failed&msg=${encodeURIComponent(error.message)}`);
     }
 
-    // 2. Sign them in immediately to establish a session cookie
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    if (signInError) {
-        console.error("Auto-login failed:", signInError);
-        return redirect(`/?error=login_failed&msg=${encodeURIComponent(signInError.message)}`);
+    // If user is returned but has no session, it means email verification is required
+    if (data.user && !data.session) {
+        return redirect('/?success=signup_pending');
     }
 
-    redirect('/'); // Will now route to 'Create Workspace' since they are logged in but have no org
+    redirect('/');
   };
 
   const createOrganization = async (formData: FormData) => {
@@ -87,11 +107,11 @@ export default async function Home() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return redirect('/');
 
-    // 1. Create Org using Service Role (since RLS might block insert if user not a member yet, though we can allow it in policies. It's safer to use admin here)
+    // 1. Create Org using Service Role
     const { createClient: createAdminClient } = await import('@supabase/supabase-js')
     const supabaseAdmin = createAdminClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
         { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
@@ -143,9 +163,42 @@ export default async function Home() {
           </div>
 
           <Card className="p-8">
-            <form action={login} className="space-y-4">
+            {/* Feedback Messages */}
+            <div className="mb-6">
+              {Object.entries({
+                invalid_credentials: { msg: 'Invalid email or password.', type: 'error' },
+                email_not_verified: { msg: 'Please verify your email before logging in.', type: 'error' },
+                rate_limited: { msg: 'Too many attempts. Please try again later.', type: 'error' },
+                signup_failed: { msg: 'Signup failed. Please try again.', type: 'error' },
+                signup_pending: { msg: 'Please check your email to verify your account.', type: 'success' },
+                reset_sent: { msg: 'Password reset link sent to your email.', type: 'success' },
+                password_updated: { msg: 'Password updated successfully. Please log in.', type: 'success' },
+                bot_detected: { msg: 'Security check failed. Please try again.', type: 'error' }
+              }).map(([key, config]) => (
+                key === (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')).get('error') || 
+                key === (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')).get('success') ? (
+                  <div key={key} className={`p-3 rounded-lg text-sm font-bold mb-4 ${config.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
+                    {config.msg}
+                  </div>
+                ) : null
+              ))}
+            </div>
+
+            <form action={async (fd) => {
+              "use server"
+              // Honeypot check
+              if (fd.get('website')) return redirect('/?error=bot_detected');
+              return login(fd);
+            }} className="space-y-4">
+              {/* Honeypot field - hidden from users, but often filled by bots */}
+              <div className="hidden" aria-hidden="true">
+                <input type="text" name="website" tabIndex={-1} autoComplete="off" />
+              </div>
               <Input name="email" type="email" required placeholder="Email Address" className="w-full h-12" />
               <Input name="password" type="password" required placeholder="Password" className="w-full h-12" />
+              <div className="flex justify-end">
+                <a href="/auth/password-reset" className="text-xs font-bold text-[#0071e3] hover:underline">Forgot password?</a>
+              </div>
               <Button type="submit" className="w-full h-12 text-md font-bold mt-2">Sign In</Button>
             </form>
 
@@ -154,7 +207,16 @@ export default async function Home() {
                 <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-[#86868b] font-bold">Or create an account</span></div>
             </div>
 
-            <form action={signup} className="space-y-4">
+            <form action={async (fd) => {
+              "use server"
+              // Honeypot check
+              if (fd.get('website')) return redirect('/?error=bot_detected');
+              return signup(fd);
+            }} className="space-y-4">
+              {/* Honeypot field */}
+              <div className="hidden" aria-hidden="true">
+                <input type="text" name="website" tabIndex={-1} autoComplete="off" />
+              </div>
               <Input name="name" type="text" required placeholder="Full Name" className="w-full h-12" />
               <Input name="email" type="email" required placeholder="Work Email" className="w-full h-12" />
               <Input name="password" type="password" required placeholder="Choose Password" className="w-full h-12" />

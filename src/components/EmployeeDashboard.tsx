@@ -9,7 +9,7 @@ const TimelineSchedule = dynamic(() => import('@/components/ui/TimelineSchedule'
     ssr: false,
     loading: () => <div className="h-96 w-full animate-pulse bg-slate-100 rounded-2xl flex items-center justify-center font-bold text-slate-400">Loading Timeline...</div>
 });
-import { Task, Subtask, Profile, Priority, Status, Project, getTasks, getProjects, getProfiles, saveTask, updateTaskPriority, updateTaskStatus, deleteTask, updateTask, getSubtasks, getBulkSubtasks, saveSubtask, updateSubtaskStatus, updateSubtaskHours, deleteSubtask, updateSubtask, updateProfile, changePassword, updateOwnPassword, logout, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, ActivityLog, getOrgActivityFeed, getBulkCounts } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, Project, getTasks, getProjects, getProfiles, saveTask, updateTaskPriority, updateTaskStatus, deleteTask, updateTask, getSubtasks, getBulkSubtasks, saveSubtask, updateSubtaskStatus, updateSubtaskHours, deleteSubtask, updateSubtask, updateProfile, changePassword, updateOwnPassword, logout, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, ActivityLog, getOrgActivityFeed, getBulkCounts, syncOverdueTasks, getDashboardData } from '@/app/actions/actions';
 import { createClient } from '@/utils/supabase/client';
 import { Card, Button, Input, Select, Badge } from '@/components/ui/components';
 import { ProjectSwitcher } from '@/components/ProjectSwitcher';
@@ -17,13 +17,28 @@ import { EmployeeSidebar } from './layout/EmployeeSidebar';
 import { EmployeeHeader } from './layout/EmployeeHeader';
 import { EmployeeBoardView } from './dashboard/EmployeeBoardView';
 import { EmployeeRightPanel } from './dashboard/EmployeeRightPanel';
+import { SettingsView } from './dashboard/SettingsView';
 import { Menu, X, Clock, Trash2, Pencil, Search, Bell, CheckCircle2, AlertCircle, ChevronRight, Activity, Zap, Plus, MessageSquare, Paperclip, LogOut } from 'lucide-react';
 import { formatAuditEntry } from '@/utils/audit-formatters';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 
-export default function EmployeeDashboard({ userId, userName, projectId, userRole, orgId }: { userId: string, userName: string, projectId?: string, userRole: 'employee' | 'manager', orgId: string }) {
+export default function EmployeeDashboard({ 
+    userId, 
+    userName, 
+    projectId, 
+    userRole, 
+    orgId,
+    initialData
+}: { 
+    userId: string, 
+    userName: string, 
+    projectId?: string, 
+    userRole: 'employee' | 'manager', 
+    orgId: string,
+    initialData?: any
+}) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'mine' | 'team' | 'schedule' | 'settings'>('mine');
     const [viewMode, setViewMode] = useState<'today' | 'overview'>('today');
@@ -38,11 +53,14 @@ export default function EmployeeDashboard({ userId, userName, projectId, userRol
     }, [activeTab]);
 
     // Data
-    const [allTasks, setAllTasks] = useState<Task[]>([]);
-    const [myTasks, setMyTasks] = useState<Task[]>([]);
-    const [employees, setEmployees] = useState<Profile[]>([]);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [allTasks, setAllTasks] = useState<Task[]>(initialData?.tasks || []);
+    const [myTasks, setMyTasks] = useState<Task[]>(() => {
+        if (!initialData?.tasks) return [];
+        return initialData.tasks.filter((t: Task) => t.employee_id === userId || (t.assignee_ids && t.assignee_ids.includes(userId)));
+    });
+    const [employees, setEmployees] = useState<Profile[]>(initialData?.profiles || []);
+    const [projects, setProjects] = useState<Project[]>(initialData?.projects || []);
+    const [loading, setLoading] = useState(!initialData);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -61,9 +79,18 @@ export default function EmployeeDashboard({ userId, userName, projectId, userRol
 
     const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [editTaskData, setEditTaskData] = useState<Partial<Task>>({});
-    const [subtasksMap, setSubtasksMap] = useState<Record<string, Subtask[]>>({});
-    const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
-    const [attachmentCounts, setAttachmentCounts] = useState<Record<string, number>>({});
+    const [subtasksMap, setSubtasksMap] = useState<Record<string, Subtask[]>>(() => {
+        const map: Record<string, Subtask[]> = {};
+        if (initialData?.subtasks) {
+            initialData.subtasks.forEach((st: Subtask) => {
+                if (!map[st.task_id]) map[st.task_id] = [];
+                map[st.task_id].push(st);
+            });
+        }
+        return map;
+    });
+    const [commentCounts, setCommentCounts] = useState<Record<string, number>>(initialData?.counts?.comments || {});
+    const [attachmentCounts, setAttachmentCounts] = useState<Record<string, number>>(initialData?.counts?.attachments || {});
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
     const activeTask = useMemo(() => {
@@ -94,12 +121,12 @@ export default function EmployeeDashboard({ userId, userName, projectId, userRol
     const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>(initialData?.notifications || []);
     const [showNotifications, setShowNotifications] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadCount, setUnreadCount] = useState((initialData?.notifications || []).filter((n: any) => !n.is_read).length);
     const [subtaskToDelete, setSubtaskToDelete] = useState<{ taskId: string, subtaskId: string, subtaskName: string } | null>(null);
     const [isDeletingSubtask, setIsDeletingSubtask] = useState(false);
-    const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+    const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(initialData?.logs || []);
 
     const [isSideSheetOpen, setIsSideSheetOpen] = useState(false);
     const [taskForSheet, setTaskForSheet] = useState<Task | null>(null);
@@ -124,55 +151,50 @@ export default function EmployeeDashboard({ userId, userName, projectId, userRol
     const refreshData = useCallback(async (silent = true) => {
         if (!silent) setLoading(true);
         try {
-            // Level 1: Core Data, Projects, Profiles, Logs, Notifications
-            const [tasks, profiles, fetchedProjects, logs, notifs] = await Promise.all([
-                getTasks(projectId), 
-                getProfiles(projectId),
-                getProjects(),
-                getOrgActivityFeed(orgId || ''),
-                getNotifications(userId || '')
-            ]);
+            // Automatically sync overdue tasks in the database - do this in background
+            syncOverdueTasks().catch(err => console.error("Sync error:", err));
+
+            // Use consolidated fetch for better performance
+            const data = await getDashboardData(projectId);
+            if (!data) return { tasks: [], profiles: [] };
             
-            setActivityLogs(logs);
-            setProjects(fetchedProjects);
-            setAllTasks(tasks);
-            const myTasksFiltered = tasks.filter(t => t.employee_id === userId || (t.assignee_ids && t.assignee_ids.includes(userId)));
+            setActivityLogs(data.logs);
+            setProjects(data.projects);
+            setAllTasks(data.tasks);
+            const myTasksFiltered = data.tasks.filter((t: Task) => t.employee_id === userId || (t.assignee_ids && t.assignee_ids.includes(userId)));
             setMyTasks(myTasksFiltered);
-            setEmployees(profiles);
+            setEmployees(data.profiles);
+            
+            // Notifications are separate but important
+            const notifs = await getNotifications(userId || '');
             setNotifications(notifs || []);
-            setUnreadCount((notifs || []).filter(n => !n.is_read).length);
+            setUnreadCount((notifs || []).filter((n: Notification) => !n.is_read).length);
 
-            if (tasks.length > 0) {
-                const taskIds = tasks.map(t => t.id);
-                
-                // Level 2: Secondary Data (Subtasks, Counts)
-                const [allSubtasks, counts] = await Promise.all([
-                    getBulkSubtasks(taskIds),
-                    getBulkCounts(taskIds)
-                ]);
-
-                // Sync task sheet if it's open
-                setTaskForSheet(prev => {
-                    if (prev) {
-                        const updated = tasks.find(t => t.id === prev.id);
-                        if (updated) {
-                            setSheetSubtasks(allSubtasks.filter(st => st.task_id === updated.id));
-                            return updated;
-                        }
+            // Level 2: Secondary Data (Subtasks, Counts)
+            const allSubtasks = data.subtasks;
+            const counts = data.counts;
+            
+            // Sync task sheet if it's open
+            setTaskForSheet(prev => {
+                if (prev) {
+                    const updated = data.tasks.find((t: Task) => t.id === prev.id);
+                    if (updated) {
+                        setSheetSubtasks(allSubtasks.filter((st: Subtask) => st.task_id === updated.id));
+                        return updated;
                     }
-                    return prev;
-                });
+                }
+                return prev;
+            });
 
-                const newSubtasksMap: Record<string, Subtask[]> = {};
-                allSubtasks.forEach(st => {
-                    if (!newSubtasksMap[st.task_id]) newSubtasksMap[st.task_id] = [];
-                    newSubtasksMap[st.task_id].push(st);
-                });
-                setSubtasksMap(newSubtasksMap);
-                setCommentCounts(counts.comments);
-                setAttachmentCounts(counts.attachments);
-            }
-            return { tasks, profiles };
+            const newSubtasksMap: Record<string, Subtask[]> = {};
+            allSubtasks.forEach((st: Subtask) => {
+                if (!newSubtasksMap[st.task_id]) newSubtasksMap[st.task_id] = [];
+                newSubtasksMap[st.task_id].push(st);
+            });
+            setSubtasksMap(newSubtasksMap);
+            setCommentCounts(counts.comments);
+            setAttachmentCounts(counts.attachments);
+            return { tasks: data.tasks, profiles: data.profiles };
         } catch (error: any) {
             console.error("Error refreshing dashboard:", error);
             return { tasks: [], profiles: [] };
@@ -211,9 +233,14 @@ export default function EmployeeDashboard({ userId, userName, projectId, userRol
     // Initial Load
     useEffect(() => {
         if (userId) {
-            refreshData(false);
+            // Only fetch if we don't have initial data or on subsequent mounts
+            if (!initialData) {
+                refreshData(false);
+            } else {
+                setLoading(false);
+            }
         }
-    }, [userId, projectId, refreshData]);
+    }, [userId, projectId, refreshData, initialData]);
 
     useEffect(() => {
         if (loading) {
@@ -447,8 +474,7 @@ export default function EmployeeDashboard({ userId, userName, projectId, userRol
 
         try {
             await deleteTask(taskId);
-            // Silent refresh after success
-            await refreshData(true);
+            // Real-time subscription will handle the final sync.
         } catch (err: any) {
             // Rollback on error
             setMyTasks(originalTasks);
@@ -533,15 +559,18 @@ export default function EmployeeDashboard({ userId, userName, projectId, userRol
     const completedTasksCount = myTasks.filter(t => t.status === 'Completed').length;
 
     const efficiencyPercentage = useMemo(() => {
-        if (myTasks.length === 0) return 0;
+        if (!myTasks || myTasks.length === 0) return 0;
         
         const totalProgress = myTasks.reduce((acc, task) => {
+            const isOverdue = task.status === 'Overdue' || (task.deadline && new Date(task.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && task.status !== 'Completed');
+            if (isOverdue) return acc + 5;
+
             const taskSubtasks = subtasksMap[task.id] || [];
             if (taskSubtasks.length > 0) {
                 const completedCount = taskSubtasks.filter(s => s.is_completed).length;
                 return acc + (completedCount / taskSubtasks.length) * 100;
             }
-            // Status-based fallback mirroring ManagerDashboard logic
+            
             switch (task.status) {
                 case 'Completed': return acc + 100;
                 case 'In Review': return acc + 80;
@@ -621,6 +650,16 @@ export default function EmployeeDashboard({ userId, userName, projectId, userRol
                                     onEmployeeClick={handleEmployeeClick} 
                                     refreshData={refreshData}
                                     searchFilter={timelineSearchFilter}
+                                />
+                            </div>
+                        )}
+
+                        {activeTab === 'settings' && (
+                            <div className="fade-in">
+                                <SettingsView 
+                                    userId={userId} 
+                                    userName={userName} 
+                                    initialProfileName={profileName || userName} 
                                 />
                             </div>
                         )}

@@ -18,6 +18,7 @@ interface DashboardContainerProps {
   orgName: string;
   orgId: string;
   projectId?: string;
+  initialData?: any;
 }
 
 export default function DashboardContainer({ 
@@ -25,7 +26,8 @@ export default function DashboardContainer({
   userName, 
   userRole, 
   orgId,
-  projectId 
+  projectId,
+  initialData
 }: DashboardContainerProps) {
   return (
     <div className="min-h-screen bg-[#f8f9fb]">
@@ -36,6 +38,7 @@ export default function DashboardContainer({
           userRole={userRole}
           projectId={projectId} 
           orgId={orgId}
+          initialData={initialData}
         />
       ) : (
         <ManagerDashboard 
@@ -44,6 +47,7 @@ export default function DashboardContainer({
           userRole={userRole}
           projectId={projectId} 
           orgId={orgId}
+          initialData={initialData}
         />
       )}
     </div>

@@ -171,6 +171,7 @@ export function EmployeeRightPanel({
                                     <option>To Do</option>
                                     <option>In Progress</option>
                                     <option>Blocked</option>
+                                    <option>Overdue</option>
                                     <option>Completed</option>
                                 </Select>
                             </div>

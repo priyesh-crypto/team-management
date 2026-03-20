@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Task, Subtask, Profile, Priority, Status, Project, getTasks, getProfiles, getProjects, saveTask, saveSubtask, inviteMember, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskPriority, updateTaskStatus, deleteTask, deleteSubtask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, getBulkCounts, getAttachments, Attachment, getWorkloadHeatmap, WorkloadMap, ActivityLog, getTaskAuditLog, getMemberActivity, getOrgActivityFeed, logout } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, Project, getTasks, getProfiles, getProjects, saveTask, saveSubtask, inviteMember, addMemberDirectly, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskPriority, updateTaskStatus, deleteTask, deleteSubtask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, getBulkCounts, getAttachments, Attachment, getWorkloadHeatmap, WorkloadMap, ActivityLog, getTaskAuditLog, getMemberActivity, getOrgActivityFeed, logout, syncOverdueTasks, getDashboardData } from '@/app/actions/actions';
 import { formatAuditEntry } from '@/utils/audit-formatters';
 import { useRouter } from 'next/navigation';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
@@ -13,6 +13,7 @@ import { ManagerSidebar } from './layout/ManagerSidebar';
 import { ManagerHeader } from './layout/ManagerHeader';
 import { ManagerBoardView } from './dashboard/ManagerBoardView';
 import { ManagerMineView } from './dashboard/ManagerMineView';
+import { SettingsView } from './dashboard/SettingsView';
 
 const TimelineSchedule = dynamic(() => import('@/components/ui/TimelineSchedule'), { 
     ssr: false,
@@ -30,7 +31,21 @@ import { Pencil, Trash2, Menu, X, Calendar, Clock, Bell, Settings, Search, Layou
 import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/lib/utils';
 
-export default function ManagerDashboard({ userId, userName, projectId, userRole, orgId }: { userId: string, userName: string, projectId?: string, userRole: 'employee' | 'manager', orgId: string }) {
+export default function ManagerDashboard({ 
+    userId, 
+    userName, 
+    projectId, 
+    userRole, 
+    orgId,
+    initialData
+}: { 
+    userId: string, 
+    userName: string, 
+    projectId?: string, 
+    userRole: 'employee' | 'manager', 
+    orgId: string,
+    initialData?: any
+}) {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'board' | 'mine' | 'planning' | 'team' | 'settings'>('board');
     const [searchQuery, setSearchQuery] = useState('');
@@ -46,15 +61,24 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
     }, [activeTab]);
 
     // Data State
-    const [tasks, setTasks] = useState<Task[]>([]); // This will hold all tasks
-    const [employees, setEmployees] = useState<Profile[]>([]); // organization wide
-    const [projectMembers, setProjectMembers] = useState<Profile[]>([]); // project specific
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [subtasksMap, setSubtasksMap] = useState<Record<string, Subtask[]>>({});
-    const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
-    const [attachmentCounts, setAttachmentCounts] = useState<Record<string, number>>({});
-    const [auditLogs, setAuditLogs] = useState<ActivityLog[]>([]);
+    const [tasks, setTasks] = useState<Task[]>(initialData?.tasks || []); // This will hold all tasks
+    const [employees, setEmployees] = useState<Profile[]>(initialData?.profiles || []); // organization wide
+    const [projectMembers, setProjectMembers] = useState<Profile[]>(initialData?.projectMembers || []); // project specific
+    const [projects, setProjects] = useState<Project[]>(initialData?.projects || []);
+    const [loading, setLoading] = useState(!initialData);
+    const [subtasksMap, setSubtasksMap] = useState<Record<string, Subtask[]>>(() => {
+        const map: Record<string, Subtask[]> = {};
+        if (initialData?.subtasks) {
+            initialData.subtasks.forEach((st: Subtask) => {
+                if (!map[st.task_id]) map[st.task_id] = [];
+                map[st.task_id].push(st);
+            });
+        }
+        return map;
+    });
+    const [commentCounts, setCommentCounts] = useState<Record<string, number>>(initialData?.counts?.comments || {});
+    const [attachmentCounts, setAttachmentCounts] = useState<Record<string, number>>(initialData?.counts?.attachments || {});
+    const [auditLogs, setAuditLogs] = useState<ActivityLog[]>(initialData?.logs || []);
 
     // Profile State
     const [profileName, setProfileName] = useState(userName);
@@ -65,13 +89,15 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
 
     // Team Management Form State
     const [inviteForm, setInviteForm] = useState({ email: '', role: 'employee' });
+    const [memberFormMode, setMemberFormMode] = useState<'invite' | 'direct'>('invite');
+    const [directAddForm, setDirectAddForm] = useState({ name: '', email: '', role: 'employee', password: '' });
     const [inviteResult, setInviteResult] = useState<{type: 'error' | 'success', text: string} | null>(null);
     const [editingEmpId, setEditingEmpId] = useState<string | null>(null);
-    const [editEmpForm, setEditEmpForm] = useState({ name: '', role: 'employee', password: '' });
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [editEmpForm, setEditEmpForm] = useState({ name: '', role: 'employee', password: '', email: '' });
+    const [notifications, setNotifications] = useState<Notification[]>(initialData?.notifications || []);
     const [showNotifications, setShowNotifications] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
-    const [workloadData, setWorkloadData] = useState<WorkloadMap>({});
+    const [unreadCount, setUnreadCount] = useState((initialData?.notifications || []).filter((n: any) => !n.is_read).length);
+    const [workloadData, setWorkloadData] = useState<WorkloadMap>(initialData?.workload || {});
     const [showBroadcastModal, setShowBroadcastModal] = useState(false);
     const [broadcastForm, setBroadcastForm] = useState({ message: '', type: 'system' as 'urgent' | 'system' });
     const [isBroadcasting, setIsBroadcasting] = useState(false);
@@ -171,10 +197,12 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
 
     useEffect(() => {
         setMounted(true);
+        // If we have initial data, we can stop loading immediately
+        if (initialData) setLoading(false);
         // Reduced frequency to once per minute - enough for "now" precision on dates
         const interval = setInterval(() => setNow(new Date()), 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [initialData]);
 
     const formatTaskDate = (dateStr: string) => {
         if (!dateStr) return null;
@@ -257,54 +285,44 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
     const refreshData = async (silent = true) => {
         if (!silent) setLoading(true);
         try {
-            // Level 1: Core Data, Activity logs & Workload (Flattened waterfall)
-            const [fetchedTasks, fetchedProfiles, fetchedProjects, fetchedProjectMembers, logs, workload] = await Promise.all([
-                getTasks(projectId), 
-                getProfiles(),
-                getProjects(),
-                projectId ? getProfiles(projectId) : Promise.resolve([]),
-                getOrgActivityFeed(orgId || ''),
-                getWorkloadHeatmap(projectId)
-            ]);
+            // Automatically sync overdue tasks in the database - do this in background
+            syncOverdueTasks().catch(err => console.error("Sync error:", err));
+
+            // Use consolidated fetch for better performance
+            const data = await getDashboardData(projectId);
+            if (!data) return { tasks: [], profiles: [] };
+
+            setTasks(data.tasks);
+            setEmployees(data.profiles);
+            setProjects(data.projects);
+            setProjectMembers(data.projectMembers);
+            setAuditLogs(data.logs);
+            setWorkloadData(data.workload);
+
+            // Level 2: Secondary Data (Subtasks, Counts, etc.)
+            const allSubtasks = data.subtasks;
+            const counts = data.counts;
             
-            setTasks(fetchedTasks);
-            setEmployees(fetchedProfiles);
-            setProjects(fetchedProjects);
-            setProjectMembers(fetchedProjectMembers);
-            setAuditLogs(logs);
-            setWorkloadData(workload);
-
-            if (fetchedTasks.length > 0) {
-                const taskIds = fetchedTasks.map(t => t.id);
-                
-                // Level 2: Secondary Data (Subtasks, Counts, etc.)
-                const [allSubtasks, counts] = await Promise.all([
-                    getBulkSubtasks(taskIds),
-                    getBulkCounts(taskIds)
-                ]);
-
-                // Sync selected task if it's open (Level 3 - separate if needed but keeping it here for simplicity)
-                if (selectedTask) {
-                    const refreshedTask = fetchedTasks.find(t => t.id === selectedTask.task.id);
-                    if (refreshedTask) {
-                        const subtasks = allSubtasks.filter(st => st.task_id === refreshedTask.id);
-                        setSelectedTask({ task: refreshedTask, subtasks });
-                    }
+            // Sync selected task if it's open
+            if (selectedTask) {
+                const refreshedTask = data.tasks.find((t: Task) => t.id === selectedTask.task.id);
+                if (refreshedTask) {
+                    const subtasks = allSubtasks.filter((st: Subtask) => st.task_id === refreshedTask.id);
+                    setSelectedTask({ task: refreshedTask, subtasks });
                 }
-
-                const newMap: Record<string, Subtask[]> = {};
-                allSubtasks.forEach(st => {
-                    if (!newMap[st.task_id]) newMap[st.task_id] = [];
-                    newMap[st.task_id].push(st);
-                });
-                
-                setSubtasksMap(newMap);
-                setCommentCounts(counts.comments);
-                setAttachmentCounts(counts.attachments);
             }
 
+            const newMap: Record<string, Subtask[]> = {};
+            allSubtasks.forEach((st: Subtask) => {
+                if (!newMap[st.task_id]) newMap[st.task_id] = [];
+                newMap[st.task_id].push(st);
+            });
+            
+            setSubtasksMap(newMap);
+            setCommentCounts(counts.comments);
+            setAttachmentCounts(counts.attachments);
 
-            return { tasks: fetchedTasks, profiles: fetchedProfiles };
+            return { tasks: data.tasks, profiles: data.profiles };
         } catch (error) {
             console.error("Error refreshing dashboard data:", error);
             return { tasks: [], profiles: [] };
@@ -663,21 +681,26 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
             employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
         );
 
-        const groupTasksByStatus = (status: Status) => filteredTasks.filter(t => t.status === status);
+        const isOverdue = (t: Task) => (t.status === 'Overdue' || (t.deadline && new Date(t.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && t.status !== 'Completed'));
+        const groupTasksByStatus = (status: Status) => {
+            if (status === 'Overdue') return filteredTasks.filter(isOverdue);
+            return filteredTasks.filter(t => t.status === status && !isOverdue(t));
+        };
 
         const total = filteredTasks.length;
         const completed = groupTasksByStatus('Completed').length;
         const inProgress = groupTasksByStatus('In Progress').length;
         const draft = groupTasksByStatus('To Do').length;
         const inReview = groupTasksByStatus('In Review').length;
+        const overdueCount = groupTasksByStatus('Overdue').length;
 
-        return { total, completed, inProgress, draft, inReview };
+        return { total, completed, inProgress, draft, inReview, overdue: overdueCount };
     }, [tasks, searchQuery, employees]);
 
     const heatmapData = useMemo(() => {
-        const highUrgent = tasks.filter(t => t.priority === 'High' || t.priority === 'Urgent');
-        const active = highUrgent.filter(t => t.status !== 'Completed' && new Date(t.deadline) >= new Date());
-        const overdue = highUrgent.filter(t => t.status !== 'Completed' && new Date(t.deadline) < new Date());
+        const isOverdue = (t: Task) => (t.status === 'Overdue' || (t.deadline && new Date(t.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && t.status !== 'Completed'));
+        const active = tasks.filter(t => (t.priority === 'High' || t.priority === 'Urgent') && t.status !== 'Completed' && !isOverdue(t));
+        const overdue = tasks.filter(t => isOverdue(t));
         
         return { 
             active: active.map(t => ({ ...t, employee: employees.find(e => e.id === t.employee_id)?.name })), 
@@ -718,6 +741,23 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
         }
     };
 
+    const handleDirectAdd = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setInviteResult(null);
+        try {
+            const result = await addMemberDirectly(directAddForm);
+            if (result.success) {
+                setInviteResult({ type: 'success', text: `Successfully added ${directAddForm.name}!` });
+                setDirectAddForm({ name: '', email: '', role: 'employee', password: '' });
+                refreshData();
+            } else {
+                setInviteResult({ type: 'error', text: result.error || 'Failed to add member.' });
+            }
+        } catch (err: any) {
+            setInviteResult({ type: 'error', text: err.message || 'Failed to add member.' });
+        }
+    };
+
     const handleInviteMember = async (e: React.FormEvent) => {
         e.preventDefault();
         setInviteResult(null);
@@ -740,12 +780,12 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
 
     const handleSaveEdit = async (empId: string) => {
         try {
-            await updateEmployeeProfile(empId, editEmpForm.name, editEmpForm.role);
+            await updateEmployeeProfile(empId, editEmpForm.name, editEmpForm.role, editEmpForm.email);
             if (editEmpForm.password) {
                 await updateUserPassword(empId, editEmpForm.password);
             }
             setEditingEmpId(null);
-            setEditEmpForm({ name: '', role: 'employee', password: '' });
+            setEditEmpForm({ name: '', role: 'employee', password: '', email: '' });
             refreshData();
         } catch (err: any) {
             alert(err.message);
@@ -804,8 +844,7 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
 
         try {
             await deleteTask(taskId);
-            // After successful delete, do a silent refresh to ensure sync
-            await refreshData(true);
+            // Real-time subscription will handle the final sync.
         } catch (err: any) {
             // Rollback on error
             setTasks(originalTasks);
@@ -873,7 +912,9 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
         }
     };
 
-    if (loading) {
+    // Optimized rendering: show the layout immediately if we have initial data
+    // Only show the global loader if we have NO data and are still loading
+    if (loading && tasks.length === 0) {
         return (
             <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
                 <div className="w-12 h-12 border-4 border-[#0071e3] border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -1005,31 +1046,85 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
                             
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <Card className="p-6 rounded-2xl border-[#eceef0]">
-                                <h3 className="text-base font-black mb-4 text-[#1d1d1f] tracking-tight">Invite Member</h3>
-                                <form onSubmit={handleInviteMember} className="space-y-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
-                                        <input type="email" required value={inviteForm.email} onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })} placeholder="colleague@company.com" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>
-                                        <select 
-                                            value={inviteForm.role} 
-                                            onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
-                                            className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0071e3]"
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-base font-black text-[#1d1d1f] tracking-tight">Team Onboarding</h3>
+                                    <div className="flex bg-[#f5f5f7] p-0.5 rounded-lg border border-[#e5e5ea]">
+                                        <button 
+                                            onClick={() => setMemberFormMode('invite')} 
+                                            className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tight transition-all ${memberFormMode === 'invite' ? 'bg-white shadow-sm text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
                                         >
-                                            <option value="employee">Employee</option>
-                                            <option value="manager">Manager</option>
-                                        </select>
+                                            INVITE
+                                        </button>
+                                        <button 
+                                            onClick={() => setMemberFormMode('direct')} 
+                                            className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tight transition-all ${memberFormMode === 'direct' ? 'bg-white shadow-sm text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+                                        >
+                                            DIRECT
+                                        </button>
                                     </div>
-                                    
-                                    {inviteResult && (
-                                        <p className={`text-[10px] font-bold px-4 ${inviteResult.type === 'error' ? 'text-[#ff3b30]' : 'text-[#34c759]'}`}>
-                                            {inviteResult.text}
-                                        </p>
-                                    )}
-                                    <button type="submit" className="w-full h-10 rounded-xl bg-[#0071e3] text-white font-black tracking-widest text-[10px] mt-2 shadow-sm hover:bg-[#005bb7] transition-colors">SEND INVITATION</button>
-                                </form>
+                                </div>
+
+                                {memberFormMode === 'invite' ? (
+                                    <form onSubmit={handleInviteMember} className="space-y-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
+                                            <input type="email" required value={inviteForm.email} onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })} placeholder="colleague@company.com" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>
+                                            <select 
+                                                value={inviteForm.role} 
+                                                onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
+                                                className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0071e3]"
+                                            >
+                                                <option value="employee">Employee</option>
+                                                <option value="manager">Manager</option>
+                                            </select>
+                                        </div>
+                                        
+                                        {inviteResult && (
+                                            <p className={`text-[10px] font-bold px-4 ${inviteResult.type === 'error' ? 'text-[#ff3b30]' : 'text-[#34c759]'}`}>
+                                                {inviteResult.text}
+                                            </p>
+                                        )}
+                                        <button type="submit" className="w-full h-10 rounded-xl bg-[#0071e3] text-white font-black tracking-widest text-[10px] mt-2 shadow-sm hover:bg-[#005bb7] transition-colors">SEND INVITATION</button>
+                                    </form>
+                                ) : (
+                                    <form onSubmit={handleDirectAdd} className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
+                                                <input required value={directAddForm.name} onChange={e => setDirectAddForm({ ...directAddForm, name: e.target.value })} placeholder="John Doe" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>
+                                                <select 
+                                                    value={directAddForm.role} 
+                                                    onChange={(e) => setDirectAddForm({ ...directAddForm, role: e.target.value })}
+                                                    className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold appearance-none cursor-pointer"
+                                                >
+                                                    <option value="employee">Employee</option>
+                                                    <option value="manager">Manager</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
+                                            <input type="email" required value={directAddForm.email} onChange={e => setDirectAddForm({ ...directAddForm, email: e.target.value })} placeholder="email@example.com" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Temp Password</label>
+                                            <input type="text" required value={directAddForm.password} onChange={e => setDirectAddForm({ ...directAddForm, password: e.target.value })} placeholder="Min 6 chars" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
+                                        </div>
+                                        
+                                        {inviteResult && (
+                                            <p className={`text-[10px] font-bold px-4 ${inviteResult.type === 'error' ? 'text-[#ff3b30]' : 'text-[#34c759]'}`}>
+                                                {inviteResult.text}
+                                            </p>
+                                        )}
+                                        <button type="submit" className="w-full h-10 rounded-xl bg-[#1d1d1f] text-white font-black tracking-widest text-[10px] mt-2 shadow-sm hover:bg-black transition-colors">CREATE MEMBER ACCOUNT</button>
+                                    </form>
+                                )}
                             </Card>
 
                             <Card className="p-6 rounded-2xl border-[#eceef0]">
@@ -1046,7 +1141,7 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
                                                     <div className="min-w-0">
                                                         <div className="flex items-center gap-1.5">
                                                             <p className="text-[11px] font-bold text-[#1d1d1f] truncate leading-tight">{emp.name}</p>
-                                                            {emp.role === 'manager' && <Badge className="bg-[#0071e3] text-white border-none text-[7px] px-1.5 flex-shrink-0">ADM</Badge>}
+                                                            {emp.role === 'manager' && <Badge className="bg-[#0071e3] text-white border-none text-[7px] px-1.5 flex-shrink-0">ADMIN</Badge>}
                                                         </div>
                                                         <p className="text-[9px] font-medium text-[#86868b] truncate leading-none">{emp.email}</p>
                                                     </div>
@@ -1062,7 +1157,7 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setEditingEmpId(emp.id);
-                                                        setEditEmpForm({ name: emp.name || '', role: (emp.role as any) || 'employee', password: '' });
+                                                        setEditEmpForm({ name: emp.name || '', role: (emp.role as any) || 'employee', password: '', email: emp.email || '' });
                                                     }} 
                                                     className="w-7 h-7 rounded-lg border border-[#e5e5ea] bg-white flex items-center justify-center hover:bg-[#f5f5f7] transition-colors"
                                                 >
@@ -1124,61 +1219,13 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
                     )}
 
                     {activeTab === 'settings' && (
-                        <div className="max-w-2xl mx-auto space-y-6">
-                            <div className="flex items-center gap-6 mb-10 pb-8 border-b border-[#f0f0f2]">
-                                <div className="w-16 h-16 bg-[#0071e3] rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-sm">
-                                    {userName.charAt(0)}
-                                </div>
-                                <div>
-                                    <h2 className="text-xl font-black text-[#1d1d1f] tracking-tight">{userName}</h2>
-                                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest leading-none mt-1">Workspace Admin</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-12">
-                                <section>
-                                    <h3 className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.3em] mb-6">Task Digest</h3>
-                                    <DigestSettings />
-                                </section>
-                                
-                                <Card className="p-6 rounded-2xl border-[#eceef0]">
-                                    <h3 className="text-[10px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
-                                        <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">👤</span>
-                                        Profile Details
-                                    </h3>
-                                    <form onSubmit={handleUpdateProfile} className="space-y-4">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
-                                            <input value={profileName} onChange={e => setProfileName(e.target.value)} className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
-                                        </div>
-                                        <button type="submit" disabled={isUpdatingProfile} className="w-full h-10 rounded-xl bg-[#1d1d1f] text-white font-black tracking-widest text-[10px] mt-2">
-                                            {isUpdatingProfile ? 'UPDATING...' : 'SAVE CHANGES'}
-                                        </button>
-                                    </form>
-                                </Card>
-
-                                <Card className="p-6 rounded-2xl border-[#eceef0]">
-                                    <h3 className="text-[10px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
-                                        <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">🔒</span>
-                                        Security
-                                    </h3>
-                                    <form onSubmit={handleChangePassword} className="space-y-4">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div className="space-y-1.5">
-                                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">New Password</label>
-                                                <input type="password" value={passwords.new} onChange={e => setPasswords({ ...passwords, new: e.target.value })} className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" placeholder="••••••••" />
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Confirm</label>
-                                                <input type="password" value={passwords.confirm} onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" placeholder="••••••••" />
-                                            </div>
-                                        </div>
-                                        <button type="submit" disabled={isUpdatingPassword} className="w-full h-10 rounded-xl bg-[#f5f5f7] text-[#1d1d1f] font-black tracking-widest text-[10px] border border-[#e5e5ea] hover:bg-[#e5e5ea] transition-colors mt-2">
-                                            {isUpdatingPassword ? 'UPDATING...' : 'CHANGE PASSWORD'}
-                                        </button>
-                                    </form>
-                                </Card>
-                            </div>
+                        <div className="fade-in">
+                            <SettingsView 
+                                userId={userId} 
+                                userName={userName} 
+                                initialProfileName={profileName} 
+                                isManager={true}
+                            />
                         </div>
                     )}
                 </main>
@@ -1192,7 +1239,7 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
                             <h2 className="text-3xl font-black text-[#1d1d1f] tracking-tight">Edit Member</h2>
                             <button onClick={() => {
                                 setEditingEmpId(null);
-                                setEditEmpForm({ name: '', role: 'employee', password: '' });
+                                setEditEmpForm({ name: '', role: 'employee', password: '', email: '' });
                             }} className="w-10 h-10 rounded-full bg-[#f5f5f7] flex items-center justify-center font-bold hover:bg-[#e5e5ea]">✕</button>
                         </div>
 
@@ -1200,6 +1247,10 @@ export default function ManagerDashboard({ userId, userName, projectId, userRole
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
                                 <Input required value={editEmpForm.name} onChange={e => setEditEmpForm({ ...editEmpForm, name: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
+                                <Input required type="email" value={editEmpForm.email} onChange={e => setEditEmpForm({ ...editEmpForm, email: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>

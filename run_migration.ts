@@ -12,7 +12,7 @@ envContent.split('\n').forEach(line => {
 });
 
 const supabaseUrl = env['NEXT_PUBLIC_SUPABASE_URL'];
-const supabaseKey = env['NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY'];
+const supabaseKey = env['SUPABASE_SERVICE_ROLE_KEY'];
 
 if (!supabaseUrl || !supabaseKey) {
     console.error('Missing Supabase URL or Service Role Key in .env.local');

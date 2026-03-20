@@ -13,6 +13,11 @@ export default async function DashboardLayout({
     redirect('/');
   }
 
+  // Security: Ensure email is confirmed before accessing dashboard
+  if (!user.email_confirmed_at) {
+    redirect('/?error=email_not_verified');
+  }
+
   // Check organziation membership
   const { data: mData } = await supabase
     .from('organization_members')

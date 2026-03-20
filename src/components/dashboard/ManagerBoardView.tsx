@@ -32,7 +32,7 @@ function MorningBriefing({ userName, tasks }: MorningBriefingProps) {
         </div>
         
         <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight mb-2">
-          {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening'}, <span className="text-[#0071e3]">{userName.split(' ')[0]}</span>.
+          {mounted ? (new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening') : '...'}, <span className="text-[#0071e3]">{userName.split(' ')[0]}</span>.
         </h1>
         
         <p className="text-sm font-bold text-[#86868b] max-w-2xl leading-relaxed">
@@ -63,6 +63,7 @@ interface BoardColumnProps {
   onTaskClick: (task: Task) => void;
   onDeleteTask: (taskId: string, taskName: string) => void;
   formatTaskDate: (dateStr: string) => { label: string, color: string } | null;
+  isOverdue: (t: Task) => boolean;
 }
 
 function BoardColumn({ 
@@ -74,7 +75,8 @@ function BoardColumn({
   employees, 
   onTaskClick, 
   onDeleteTask,
-  formatTaskDate
+  formatTaskDate,
+  isOverdue
 }: BoardColumnProps) {
   return (
     <div className="flex flex-col h-full min-w-[280px] max-w-[280px] flex-shrink-0">
@@ -82,6 +84,7 @@ function BoardColumn({
         <div className="flex items-center gap-3">
           <div className={cn(
             "w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor]",
+            title.toUpperCase().includes('OVERDUE') ? 'text-[#ff3b30] bg-[#ff3b30]' : 
             title.toUpperCase().includes('TO DO') ? 'text-[#0071e3] bg-[#0071e3]' : 
             title.toUpperCase().includes('IN PROGRESS') ? 'text-[#ff9500] bg-[#ff9500]' : 
             title.toUpperCase().includes('BLOCKED') ? 'text-[#ff3b30] bg-[#ff3b30]' : 'text-[#34c759] bg-[#34c759]'
@@ -116,7 +119,7 @@ function BoardColumn({
               }
             }
             const dateInfo = task.deadline ? formatTaskDate(task.deadline) : null;
-            const isOverdue = task.deadline && new Date(task.deadline) < new Date() && task.status !== 'Completed';
+            const isOverdueTask = isOverdue(task);
             
             return (
               <motion.div
@@ -140,7 +143,7 @@ function BoardColumn({
                     )}>
                       {task.priority.toUpperCase()}
                     </Badge>
-                    {isOverdue && (
+                    {isOverdueTask && (
                       <Badge className="bg-[#ff3b30] text-white text-[8px] font-black px-2 py-0.5 rounded-lg border-none shadow-lg shadow-[#ff3b30]/20 animate-pulse">
                         OVERDUE
                       </Badge>
@@ -265,101 +268,22 @@ export function ManagerBoardView({
   handleDeleteTask,
   formatTaskDate
 }: ManagerBoardViewProps) {
+  const isOverdue = (t: Task) => !!(t.status === 'Overdue' || (t.deadline && new Date(t.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && t.status !== 'Completed'));
+
   return (
     <div className="space-y-6">
       <MorningBriefing userName={userName} tasks={tasks} />
       
-      {/* Board View — horizontally scrollable */}
-      <div className="overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
-        <div className="flex gap-5 min-w-max pb-2">
-          <BoardColumn 
-            title="TO DO" 
-            tasks={tasks.filter(t => t.status === 'To Do' && (
-              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-            ))} 
-            subtasksMap={subtasksMap} 
-            commentCounts={commentCounts} 
-            attachmentCounts={attachmentCounts} 
-            employees={employees} 
-            onTaskClick={handleTaskClick} 
-            onDeleteTask={handleDeleteTask} 
-            formatTaskDate={formatTaskDate}
-          />
-          <BoardColumn 
-            title="IN PROGRESS" 
-            tasks={tasks.filter(t => t.status === 'In Progress' && (
-              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-            ))} 
-            subtasksMap={subtasksMap} 
-            commentCounts={commentCounts} 
-            attachmentCounts={attachmentCounts} 
-            employees={employees} 
-            onTaskClick={handleTaskClick} 
-            onDeleteTask={handleDeleteTask} 
-            formatTaskDate={formatTaskDate}
-          />
-          <BoardColumn 
-            title="IN REVIEW" 
-            tasks={tasks.filter(t => t.status === 'In Review' && (
-              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-            ))} 
-            subtasksMap={subtasksMap} 
-            commentCounts={commentCounts} 
-            attachmentCounts={attachmentCounts} 
-            employees={employees} 
-            onTaskClick={handleTaskClick} 
-            onDeleteTask={handleDeleteTask} 
-            formatTaskDate={formatTaskDate}
-          />
-          <BoardColumn 
-            title="BLOCKED" 
-            tasks={tasks.filter(t => t.status === 'Blocked' && (
-              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-            ))} 
-            subtasksMap={subtasksMap} 
-            commentCounts={commentCounts} 
-            attachmentCounts={attachmentCounts} 
-            employees={employees} 
-            onTaskClick={handleTaskClick} 
-            onDeleteTask={handleDeleteTask} 
-            formatTaskDate={formatTaskDate}
-          />
-          <BoardColumn 
-            title="COMPLETED" 
-            tasks={tasks.filter(t => t.status === 'Completed' && (
-              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-            ))} 
-            subtasksMap={subtasksMap} 
-            commentCounts={commentCounts} 
-            attachmentCounts={attachmentCounts} 
-            employees={employees} 
-            onTaskClick={handleTaskClick} 
-            onDeleteTask={handleDeleteTask} 
-            formatTaskDate={formatTaskDate}
-          />
-        </div>
-      </div>
-
-      {/* Stats Row — below board */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Stats Row — Now at top & wider rectangles */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
         <Card className="p-6 rounded-[24px] bg-white border-[#eceef0] shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-[10px] font-black text-[#86868b] tracking-widest uppercase">Efficiency</h3>
             <Badge variant="secondary" className="bg-[#f0f0f2] text-[#1d1d1f] font-bold text-[8px]">2026</Badge>
           </div>
           
-          <div className="flex flex-col items-center gap-6">
-            <div className="relative w-32 h-32">
+          <div className="flex flex-col sm:flex-row items-center justify-around gap-8">
+            <div className="relative w-32 h-32 shrink-0">
               <svg className="w-full h-full transform -rotate-90">
                 <circle cx="64" cy="64" r="56" className="stroke-[#f0f0f2] stroke-[10] fill-none" />
                 <circle 
@@ -377,20 +301,22 @@ export function ManagerBoardView({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 w-full">
-              <div className="p-3 bg-[#f5f5f7] rounded-2xl">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#0071e3]"></div>
-                  <span className="text-[8px] font-bold text-[#86868b] tracking-wider uppercase">Total</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-sm">
+              <div className="p-4 bg-[#f5f5f7] rounded-3xl border border-white/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-[#0071e3]"></div>
+                  <span className="text-[9px] font-black text-[#86868b] tracking-wider uppercase">Total Assigned</span>
                 </div>
-                <p className="text-lg font-black">{boardStats.total}</p>
+                <p className="text-2xl font-black text-[#1d1d1f]">{boardStats.total}</p>
+                <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-tighter mt-1 opacity-60">Across all projects</p>
               </div>
-              <div className="p-3 bg-[#f5f5f7] rounded-2xl">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#34c759]"></div>
-                  <span className="text-[8px] font-bold text-[#86868b] tracking-wider uppercase">Done</span>
+              <div className="p-4 bg-[#f5f5f7] rounded-3xl border border-white/50">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-[#34c759]"></div>
+                  <span className="text-[9px] font-black text-[#86868b] tracking-wider uppercase">Completed</span>
                 </div>
-                <p className="text-lg font-black">{boardStats.completed}</p>
+                <p className="text-2xl font-black text-[#1d1d1f]">{boardStats.completed}</p>
+                <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-tighter mt-1 opacity-60">Verified & Finished</p>
               </div>
             </div>
           </div>
@@ -401,37 +327,40 @@ export function ManagerBoardView({
             <h3 className="text-[10px] font-black text-[#86868b] tracking-widest uppercase">Hotspots</h3>
             <div className="w-1.5 h-1.5 rounded-full bg-[#ff3b30] animate-pulse"></div>
           </div>
-          <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-wider mb-4 opacity-50">Critical Signals</p>
+          <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-wider mb-4 opacity-50">Critical Signals · Real-time</p>
           
-          <div className="space-y-4">
-            <div className="p-3 bg-[#fff2f2] rounded-xl border border-[#ff3b30]/10">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[10px] font-black text-[#ff3b30] uppercase tracking-widest">Overdue</span>
-                <span className="text-base font-black text-[#ff3b30]">{heatmapData.overdue.length}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="p-3 bg-[#fff2f2] rounded-xl border border-[#ff3b30]/10">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-black text-[#ff3b30] uppercase tracking-widest">Overdue</span>
+                  <span className="text-base font-black text-[#ff3b30]">{heatmapData.overdue.length}</span>
+                </div>
+                <div className="h-1 w-full bg-[#ff3b30]/10 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-[#ff3b30] rounded-full transition-all duration-1000"
+                    style={{ width: `${Math.min(100, (heatmapData.overdue.length / (heatmapData.active.length + heatmapData.overdue.length || 1)) * 100)}%` }}
+                  ></div>
+                </div>
               </div>
-              <div className="h-1 w-full bg-[#ff3b30]/10 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-[#ff3b30] rounded-full transition-all duration-1000"
-                  style={{ width: `${Math.min(100, (heatmapData.overdue.length / (heatmapData.active.length + heatmapData.overdue.length || 1)) * 100)}%` }}
-                ></div>
+
+              <div className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-widest">High/Urgent</span>
+                  <span className="text-base font-black text-[#1d1d1f]">{heatmapData.active.length}</span>
+                </div>
+                <div className="h-1 w-full bg-[#e5e5ea] rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-[#1d1d1f] rounded-full transition-all duration-1000"
+                    style={{ width: `${Math.min(100, (heatmapData.active.length / (heatmapData.active.length + heatmapData.overdue.length || 1)) * 100)}%` }}
+                  ></div>
+                </div>
               </div>
             </div>
 
-            <div className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-widest">High/Urgent</span>
-                <span className="text-base font-black text-[#1d1d1f]">{heatmapData.active.length}</span>
-              </div>
-              <div className="h-1 w-full bg-[#e5e5ea] rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-[#1d1d1f] rounded-full transition-all duration-1000"
-                  style={{ width: `${Math.min(100, (heatmapData.active.length / (heatmapData.active.length + heatmapData.overdue.length || 1)) * 100)}%` }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="pt-2 space-y-2">
-              {heatmapData.overdue.slice(0, 3).map(t => (
+            <div className="space-y-2">
+              <p className="text-[8px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-2 opacity-40">Immediate Attention</p>
+              {heatmapData.overdue.slice(0, 2).map(t => (
                 <div 
                   key={t.id} 
                   onClick={() => handleTaskClick(t)}
@@ -443,7 +372,7 @@ export function ManagerBoardView({
                   </div>
                 </div>
               ))}
-              {heatmapData.active.slice(0, 3).map(t => (
+              {heatmapData.active.slice(0, 2).map(t => (
                 <div 
                   key={t.id} 
                   onClick={() => handleTaskClick(t)}
@@ -455,12 +384,114 @@ export function ManagerBoardView({
                   </div>
                 </div>
               ))}
-              {(heatmapData.overdue.length > 3 || heatmapData.active.length > 3) && (
-                <p className="text-[8px] font-bold text-center text-[#86868b] mt-2 tracking-widest uppercase opacity-40">+{heatmapData.overdue.length + heatmapData.active.length - 6} More critical</p>
+              {(heatmapData.overdue.length > 2 || heatmapData.active.length > 2) && (
+                <p className="text-[7px] font-bold text-center text-[#86868b] mt-1 tracking-widest uppercase opacity-40">+{heatmapData.overdue.length + heatmapData.active.length - 4} More</p>
               )}
             </div>
           </div>
         </Card>
+      </div>
+      
+      {/* Board View — horizontally scrollable */}
+      <div className="overflow-x-auto pb-4 custom-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
+        <div className="flex gap-5 min-w-max pb-2">
+          <BoardColumn 
+            title="OVERDUE" 
+            tasks={tasks.filter(t => isOverdue(t) && (
+              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+            ))} 
+            subtasksMap={subtasksMap} 
+            commentCounts={commentCounts} 
+            attachmentCounts={attachmentCounts} 
+            employees={employees} 
+            onTaskClick={handleTaskClick} 
+            onDeleteTask={handleDeleteTask} 
+            formatTaskDate={formatTaskDate}
+            isOverdue={isOverdue}
+          />
+          <BoardColumn 
+            title="TO DO" 
+            tasks={tasks.filter(t => t.status === 'To Do' && !isOverdue(t) && (
+              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+            ))} 
+            subtasksMap={subtasksMap} 
+            commentCounts={commentCounts} 
+            attachmentCounts={attachmentCounts} 
+            employees={employees} 
+            onTaskClick={handleTaskClick} 
+            onDeleteTask={handleDeleteTask} 
+            formatTaskDate={formatTaskDate}
+            isOverdue={isOverdue}
+          />
+          <BoardColumn 
+            title="IN PROGRESS" 
+            tasks={tasks.filter(t => t.status === 'In Progress' && !isOverdue(t) && (
+              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+            ))} 
+            subtasksMap={subtasksMap} 
+            commentCounts={commentCounts} 
+            attachmentCounts={attachmentCounts} 
+            employees={employees} 
+            onTaskClick={handleTaskClick} 
+            onDeleteTask={handleDeleteTask} 
+            formatTaskDate={formatTaskDate}
+            isOverdue={isOverdue}
+          />
+          <BoardColumn 
+            title="IN REVIEW" 
+            tasks={tasks.filter(t => t.status === 'In Review' && !isOverdue(t) && (
+              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+            ))} 
+            subtasksMap={subtasksMap} 
+            commentCounts={commentCounts} 
+            attachmentCounts={attachmentCounts} 
+            employees={employees} 
+            onTaskClick={handleTaskClick} 
+            onDeleteTask={handleDeleteTask} 
+            formatTaskDate={formatTaskDate}
+            isOverdue={isOverdue}
+          />
+          <BoardColumn 
+            title="BLOCKED" 
+            tasks={tasks.filter(t => t.status === 'Blocked' && !isOverdue(t) && (
+              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+            ))} 
+            subtasksMap={subtasksMap} 
+            commentCounts={commentCounts} 
+            attachmentCounts={attachmentCounts} 
+            employees={employees} 
+            onTaskClick={handleTaskClick} 
+            onDeleteTask={handleDeleteTask} 
+            formatTaskDate={formatTaskDate}
+            isOverdue={isOverdue}
+          />
+          <BoardColumn 
+            title="COMPLETED" 
+            tasks={tasks.filter(t => t.status === 'Completed' && (
+              t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+            ))} 
+            subtasksMap={subtasksMap} 
+            commentCounts={commentCounts} 
+            attachmentCounts={attachmentCounts} 
+            employees={employees} 
+            onTaskClick={handleTaskClick} 
+            onDeleteTask={handleDeleteTask} 
+            formatTaskDate={formatTaskDate}
+            isOverdue={isOverdue}
+          />
+        </div>
       </div>
     </div>
   );

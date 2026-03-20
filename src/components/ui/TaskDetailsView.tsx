@@ -714,7 +714,7 @@ export function TaskDetailsView({
                                     <span>Status</span>
                                 </h4>
                                 <Select 
-                                    value={task.status}
+                                    value={(task.deadline && new Date(task.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && task.status !== 'Completed') ? 'Overdue' : task.status}
                                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onUpdateStatus(task.id, e.target.value as Status)}
                                     className="w-full h-10 text-[10px] font-bold uppercase tracking-widest bg-slate-50 border-slate-100 rounded-xl focus:bg-white transition-all px-4 cursor-pointer"
                                     disabled={!isManager && !isEditable}
@@ -723,6 +723,7 @@ export function TaskDetailsView({
                                     <option>In Progress</option>
                                     <option>In Review</option>
                                     <option>Blocked</option>
+                                    <option>Overdue</option>
                                     <option>Completed</option>
                                 </Select>
                             </div>

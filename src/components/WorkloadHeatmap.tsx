@@ -195,6 +195,10 @@ export function WorkloadHeatmap({ data }: { data: WorkloadMap }) {
                                                         colors.text,
                                                         isSelected ? "ring-2 ring-offset-1 ring-[#0071e3] scale-105" : "border-transparent"
                                                     )}
+                                                    onMouseEnter={() => {
+                                                        // Pre-fetch detail data on hover for instant click feel
+                                                        getDailyWorkDetails(userId, dateKey);
+                                                    }}
                                                     onMouseMove={(e) => handleMouseMove(e, userId, member.name, d, value)}
                                                     onMouseLeave={() => setHoveredCell(null)}
                                                     onClick={() => setSelectedCell({ userId, userName: member.name, date: d })}
@@ -247,9 +251,21 @@ export function WorkloadHeatmap({ data }: { data: WorkloadMap }) {
                         </div>
 
                         {detailsLoading ? (
-                            <div className="flex flex-col items-center justify-center py-20 bg-[#f5f5f7] rounded-[32px] border border-[#e5e5ea] border-dashed">
-                                <div className="w-8 h-8 border-4 border-[#0071e3] border-t-transparent rounded-full animate-spin mb-4"></div>
-                                <p className="text-xs font-black text-[#86868b] uppercase tracking-widest">Loading precise metrics...</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="bg-white p-6 rounded-[28px] border border-[#e5e5ea] animate-pulse">
+                                        <div className="flex justify-between mb-4">
+                                            <div className="h-4 w-20 bg-[#f5f5f7] rounded-full"></div>
+                                            <div className="h-4 w-12 bg-[#f5f5f7] rounded-full"></div>
+                                        </div>
+                                        <div className="h-5 w-3/4 bg-[#f5f5f7] rounded-lg mb-2"></div>
+                                        <div className="h-4 w-full bg-[#f5f5f7] rounded-lg mb-6"></div>
+                                        <div className="pt-4 border-t border-[#f5f5f7] flex justify-between">
+                                            <div className="h-3 w-16 bg-[#f5f5f7] rounded-full"></div>
+                                            <div className="h-5 w-10 bg-[#f5f5f7] rounded-full"></div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         ) : details.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 bg-[#f5f5f7] rounded-[32px] border border-[#e5e5ea] border-dashed">
