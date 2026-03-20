@@ -30,6 +30,7 @@ export default async function ProjectPage({
       userName={profile?.name || ''}
       userRole={profile?.role || 'employee'}
       orgName={orgName}
+      orgId={mData.org_id}
       projectId={projectId}
     />
   );

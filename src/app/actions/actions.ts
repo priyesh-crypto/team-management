@@ -2,8 +2,10 @@
 
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 import { Resend } from 'resend'
 import { formatDistanceToNow, format } from 'date-fns'
+import crypto from 'crypto'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -86,7 +88,7 @@ export type ActivityLog = {
     actor_id: string;
     actor_name?: string; // Joined from profiles
     task_id?: string;
-    type: 'task_created' | 'task_updated' | 'task_deleted' | 'task_status_changed' | 'comment_added' | 'subtask_created' | 'subtask_updated' | 'subtask_deleted';
+    type: 'task_created' | 'task_updated' | 'task_deleted' | 'task_status_changed' | 'comment_added' | 'subtask_created' | 'subtask_updated' | 'subtask_deleted' | 'attachment_added' | 'attachment_deleted';
     description: string;
     metadata?: Record<string, any>;
     created_at: string;
@@ -161,13 +163,20 @@ export type ProjectMember = {
 
 export async function requireOrgContext() {
     const supabase = await createClient()
+    console.log("[requireOrgContext] Getting user...");
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) throw new Error("Unauthorized: Please sign in.")
+    if (authError || !user) {
+        console.error("[requireOrgContext] Auth error:", authError);
+        throw new Error("Unauthorized: Please sign in.");
+    }
+    console.log("[requireOrgContext] User:", user.id);
 
     const { data: mData, error: memberError } = await supabase
         .from('organization_members')
         .select('org_id, role')
         .eq('user_id', user.id)
+    
+    console.log("[requireOrgContext] Member data:", { mData, memberError });
 
     if (memberError || !mData || mData.length === 0) throw new Error("Unauthorized: You do not belong to an organization.")
 
@@ -228,36 +237,18 @@ export async function getProfiles(projectId?: string): Promise<Profile[]> {
         .select('*')
         .in('id', userIds);
     
-    // Fetch Auth Users for emails and fallback names (requires Admin API)
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
-    let authUsers: any[] = [];
-    if (serviceKey) {
-        try {
-            const { createClient: createAdminClient } = await import('@supabase/supabase-js')
-            const supabaseAdmin = createAdminClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                serviceKey,
-                { auth: { autoRefreshToken: false, persistSession: false } }
-            )
-
-            const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers()
-            if (!authError && users) {
-                authUsers = users;
-            }
-        } catch (e) {
-            console.error("[getProfiles] Admin API error:", e);
-        }
+    if (error) {
+        console.error("[getProfiles] profiles error:", error);
     }
 
     // Use MEMBERS as the source of truth to ensure everyone is listed
     return members.map(m => {
         const p = (profiles || []).find(prof => prof.id === m.user_id);
-        const a = authUsers.find(u => u.id === m.user_id);
         
         return {
             id: m.user_id,
-            name: p?.name || a?.user_metadata?.name || a?.email?.split('@')[0] || 'Team Member',
-            email: p?.email || a?.email || '',
+            name: p?.name || 'Team Member',
+            email: p?.email || '',
             role: p?.role || m.role || 'employee'
         } as Profile;
     });
@@ -304,11 +295,7 @@ export async function getTasks(projectId?: string): Promise<Task[]> {
         // We query the tasks table directly to be robust against view creation failures
         let query = supabase
             .from('tasks')
-            .select(`
-                *,
-                project:projects(name, color, icon),
-                profiles:profiles(name)
-            `)
+            .select('*')
             .eq('org_id', context.orgId);
         
         if (projectId && projectId !== 'all') {
@@ -487,15 +474,17 @@ export async function deleteProject(id: string) {
 export async function logout() {
     const supabase = await createClient();
     await supabase.auth.signOut();
-    revalidatePath('/');
+    redirect('/');
 }
 
 export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_id" | "workspace_id">) {
   try {
     const { userId, orgId, workspaceId } = await requireOrgContext();
+    console.log("[saveTask] Context:", { userId, orgId, workspaceId });
     if (!workspaceId) return { success: false, error: "No default workspace found for organization." };
 
     const supabase = await createClient();
+    console.log("[saveTask] Supabase client created");
 
     // Duplication Check (scoped to project)
     const { data: existingTask, error: checkError } = await supabase
@@ -521,6 +510,8 @@ export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_i
       .insert([{ ...sanitizedData, org_id: orgId, workspace_id: workspaceId }])
       .select()
       .single();
+    
+    console.log("[saveTask] Insert result:", { task, error });
 
     if (error) {
       console.error("Error saving task:", error);
@@ -528,37 +519,59 @@ export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_i
     }
 
     if (task) {
-      await logActivity({
-        org_id: orgId,
-        actor_id: userId,
-        task_id: task.id,
-        type: "task_created",
-        description: `Created new task: "${task.name}"`,
-        metadata: { name: task.name },
-      });
+      // Parallelize non-dependent operations
+      const operations: Promise<any>[] = [
+        logActivity({
+          org_id: orgId,
+          actor_id: userId,
+          task_id: task.id,
+          type: "task_created",
+          description: `Created new task: "${task.name}"`,
+          metadata: { name: task.name },
+        }),
+        createNotification({
+          user_id: task.employee_id,
+          type: "system",
+          message: `New task assigned: ${task.name}`,
+          task_id: task.id,
+        })
+      ];
 
-      await createNotification({
-        user_id: task.employee_id,
-        type: "system",
-        message: `New task assigned: ${task.name}`,
-        task_id: task.id,
-      });
+      // Initial work log subtask
+      if (task.hours_spent > 0) {
+        operations.push((async () => {
+          const { error: subtaskError } = await supabase.from('subtasks').insert([{
+            task_id: task.id,
+            employee_id: task.employee_id,
+            org_id: orgId,
+            name: `Initial work log for "${task.name}"`,
+            hours_spent: task.hours_spent,
+            is_completed: true,
+            date_logged: new Date().toISOString().split('T')[0],
+            start_time: '09:00',
+            end_time: '17:00'
+          }]);
+          if (subtaskError) console.error("[saveTask] Initial subtask error:", subtaskError);
+        })());
+      }
 
+      // Collaborator notifications
       if (task.assignee_ids && task.assignee_ids.length > 0) {
-        for (const assigneeId of task.assignee_ids) {
+        task.assignee_ids.forEach((assigneeId: string) => {
           if (assigneeId !== task.employee_id) {
-            await createNotification({
+            operations.push(createNotification({
               user_id: assigneeId,
               type: "system",
               message: `You were added as a collaborator to: ${task.name}`,
               task_id: task.id,
-            });
+            }));
           }
-        }
+        });
       }
+
+      await Promise.all(operations).catch(err => console.warn("Background operations failed:", err));
     }
 
-    revalidatePath("/");
     return { success: true };
   } catch (err: any) {
     console.error("Unexpected error in saveTask:", err);
@@ -607,72 +620,95 @@ export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'i
         }
     }
 
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
-export async function inviteMember(email: string, role: string) {
-    const { orgId, role: currentUserRole } = await requireOrgContext();
-    if (currentUserRole !== 'owner' && currentUserRole !== 'admin' && currentUserRole !== 'manager') {
-        throw new Error("Unauthorized to invite members.");
-    }
-
-    if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
-        throw new Error("Missing Supabase Service Role Key.");
-    }
-
-    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
-    const supabaseAdmin = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
-        { auth: { autoRefreshToken: false, persistSession: false } }
-    )
-
-    // 1. Create Invite Record
-    const { data: invite, error: inviteError } = await supabaseAdmin
-        .from('invitations')
-        .insert({ org_id: orgId, email, role })
-        .select()
-        .single();
-        
-    if (inviteError) {
-        if (inviteError.code === '23505') { // Unique constraint violation
-            throw new Error(`An invitation for ${email} already exists in this organization.`);
+export async function inviteMember(email: string, role: string): Promise<{ success: boolean; error?: string }> {
+    try {
+        const { orgId, role: currentUserRole } = await requireOrgContext();
+        if (currentUserRole !== 'owner' && currentUserRole !== 'admin' && currentUserRole !== 'manager') {
+            return { success: false, error: "Unauthorized to invite members." };
         }
-        console.error("Error creating invite:", inviteError);
-        throw new Error("Failed to create invitation. " + inviteError.message);
-    }
 
-    // 2. Send Email
-    if (resend && process.env.RESEND_FROM_EMAIL) {
+        if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+            console.error("Missing NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY");
+            return { success: false, error: "Server configuration error: Missing Service Role Key." };
+        }
+
+        const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+        const supabaseAdmin = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        )
+
+        // 1. Create/Update Invite Record (Upsert to allow resending)
+        // We use gen_random_uuid() for the token to ensure a fresh link on resend
+        const newToken = crypto.randomUUID();
+        const { data: invite, error: inviteError } = await supabaseAdmin
+            .from('invitations')
+            .upsert(
+                { 
+                    org_id: orgId, 
+                    email: email.toLowerCase(), 
+                    role,
+                    token: newToken,
+                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // reset expiry
+                }, 
+                { onConflict: 'org_id, email' }
+            )
+            .select()
+            .single();
+            
+        if (inviteError) {
+            console.error("Error creating/updating invite:", inviteError);
+            return { success: false, error: "Failed to process invitation: " + inviteError.message };
+        }
+
+        // 2. Send Email
         const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${invite.token}`;
-        
-        // Fetch org name for the email
-        const { data: org } = await supabaseAdmin.from('organizations').select('name').eq('id', orgId).single();
-        const orgName = org?.name || "an organization";
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mindbird Team <onboarding@resend.dev>';
 
-        try {
-            await resend.emails.send({
-                from: process.env.RESEND_FROM_EMAIL,
-                to: email,
-                subject: `You have been invited to join ${orgName}`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; padding: 20px;">
-                        <h2>You've been invited!</h2>
-                        <p>You have been invited to join <strong>${orgName}</strong> as a ${role}.</p>
-                        <p>Click the link below to set up your account and get started:</p>
-                        <a href="${inviteUrl}" style="display: inline-block; padding: 10px 20px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">Accept Invitation</a>
-                        <p style="margin-top: 20px; font-size: 12px; color: #666;">If you didn't expect this invitation, you can safely ignore this email.</p>
-                    </div>
-                `
-            });
-        } catch (e) {
-            console.error("Failed to send invite email", e);
+        if (resend) {
+            // Fetch org name for the email
+            const { data: org } = await supabaseAdmin.from('organizations').select('name').eq('id', orgId).single();
+            const orgName = org?.name || "an organization";
+
+            try {
+                await resend.emails.send({
+                    from: fromEmail,
+                    to: email,
+                    subject: `You have been invited to join ${orgName}`,
+                    html: `
+                        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #e1e1e1; border-radius: 12px;">
+                            <h2 style="color: #1d1d1f; margin-bottom: 24px;">You've been invited!</h2>
+                            <p style="color: #424245; line-height: 1.5;">You have been invited to join <strong>${orgName}</strong> as a <strong>${role}</strong>.</p>
+                            <p style="color: #424245; line-height: 1.5; margin-bottom: 32px;">Click the button below to set up your account and get started:</p>
+                            <a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0071e3; color: white; text-decoration: none; border-radius: 980px; font-weight: 600; font-size: 14px;">Accept Invitation</a>
+                            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e1e1e1;">
+                                <p style="font-size: 12px; color: #86868b; line-height: 1.4;">If you're having trouble clicking the button, copy and paste this URL into your browser:<br/>${inviteUrl}</p>
+                                <p style="font-size: 12px; color: #86868b; margin-top: 12px;">If you didn't expect this invitation, you can safely ignore this email.</p>
+                            </div>
+                        </div>
+                    `
+                });
+                return { success: true };
+            } catch (e: any) {
+                console.error("Failed to send invite email:", e);
+                // Return success: false because the PRIMARY goal (inviting via email) failed
+                return { success: false, error: `Invitation record created, but email failed. PLEASE SHARE MANUALLY: ${inviteUrl}` };
+            }
+        } else {
+            console.warn("Resend is not configured. Invite URL:", inviteUrl);
+            return { success: false, error: `Email service not configured. PLEASE SHARE MANUALLY: ${inviteUrl}` };
         }
-    } else {
-        console.warn("Resend is not configured. Invite URL:", `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${invite.token}`);
-    }
 
-    revalidatePath('/')
+        revalidatePath('/dashboard')
+        return { success: true };
+    } catch (err: any) {
+        console.error("Unexpected error in inviteMember:", err);
+        return { success: false, error: err.message || "An unexpected error occurred." };
+    }
 }
 
 export async function acceptInvitation(token: string, name: string, password: string) {
@@ -707,7 +743,7 @@ export async function acceptInvitation(token: string, name: string, password: st
         email: invite.email,
         password: password,
         email_confirm: true,
-        user_metadata: { name, role: 'employee' } // Base role, true role in org_members
+        user_metadata: { name, role: invite.role } // Use the role from the invitation
     });
 
     const userId = userObj?.user?.id;
@@ -741,7 +777,7 @@ export async function acceptInvitation(token: string, name: string, password: st
     await supabaseAdmin.from('profiles').upsert({
         id: userId,
         name: name,
-        role: 'employee'
+        role: invite.role // Use the role from the invitation
     });
 
     return { email: invite.email }
@@ -770,7 +806,7 @@ export async function updateEmployeeProfile(userId: string, name: string, role: 
         throw new Error(error.message);
     }
 
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
 export async function updateUserPassword(userId: string, newPassword: string) {
@@ -817,6 +853,7 @@ export async function updateTaskStatus(taskId: string, status: Status) {
         .single();
 
     if (error) {
+        console.error("Error updating task status:", error);
         throw new Error(error.message);
     }
 
@@ -854,7 +891,36 @@ export async function updateTaskStatus(taskId: string, status: Status) {
         }
     }
 
-    revalidatePath('/');
+    revalidatePath('/dashboard');
+}
+
+export async function updateTaskPriority(taskId: string, priority: Priority) {
+    const { userId, orgId } = await requireOrgContext();
+    const supabase = await createClient();
+    const { data: task, error } = await supabase
+        .from('tasks')
+        .update({ priority })
+        .eq('id', taskId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error("Error updating task priority:", error);
+        throw new Error(error.message);
+    }
+
+    if (task) {
+        await logActivity({
+            org_id: orgId,
+            actor_id: userId,
+            task_id: task.id,
+            type: 'task_updated',
+            description: `Changed priority of "${task.name}" to ${priority}`,
+            metadata: { name: task.name, priority }
+        });
+    }
+
+    revalidatePath('/dashboard');
 }
 
 
@@ -882,7 +948,7 @@ async function recalculateTaskHours(taskId: string) {
         console.error("Error updating task total hours:", updateError)
     }
 
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
 export async function saveSubtask(subtaskData: Omit<Subtask, 'id' | 'created_at' | 'org_id'>) {
@@ -902,17 +968,23 @@ export async function saveSubtask(subtaskData: Omit<Subtask, 'id' | 'created_at'
         throw new Error(error.message)
     }
 
-    // Log Activity
-    await logActivity({
-        org_id: orgId,
-        actor_id: userId,
-        task_id: subtaskData.task_id,
-        type: 'subtask_created',
-        description: `Logged work: ${subtaskData.name} (${subtaskData.hours_spent} hrs)`,
-        metadata: { name: subtaskData.name, hours: subtaskData.hours_spent }
-    });
-
-    await recalculateTaskHours(subtaskData.task_id)
+    // Parallelize non-critical background operations
+    try {
+        await Promise.all([
+            logActivity({
+                org_id: orgId,
+                actor_id: userId,
+                task_id: subtaskData.task_id,
+                type: 'subtask_created',
+                description: `Logged work: ${subtaskData.name} (${subtaskData.hours_spent} hrs)`,
+                metadata: { name: subtaskData.name, hours: subtaskData.hours_spent },
+                created_at: subtaskData.date_logged ? `${subtaskData.date_logged}T12:00:00Z` : undefined
+            }).catch(logErr => console.warn("logActivity failed (non-critical):", logErr)),
+            recalculateTaskHours(subtaskData.task_id)
+        ]);
+    } catch (postSaveErr) {
+        console.warn("Post-save background operations had an error (non-critical):", postSaveErr);
+    }
 }
 
 export async function updateSubtask(subtaskData: Partial<Omit<Subtask, 'org_id'>> & { id: string, task_id: string }) {
@@ -953,7 +1025,7 @@ export async function updateSubtaskStatus(subtaskId: string, taskId: string, isC
         sendSubtaskCompletionEmail(subtaskId, taskId).catch(err => console.error("Email notification failed:", err));
     }
 
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
 async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
@@ -1103,7 +1175,7 @@ export async function updateProfile(userId: string, data: { name: string }) {
         console.error("Error updating profile:", error)
         throw new Error(error.message)
     }
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
 export async function changePassword(newPassword: string) {
@@ -1139,21 +1211,21 @@ export async function markNotificationAsRead(notificationId: string) {
     const supabase = await createClient()
     const { error } = await supabase.from('notifications').update({ is_read: true }).eq('id', notificationId)
     if (error) throw new Error(error.message)
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
 export async function markAllNotificationsAsRead(userId: string) {
     const supabase = await createClient()
     const { error } = await supabase.from('notifications').update({ is_read: true }).eq('user_id', userId).eq('is_read', false)
     if (error) throw new Error(error.message)
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
 export async function clearNotifications(userId: string) {
     const supabase = await createClient()
     const { error } = await supabase.from('notifications').delete().eq('user_id', userId)
     if (error) throw new Error(error.message)
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
 export async function deleteTask(taskId: string) {
@@ -1174,13 +1246,11 @@ export async function deleteTask(taskId: string) {
             type: 'task_deleted',
             description: `Deleted task: "${task.name}"`,
             metadata: { name: task.name }
-        });
+        }).catch(err => console.warn("Delete logging failed:", err));
     }
-
-    revalidatePath('/')
 }
 
-export async function logActivity(activity: Omit<ActivityLog, 'id' | 'created_at' | 'actor_name'>) {
+export async function logActivity(activity: Omit<ActivityLog, 'id' | 'actor_name' | 'created_at'> & { created_at?: string }) {
     const supabase = await createClient()
     const { error } = await supabase.from('activity_logs').insert([activity])
     if (error) {
@@ -1227,7 +1297,7 @@ export async function createNotification(notificationData: Omit<Notification, 'i
         throw new Error(error.message)
     }
 
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
 export async function getComments(taskId: string): Promise<Comment[]> {
@@ -1286,7 +1356,7 @@ export async function saveComment(commentData: Omit<Comment, 'id' | 'created_at'
         }
     }
 
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
 export async function deleteComment(commentId: string) {
@@ -1302,7 +1372,7 @@ export async function deleteComment(commentId: string) {
         throw new Error(error.message)
     }
 
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 
 export async function getAttachments(taskId: string): Promise<Attachment[]> {
@@ -1318,6 +1388,140 @@ export async function getAttachments(taskId: string): Promise<Attachment[]> {
         return []
     }
     return data || []
+}
+
+export async function uploadAttachment(formData: FormData): Promise<Attachment> {
+    const { orgId, userId } = await requireOrgContext();
+    const supabase = await createClient();
+
+    const file = formData.get('file') as File;
+    const taskId = formData.get('taskId') as string;
+
+    console.log("[uploadAttachment] Starting upload for taskId:", taskId);
+    if (!file) console.log("[uploadAttachment] Error: No file found in FormData");
+    else console.log("[uploadAttachment] File info:", { name: file.name, size: file.size, type: file.type });
+
+    if (!file || !taskId) throw new Error("File and taskId are required");
+
+    // Use admin client for storage operations (bypasses storage RLS)
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    console.log("[uploadAttachment] Service key present:", !!serviceKey);
+    
+    if (!serviceKey) throw new Error("Missing service role key for storage upload");
+    const adminClient = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        serviceKey
+    );
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${taskId}/${Date.now()}-${file.name}`;
+    console.log("[uploadAttachment] Generated fileName:", fileName);
+
+    // Upload to Supabase Storage using admin client
+    const { data: uploadData, error: uploadError } = await adminClient.storage
+        .from('task-attachments')
+        .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+        });
+
+    if (uploadError) {
+        console.error("[uploadAttachment] Storage upload error:", uploadError);
+        throw new Error("Failed to upload file: " + uploadError.message);
+    }
+    console.log("[uploadAttachment] Storage upload success:", uploadData);
+
+    // Get public URL
+    const { data: urlData } = adminClient.storage
+        .from('task-attachments')
+        .getPublicUrl(fileName);
+    console.log("[uploadAttachment] Public URL:", urlData.publicUrl);
+
+    // Insert record into attachments table (use regular client for RLS)
+    const { data, error } = await supabase
+        .from('attachments')
+        .insert([{
+            task_id: taskId,
+            uploader_id: userId,
+            file_name: file.name,
+            file_url: urlData.publicUrl,
+            file_type: file.type || `application/${fileExt}`,
+            file_size: file.size
+        }])
+        .select()
+        .single();
+
+    if (error) {
+        console.error("[uploadAttachment] DB insert error:", error);
+        // Clean up uploaded file
+        await adminClient.storage.from('task-attachments').remove([fileName]);
+        throw new Error("Failed to save attachment record: " + error.message);
+    }
+    console.log("[uploadAttachment] DB insert success:", data);
+
+    // Log activity (non-critical)
+    try {
+        await logActivity({
+            org_id: orgId,
+            actor_id: userId,
+            task_id: taskId,
+            type: 'attachment_added',
+            description: `Attached file: ${file.name}`,
+            metadata: { file_name: file.name, file_size: file.size }
+        });
+    } catch (e) {
+        console.warn("logActivity for attachment failed (non-critical):", e);
+    }
+
+    revalidatePath('/dashboard');
+    return data;
+}
+
+export async function deleteAttachment(attachmentId: string, taskId: string) {
+    const { orgId, userId } = await requireOrgContext();
+    const supabase = await createClient();
+
+    // Get the attachment to find the storage path
+    const { data: attachment, error: fetchError } = await supabase
+        .from('attachments')
+        .select('*')
+        .eq('id', attachmentId)
+        .single();
+
+    if (fetchError || !attachment) {
+        throw new Error("Attachment not found");
+    }
+
+    // Use admin client for storage deletion
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    if (serviceKey) {
+        const adminClient = createSupabaseClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            serviceKey
+        );
+        // Extract storage path from URL
+        const url = new URL(attachment.file_url);
+        const pathParts = url.pathname.split('/task-attachments/');
+        if (pathParts.length > 1) {
+            const storagePath = decodeURIComponent(pathParts[1]);
+            await adminClient.storage.from('task-attachments').remove([storagePath]);
+        }
+    }
+
+    // Delete from DB
+    const { error } = await supabase
+        .from('attachments')
+        .delete()
+        .eq('id', attachmentId);
+
+    if (error) {
+        console.error("Error deleting attachment:", error);
+        throw new Error("Failed to delete attachment");
+    }
+
+    revalidatePath('/dashboard');
 }
 
 export async function getBulkCounts(taskIds: string[]) {
@@ -1396,7 +1600,7 @@ export async function deleteEmployee(userId: string) {
         }
 
         console.log(`[DeleteEmployee] Successfully deleted user ${userId}`);
-        revalidatePath('/')
+        revalidatePath('/dashboard')
     } catch (error: any) {
         console.error("[DeleteEmployee] Critical error:", error);
         throw error;
@@ -1475,7 +1679,7 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
         console.warn("Resend API Key not found. Email not sent.");
     }
 
-    revalidatePath('/')
+    revalidatePath('/dashboard')
 }
 export async function getWorkloadHeatmap(projectId?: string): Promise<WorkloadMap> {
     const { orgId } = await requireOrgContext();
@@ -1529,28 +1733,74 @@ export async function getWorkloadHeatmap(projectId?: string): Promise<WorkloadMa
     }
 }
 
+export type WorkDetail = {
+    task_name: string;
+    subtask_name: string;
+    hours_spent: number;
+    created_at: string;
+}
+
+export async function getDailyWorkDetails(userId: string, date: string): Promise<WorkDetail[]> {
+    const supabase = await createClient();
+    
+    try {
+        const { data, error } = await supabase
+            .from('subtasks')
+            .select(`
+                name,
+                hours_spent,
+                created_at,
+                tasks (
+                    name
+                )
+            `)
+            .eq('employee_id', userId)
+            .eq('date_logged', date)
+            .gt('hours_spent', 0);
+
+        if (error) {
+            console.error("[getDailyWorkDetails] Error:", error);
+            return [];
+        }
+
+        return (data as any[]).map(row => ({
+            task_name: row.tasks?.name || 'Unknown Task',
+            subtask_name: row.name,
+            hours_spent: Number(row.hours_spent) || 0,
+            created_at: row.created_at
+        }));
+    } catch (err) {
+        console.error("[getDailyWorkDetails] Catch Error:", err);
+        return [];
+    }
+}
+
 // --- Audit Log Actions ---
 
-export async function getTaskAuditLog(taskId: string): Promise<AuditLog[]> {
+export async function getTaskAuditLog(taskId: string): Promise<ActivityLog[]> {
     const supabase = await createClient()
     const { data, error } = await supabase
-        .from('audit_logs')
-        .select('*')
-        .eq('record_id', taskId)
+        .from('activity_logs')
+        .select('*, profiles:actor_id(name)')
+        .eq('task_id', taskId)
         .order('created_at', { ascending: false })
 
     if (error) {
-        console.error("Error fetching task audit log:", error)
+        console.error("Error fetching task activity log:", error)
         return []
     }
-    return data || []
+    
+    return (data || []).map(log => ({
+        ...log,
+        actor_name: (log as any).profiles?.name
+    }))
 }
 
-export async function getMemberActivity(userId: string, limit = 50): Promise<AuditLog[]> {
+export async function getMemberActivity(userId: string, limit = 50): Promise<ActivityLog[]> {
     const supabase = await createClient()
     const { data, error } = await supabase
-        .from('audit_logs')
-        .select('*')
+        .from('activity_logs')
+        .select('*, profiles:actor_id(name)')
         .eq('actor_id', userId)
         .order('created_at', { ascending: false })
         .limit(limit)
@@ -1559,14 +1809,18 @@ export async function getMemberActivity(userId: string, limit = 50): Promise<Aud
         console.error("Error fetching member activity:", error)
         return []
     }
-    return data || []
+    
+    return (data || []).map(log => ({
+        ...log,
+        actor_name: (log as any).profiles?.name
+    }))
 }
 
-export async function getOrgActivityFeed(orgId: string, limit = 100): Promise<AuditLog[]> {
+export async function getOrgActivityFeed(orgId: string, limit = 100): Promise<ActivityLog[]> {
     const supabase = await createClient()
     const { data, error } = await supabase
-        .from('audit_logs')
-        .select('*')
+        .from('activity_logs')
+        .select('*, profiles:actor_id(name)')
         .eq('org_id', orgId)
         .order('created_at', { ascending: false })
         .limit(limit)
@@ -1575,7 +1829,11 @@ export async function getOrgActivityFeed(orgId: string, limit = 100): Promise<Au
         console.error("Error fetching org activity feed:", error)
         return []
     }
-    return data || []
+    
+    return (data || []).map(log => ({
+        ...log,
+        actor_name: (log as any).profiles?.name
+    }))
 }
 
 

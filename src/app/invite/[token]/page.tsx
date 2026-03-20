@@ -1,12 +1,15 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, use } from 'react'
 import { acceptInvitation } from '@/app/actions/actions'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, CheckCircle2 } from "lucide-react"
 
-export default function InvitePage({ params }: { params: { token: string } }) {
+export default function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const router = useRouter()
+  const resolvedParams = use(params)
+  const token = resolvedParams.token
+  
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -19,7 +22,7 @@ export default function InvitePage({ params }: { params: { token: string } }) {
     setError(null)
     
     try {
-      await acceptInvitation(params.token, name, password)
+      await acceptInvitation(token, name, password)
       setSuccess(true)
       // Redirect to login or home after a short delay
       setTimeout(() => {

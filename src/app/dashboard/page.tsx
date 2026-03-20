@@ -24,6 +24,7 @@ export default async function DashboardPage() {
       userName={profile?.name || ''}
       userRole={profile?.role || 'employee'}
       orgName={orgName}
+      orgId={mData.org_id}
     />
   );
 }

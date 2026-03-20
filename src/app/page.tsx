@@ -1,6 +1,4 @@
 import { createClient } from '@/utils/supabase/server';
-import EmployeeDashboard from '@/components/EmployeeDashboard';
-import ManagerDashboard from '@/components/ManagerDashboard';
 import { Card, Button, Input } from '@/components/ui/components';
 import Logo from '@/components/ui/Logo';
 import { redirect } from 'next/navigation';

@@ -37,51 +37,54 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
   }
 
   return (
-    <div className="flex flex-col gap-1 px-3 mt-4">
+    <div className="flex flex-col gap-1.5 mt-6 px-1">
       {/* All projects view */}
       <button
         onClick={() => router.push('/dashboard')}
         className={cn(
-          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 w-full text-left group",
+          "flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 w-full text-left group relative outline-none",
           !projectId
-            ? "bg-[#0071e3] text-white shadow-[0_4px_20px_rgba(0,113,227,0.3)]"
-            : "text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
+            ? "bg-[#0071e3]/10 text-[#0071e3]"
+            : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
         )}
       >
-        <LayoutGrid size={16} className={cn("transition-colors", !projectId ? "text-white" : "text-[#86868b] group-hover:text-[#1d1d1f]")} />
-        Main Project
+        <LayoutGrid size={16} strokeWidth={2.5} className={cn("transition-colors", !projectId ? "text-[#0071e3]" : "text-slate-400 group-hover:text-slate-800")} />
+        <span>Main Inbox</span>
+        {!projectId && (
+            <div className="absolute left-0 w-1 h-5 bg-[#0071e3] rounded-r-full" />
+        )}
       </button>
 
-      <div className="text-[9px] font-black text-[#86868b] uppercase tracking-[0.2em] px-3 py-3 mt-4 opacity-50">
-        Projects
+      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-4 py-4 mt-2">
+        My Projects
       </div>
 
-      <div className="space-y-1 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
-        {projects.map(project => (
+      <div className="space-y-1">
+        {projects.length > 0 ? projects.map(project => (
           <div
             key={project.id}
             onClick={() => router.push(`/dashboard/projects/${project.id}`)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-xl text-[11px] font-bold transition-all duration-300 w-full text-left group cursor-pointer",
+              "flex items-center gap-3 px-4 py-2.5 rounded-xl text-[10px] font-bold transition-all duration-300 w-full text-left group cursor-pointer relative",
               projectId === project.id
-                ? "bg-white shadow-sm ring-1 ring-[#e5e5ea] text-[#1d1d1f]"
-                : "text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
+                ? "bg-[#0071e3]/10 text-[#0071e3]"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
             )}
           >
-            {/* Color dot/Icon */}
+            {/* Color dot */}
             <div 
-              className="w-2 h-2 rounded-full flex-shrink-0"
-              style={{ background: project.color }}
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0 shadow-sm"
+              style={{ background: project.color || '#0071e3' }}
             />
-            <span className="truncate flex-1">{project.name}</span>
+            <span className="truncate flex-1 tracking-tight">{project.name}</span>
             
-            <div className="flex items-center gap-1.5 ml-auto">
+            <div className="flex items-center gap-2 ml-auto">
                 {/* Task count badge */}
                 <span className={cn(
-                    "text-[9px] font-black px-1.5 py-0.5 rounded-md transition-colors",
+                    "text-[9px] font-bold px-2 py-0.5 rounded-lg transition-colors tabular-nums",
                     projectId === project.id 
                         ? "bg-[#0071e3] text-white" 
-                        : "bg-[#f5f5f7] text-[#86868b] group-hover:bg-[#e5e5ea]"
+                        : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
                 )}>
                   {project.task_count ?? 0}
                 </span>
@@ -90,18 +93,19 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
                 {userRole === 'manager' && (
                     <button
                         onClick={(e) => handleDeleteClick(e, project.id, project.name)}
-                        className="p-1.5 rounded-lg hover:bg-[#ff3b30]/10 text-[#86868b] hover:text-[#ff3b30] opacity-0 group-hover:opacity-100 transition-all"
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
                     >
-                        <Trash2 size={12} />
+                        <Trash2 size={12} strokeWidth={2.5} />
                     </button>
                 )}
             </div>
+            {projectId === project.id && (
+                <div className="absolute left-0 w-1 h-5 bg-[#0071e3] rounded-r-full" />
+            )}
           </div>
-        ))}
-
-        {projects.length === 0 && (
-            <div className="px-3 py-2 text-[10px] text-[#86868b] italic">
-                No projects yet
+        )) : (
+            <div className="px-4 py-2 text-[10px] text-slate-400 italic font-medium">
+                No active projects
             </div>
         )}
       </div>
@@ -110,12 +114,12 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
       {userRole === 'manager' && (
         <button
           onClick={() => router.push('/dashboard/projects/new')}
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-[10px] font-black text-[#86868b] hover:text-[#0071e3] transition-all duration-300 mt-2 group uppercase tracking-widest"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-[9px] font-bold text-slate-400 hover:text-[#0071e3] transition-all duration-300 mt-4 group uppercase tracking-widest bg-slate-50/50 hover:bg-slate-50"
         >
-          <div className="w-5 h-5 rounded-lg bg-[#f5f5f7] flex items-center justify-center group-hover:bg-[#0071e3]/10 transition-colors">
-              <Plus size={14} />
+          <div className="w-5 h-5 rounded-lg bg-white border border-slate-100 flex items-center justify-center group-hover:bg-[#0071e3] group-hover:text-white transition-all shadow-sm">
+              <Plus size={12} strokeWidth={3} />
           </div>
-          New project
+          Create Project
         </button>
       )}
 
@@ -123,15 +127,15 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
         isOpen={!!projectToDelete}
         onClose={() => setProjectToDelete(null)}
         onConfirm={handleConfirmDelete}
-        title="Confirm Project Deletion"
+        title="Delete Project"
         description={
-            <>
-                Permanently delete <span className="text-[#1d1d1f] font-black underline decoration-[#ff3b30]/30">"{projectToDelete?.name}"</span>? 
+            <div className="text-slate-500 text-xs">
+                Permanently delete <span className="text-slate-800 font-bold">"{projectToDelete?.name}"</span>? 
                 <br />
-                <span className="text-[11px] mt-2 block">Tasks will be moved to the Main Project.</span>
-            </>
+                <span className="block mt-2 opacity-80">Tasks will be archived to Main Project.</span>
+            </div>
         }
-        confirmText="Delete Project"
+        confirmText="Confirm Delete"
         isLoading={isDeleting}
       />
     </div>

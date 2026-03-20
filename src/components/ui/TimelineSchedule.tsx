@@ -23,19 +23,28 @@ interface TimelineScheduleProps {
     onTaskClick: (task: Task) => void;
     onEmployeeClick: (employee: Profile) => void;
     refreshData: () => void;
+    searchFilter?: string;
 }
 
-export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmployeeClick, refreshData }: TimelineScheduleProps) {
+export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmployeeClick, refreshData, searchFilter }: TimelineScheduleProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
     const [searchQuery, setSearchQuery] = useState('');
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [now, setNow] = useState(new Date());
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const timer = setInterval(() => setNow(new Date()), 1000); // Update every second
         return () => clearInterval(timer);
     }, []);
+    
+    useEffect(() => {
+        if (searchFilter !== undefined) {
+            setSearchQuery(searchFilter);
+        }
+    }, [searchFilter]);
 
     // Generate days for the timeline
     const timelineData = useMemo(() => {
@@ -130,94 +139,90 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#f5f5f7] p-4 lg:p-6 rounded-[40px] gap-6 overflow-y-auto custom-scrollbar">
+        <div className="flex flex-col h-full bg-slate-50/50 p-6 rounded-[32px] gap-6 overflow-y-auto custom-scrollbar">
             {/* Header Controls */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/40 backdrop-blur-xl p-4 lg:p-6 rounded-3xl border border-white/40 shadow-sm transition-all duration-300">
-                <div className="flex items-center gap-4 lg:gap-8">
-                    <div>
-                        <h2 className="text-xl lg:text-2xl font-black text-[#1d1d1f] tracking-tight">Project Timeline</h2>
-                        <div className="flex items-center gap-4 mt-1">
-                            <p className="text-[#86868b] font-bold text-[10px] lg:text-[11px] uppercase tracking-[0.2em]">
-                                {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm transition-all duration-300">
+                <div className="flex items-center gap-8">
+                    <div className="space-y-1">
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">Timeline</h2>
+                        <div className="flex items-center gap-4">
+                            <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest">
+                                {mounted ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '...'}
                             </p>
-                            <div className="h-4 w-px bg-[#e5e5ea]" />
+                            <div className="h-3 w-px bg-slate-100" />
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1.5">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[#1d1d1f]" />
-                                    <span className="text-[10px] font-black text-[#1d1d1f]">{tasks.length} Total</span>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-900" />
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tasks.length} Total</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-1.5 h-1.5 rounded-full bg-[#34c759]" />
-                                    <span className="text-[10px] font-black text-[#34c759]">{tasks.filter(t => t.status === 'Completed').length} Done</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-[#ff3b30]" />
-                                    <span className="text-[10px] font-black text-[#ff3b30]">{tasks.filter(t => t.priority === 'Urgent').length} Urgent</span>
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tasks.filter(t => t.status === 'Completed').length} Done</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div className="flex bg-[#e5e5ea]/50 p-1 rounded-2xl">
+                    <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
                         <button 
                             onClick={() => setViewMode('week')}
-                            className={`px-4 lg:px-6 py-2 rounded-xl text-[10px] font-black transition-all duration-300 ${viewMode === 'week' ? 'bg-[#1d1d1f] text-white shadow-lg scale-105' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+                            className={`px-5 py-1.5 rounded-lg text-[9px] font-bold tracking-widest transition-all duration-300 ${viewMode === 'week' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             WEEK
                         </button>
                         <button 
                             onClick={() => setViewMode('month')}
-                            className={`px-4 lg:px-6 py-2 rounded-xl text-[10px] font-black transition-all duration-300 ${viewMode === 'month' ? 'bg-[#1d1d1f] text-white shadow-lg scale-105' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+                            className={`px-5 py-1.5 rounded-lg text-[9px] font-bold tracking-widest transition-all duration-300 ${viewMode === 'month' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             MONTH
                         </button>
                     </div>
                 </div>
-
+ 
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     <div className="relative flex-1 sm:flex-none">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868b]" size={14} />
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" size={13} />
                         <input 
                             type="text" 
-                            placeholder="Filter timeline..." 
+                            placeholder="Find member or task..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-10 pl-10 pr-4 rounded-2xl bg-white/60 border-none text-[11px] font-bold outline-none ring-1 ring-[#e5e5ea] focus:ring-2 focus:ring-[#0071e3] transition-all w-full sm:w-48 lg:w-64"
+                            className="h-10 pl-10 pr-4 rounded-xl bg-slate-50/50 border border-slate-100 text-[11px] font-medium outline-none focus:bg-white focus:border-[#0071e3]/30 transition-all w-full sm:w-48 lg:w-64"
                         />
                     </div>
                     <div className="flex gap-2">
                         <button 
                             onClick={() => setCurrentDate(new Date())}
-                            className="h-10 px-4 rounded-2xl bg-white border border-[#e5e5ea] hover:border-[#0071e3] hover:text-[#0071e3] transition-all text-[10px] font-black uppercase tracking-widest"
+                            className="h-10 px-4 rounded-xl bg-white border border-slate-100 hover:border-slate-300 transition-all text-[9px] font-bold uppercase tracking-widest text-slate-500"
                         >
                             Today
                         </button>
-                        <button onClick={() => navigate('prev')} className="h-10 w-10 flex items-center justify-center rounded-2xl bg-white border border-[#e5e5ea] hover:border-[#1d1d1f] transition-all text-[#1d1d1f]">
-                            <ChevronLeft size={18} />
+                        <button onClick={() => navigate('prev')} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 hover:border-slate-300 transition-all text-slate-500">
+                            <ChevronLeft size={16} />
                         </button>
-                        <button onClick={() => navigate('next')} className="h-10 w-10 flex items-center justify-center rounded-2xl bg-white border border-[#e5e5ea] hover:border-[#1d1d1f] transition-all text-[#1d1d1f]">
-                            <ChevronRight size={18} />
+                        <button onClick={() => navigate('next')} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 hover:border-slate-300 transition-all text-slate-500">
+                            <ChevronRight size={16} />
                         </button>
                     </div>
                 </div>
             </div>
-
+ 
             {/* Timeline Viewport */}
             <div 
-                className="flex-shrink-0 min-h-[500px] h-[600px] bg-white rounded-[40px] shadow-sm border border-[#eceef0] overflow-hidden flex flex-col relative group"
+                className="flex-1 min-h-[400px] bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden flex flex-col relative"
                 style={{ 
-                    '--sticky-width': '160px',
-                    '--col-width': '112px'
+                    '--sticky-width': '180px',
+                    '--col-width': '128px'
                 } as any}
             >
                 <div 
                     ref={scrollContainerRef}
-                    className="flex-1 overflow-x-auto custom-scrollbar flex flex-col lg:[--sticky-width:192px] lg:[--col-width:128px]"
+                    className="flex-1 overflow-x-auto custom-scrollbar-subtle flex flex-col"
                 >
                     {/* Horizontal Date Header */}
-                    <div className="flex bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-[#f5f5f7] min-w-max">
-                        <div className="w-[var(--sticky-width)] border-r border-[#f5f5f7] shrink-0 p-4 sticky left-0 bg-white z-40 flex items-center">
-                            <span className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em]">Team Members</span>
+                    <div className="flex bg-white sticky top-0 z-30 border-b border-slate-50 min-w-max">
+                        <div className="w-[var(--sticky-width)] border-r border-slate-50 shrink-0 p-5 sticky left-0 bg-white z-40 flex items-center">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Team Availability</span>
                         </div>
                         <div className="flex">
                             {timelineData.days.map((date, i) => {
@@ -225,20 +230,17 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                                 return (
                                     <div 
                                         key={i} 
-                                        className={`w-28 lg:w-32 py-3 lg:py-4 text-center border-l first:border-l-0 border-[#f5f5f7] transition-all relative ${active ? 'bg-[#0071e3]/5 today-column' : ''}`}
+                                        className={`w-[var(--col-width)] py-4 text-center border-l first:border-l-0 border-slate-50 transition-all relative ${active ? 'bg-slate-50/50 today-column' : ''}`}
                                     >
-                                        {active && (
-                                            <div className="absolute top-0 left-0 right-0 h-1 bg-[#0071e3] shadow-[0_0_10px_rgba(0,113,227,0.5)]" />
-                                        )}
-                                        <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${active ? 'text-[#0071e3] scale-110' : 'text-[#86868b]'}`}>
-                                            {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                                        <p className={`text-[8px] font-bold uppercase tracking-widest mb-1 ${active ? 'text-[#0071e3]' : 'text-slate-400'}`}>
+                                            {mounted ? date.toLocaleDateString('en-US', { weekday: 'short' }) : '...'}
                                         </p>
                                         <div className="relative inline-block">
-                                            <p className={`text-base lg:text-lg font-black relative z-10 ${active ? 'text-white' : 'text-[#1d1d1f]'}`}>
+                                            <p className={`text-sm font-bold ${active ? 'text-white' : 'text-slate-900'}`}>
                                                 {date.getDate()}
                                             </p>
                                             {active && (
-                                                <div className="absolute inset-0 -m-1 bg-[#0071e3] rounded-lg shadow-lg rotate-3" />
+                                                <div className="absolute inset-x-[-6px] inset-y-[-2px] bg-[#0071e3] rounded-md -z-10 shadow-sm" />
                                             )}
                                         </div>
                                     </div>
@@ -246,33 +248,33 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                             })}
                         </div>
                     </div>
-
+ 
                     {/* Resource Rows */}
-                    <div className="flex-1 min-w-max relative">
+                    <div className="flex-1 min-w-max relative bg-white">
                         <div className="flex flex-col min-h-full">
                             {employees.filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map((emp, empIdx) => (
-                                <div key={emp.id} className="flex min-h-[100px] border-b border-[#f5f5f7] group/row transition-colors hover:bg-[#fbfbfd]">
+                                <div key={emp.id} className="flex min-h-[90px] border-b border-slate-50 group transition-colors hover:bg-slate-50/30">
                                     {/* Sticky Profile Column */}
-                                    <div className="w-[var(--sticky-width)] border-r border-[#f5f5f7] shrink-0 p-4 flex items-center gap-3 sticky left-0 bg-white/95 backdrop-blur-sm z-20 transition-all group-hover/row:bg-white">
-                                        <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-2xl bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center text-[11px] font-black group-hover:border-[#0071e3] transition-all duration-300">
+                                    <div className="w-[var(--sticky-width)] border-r border-slate-50 shrink-0 p-5 flex items-center gap-4 sticky left-0 bg-white group-hover:bg-slate-50/30 z-20 transition-all">
+                                        <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-[11px] font-bold text-slate-600">
                                             {emp.name.charAt(0)}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-[11px] lg:text-[12px] font-black text-[#1d1d1f] truncate leading-tight mb-0.5">{emp.name}</p>
-                                            <p className="text-[8px] font-bold text-[#86868b] uppercase tracking-widest">
-                                                {tasks.filter(t => t.employee_id === emp.id).length} Active
+                                            <p className="text-[12px] font-bold text-slate-800 truncate leading-tight mb-0.5">{emp.name}</p>
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
+                                                {tasks.filter(t => t.employee_id === emp.id).length} active
                                             </p>
                                         </div>
                                     </div>
-
+ 
                                     {/* Task Container */}
                                     <div className="flex-1 relative flex items-center">
                                         <div className="absolute inset-0 flex pointer-events-none">
                                             {timelineData.days.map((date, i) => (
-                                                <div key={i} className={`w-28 lg:w-32 border-l border-[#f5f5f7] first:border-l-0 relative ${isToday(date) ? 'bg-[#0071e3]/[0.02]' : ''}`} />
+                                                <div key={i} className={`w-[var(--col-width)] border-l border-slate-50 first:border-l-0 ${isToday(date) ? 'bg-slate-50/20' : ''}`} />
                                             ))}
                                         </div>
-
+ 
                                         {/* Render Tasks for this employee */}
                                         {(() => {
                                             const empTasks = tasks
@@ -291,67 +293,66 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                                                 if (startIndex === -1 && endIndex === -1) {
                                                     if (!(start < timelineData.startDate && end > timelineData.endDate)) return null;
                                                 }
-
+ 
                                                 const effectiveStart = startIndex === -1 ? 0 : startIndex;
                                                 const effectiveEnd = endIndex === -1 ? timelineData.days.length - 1 : endIndex;
                                                 
-                                                const colWidth = 112; 
+                                                const colWidth = 128; // Matching col-width var
                                                 const left = effectiveStart * colWidth;
                                                 const width = (effectiveEnd - effectiveStart + 1) * colWidth;
-
+ 
                                                 let laneIndex = 0;
                                                 while (laneIndex < lanes.length) {
                                                     const lastEndDateInLane = new Date(lanes[laneIndex][lanes[laneIndex].length - 1]);
-                                                    // Add a small buffer (1 hour) to prevent same-day overlap issues
                                                     if (start.getTime() > lastEndDateInLane.getTime() + 3600000) break;
                                                     laneIndex++;
                                                 }
                                                 
                                                 if (laneIndex === lanes.length) lanes.push([task.deadline]);
                                                 else lanes[laneIndex].push(task.deadline);
-
+ 
                                                 const isCompleted = task.status === 'Completed';
                                                 
                                                 const getBaseClasses = () => {
-                                                    if (isCompleted) return 'bg-[#34c759]/10 border-[#34c759]/20 text-[#1d1d1f]';
+                                                    if (isCompleted) return 'bg-emerald-50 text-emerald-700 border-emerald-100';
                                                     switch(task.priority) {
-                                                        case 'Urgent': return 'bg-[#ff3b30]/10 border-[#ff3b30]/20 text-[#1d1d1f]';
-                                                        case 'High': return 'bg-[#ff9500]/10 border-[#ff9500]/20 text-[#1d1d1f]';
-                                                        case 'Medium': return 'bg-[#0071e3]/10 border-[#0071e3]/20 text-[#1d1d1f]';
-                                                        default: return 'bg-[#5856d6]/10 border-[#5856d6]/20 text-[#1d1d1f]';
+                                                        case 'Urgent': return 'bg-rose-50 text-rose-700 border-rose-100';
+                                                        case 'High': return 'bg-orange-50 text-orange-700 border-orange-100';
+                                                        case 'Medium': return 'bg-blue-50 text-blue-700 border-blue-100';
+                                                        default: return 'bg-slate-50 text-slate-700 border-slate-100';
                                                     }
                                                 };
-
+ 
                                                 const getAccentClasses = () => {
-                                                    if (isCompleted) return 'bg-[#34c759]';
+                                                    if (isCompleted) return 'bg-emerald-500';
                                                     switch(task.priority) {
-                                                        case 'Urgent': return 'bg-[#ff3b30]';
-                                                        case 'High': return 'bg-[#ff9500]';
-                                                        case 'Medium': return 'bg-[#0071e3]';
-                                                        default: return 'bg-[#5856d6]';
+                                                        case 'Urgent': return 'bg-rose-500';
+                                                        case 'High': return 'bg-orange-500';
+                                                        case 'Medium': return 'bg-blue-500';
+                                                        default: return 'bg-slate-400';
                                                     }
                                                 };
-
+ 
                                                 return (
                                                     <div
                                                         key={task.id}
                                                         onClick={() => onTaskClick(task)}
-                                                        className={`absolute h-9 rounded-xl border px-3 flex items-center gap-2 transition-all duration-300 hover:z-10 hover:shadow-xl hover:scale-[1.01] cursor-pointer group/task ${getBaseClasses()}`}
+                                                        className={`absolute h-8 rounded-lg border px-3 flex items-center gap-2 transition-all duration-300 hover:z-10 hover:shadow-md cursor-pointer group/task ${getBaseClasses()}`}
                                                         style={{
-                                                            left: `${left + 4}px`,
-                                                            width: `${width - 8}px`,
-                                                            top: `${laneIndex * 44 + 8}px`,
+                                                            left: `${left + 6}px`,
+                                                            width: `${width - 12}px`,
+                                                            top: `${laneIndex * 40 + 8}px`,
                                                             zIndex: task.priority === 'Urgent' ? 5 : 1
                                                         }}
                                                     >
                                                         <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getAccentClasses()}`} />
-                                                        <span className="text-[10px] font-black truncate">{task.name}</span>
+                                                        <span className="text-[10px] font-bold truncate overflow-hidden">{task.name}</span>
                                                     </div>
                                                 );
                                             });
-
+ 
                                             return (
-                                                <div className="relative w-full h-full" style={{ minHeight: `${Math.max(1, lanes.length) * 44 + 16}px` }}>
+                                                <div className="relative w-full h-full" style={{ minHeight: `${Math.max(1, lanes.length) * 40 + 16}px` }}>
                                                     {taskElements}
                                                 </div>
                                             );
@@ -360,8 +361,8 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                                 </div>
                             ))}
                         </div>
-
-                        {/* GLOBAL REAL-TIME "NOW" INDICATOR OVERLAY */}
+ 
+                        {/* GLOBAL REAL-TIME "NOW" INDICATOR */}
                         {(() => {
                             const todayIndex = timelineData.days.findIndex(d => isToday(d));
                             if (todayIndex === -1) return null;
@@ -370,20 +371,14 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                             
                             return (
                                 <div 
-                                    className="absolute inset-y-0 w-0.5 bg-[#ff3b30] shadow-[0_0_20px_rgba(255,59,48,0.7)] z-[50] pointer-events-none transition-all duration-1000 ease-linear"
+                                    className="absolute inset-y-0 w-px bg-rose-500 z-[50] pointer-events-none"
                                     style={{ 
                                         left: `calc(var(--sticky-width) + (${todayIndex} * var(--col-width)) + (${dayProgress} * var(--col-width)))` 
                                     }}
                                 >
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#ff3b30] border-2 border-white shadow-xl flex items-center justify-center">
-                                        <div className="w-1 h-1 bg-white rounded-full animate-ping" />
-                                    </div>
-                                    <div className="sticky top-20 left-0 -translate-x-1/2 flex flex-col items-center group/now z-[100] pointer-events-none self-start">
-                                        <div className="bg-[#ff3b30] text-white text-[8px] font-black px-2.5 py-1 rounded-full shadow-[0_4px_12px_rgba(255,59,48,0.4)] whitespace-nowrap tracking-[0.1em] uppercase flex items-center gap-1.5 transition-transform group-hover/now:scale-110">
-                                            <span className="w-1 h-1 bg-white rounded-full animate-pulse" />
-                                            NOW • {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </div>
-                                        <div className="w-0.5 h-4 bg-[#ff3b30]/30" />
+                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-rose-500 border border-white shadow-sm" />
+                                    <div className="absolute top-0 left-4 bg-rose-500 text-white text-[8px] font-bold px-2 py-0.5 rounded shadow-sm whitespace-nowrap tracking-widest uppercase">
+                                        {mounted ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...'}
                                     </div>
                                 </div>
                             );
@@ -391,81 +386,60 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                     </div>
                 </div>
             </div>
-
-            {/* Employee Data Table */}
-            <div className="bg-white rounded-[40px] shadow-sm border border-[#eceef0] overflow-hidden flex flex-col">
-                <div className="px-8 py-6 border-b border-[#f5f5f7] flex items-center justify-between">
-                    <div>
-                        <h3 className="text-base font-black text-[#1d1d1f] tracking-tight">Team Overview</h3>
-                        <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-0.5">Resource Allocation & Metrics</p>
-                    </div>
-                    <Badge variant="default" className="bg-[#f5f5f7] text-[#1d1d1f] border-none font-black text-[9px] px-3 py-1">
-                        {employees.length} MEMBERS
+ 
+            {/* Team Stats Summary */}
+            <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden">
+                <div className="px-8 py-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+                    <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest">Resource Allocation</h3>
+                    <Badge className="bg-white text-slate-400 border-slate-100 font-bold text-[9px] px-3 py-1 uppercase tracking-widest">
+                        {employees.length} Team Members
                     </Badge>
                 </div>
                 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-[#fbfbfd]">
-                                <th className="px-8 py-4 text-[10px] font-black text-[#86868b] uppercase tracking-widest border-b border-[#f5f5f7]">Member</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-[#86868b] uppercase tracking-widest border-b border-[#f5f5f7]">Role</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-[#86868b] uppercase tracking-widest border-b border-[#f5f5f7]">Active Tasks</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-[#86868b] uppercase tracking-widest border-b border-[#f5f5f7]">Done</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-[#86868b] uppercase tracking-widest border-b border-[#f5f5f7]">Workload</th>
-                                <th className="px-8 py-4 text-[10px] font-black text-[#86868b] uppercase tracking-widest border-b border-[#f5f5f7] text-right">Actions</th>
+                            <tr className="border-b border-slate-50">
+                                <th className="px-8 py-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Member</th>
+                                <th className="px-8 py-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center">Active Tasks</th>
+                                <th className="px-8 py-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Distribution</th>
+                                <th className="px-8 py-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest text-right">Activity</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {employees.filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map((emp, idx) => {
+                        <tbody className="divide-y divide-slate-50">
+                            {employees.filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map((emp) => {
                                 const empTasks = tasks.filter(t => t.employee_id === emp.id);
                                 const activeCount = empTasks.filter(t => t.status !== 'Completed').length;
-                                const doneCount = empTasks.filter(t => t.status === 'Completed').length;
                                 const workload = Math.min((activeCount / 5) * 100, 100); 
                                 
                                 return (
-                                    <tr key={emp.id} className="group hover:bg-[#f5f5f7]/50 transition-colors">
-                                        <td className="px-8 py-4 border-b border-[#f5f5f7]">
+                                    <tr key={emp.id} className="group hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-8 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-xl bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center text-[10px] font-black group-hover:bg-white transition-colors">
+                                                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
                                                     {emp.name.charAt(0)}
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs font-black text-[#1d1d1f] leading-tight">{emp.name}</p>
-                                                    <p className="text-[9px] font-bold text-[#86868b] truncate max-w-[150px]">{emp.email || 'No email provided'}</p>
-                                                </div>
+                                                <span className="text-xs font-bold text-slate-700">{emp.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-4 border-b border-[#f5f5f7]">
-                                            <Badge variant={emp.role === 'manager' ? 'Urgent' : 'Medium'} className="text-[8px] px-2 py-0.5 uppercase">
-                                                {emp.role}
-                                            </Badge>
+                                        <td className="px-8 py-4 text-center">
+                                            <span className="text-xs font-bold text-slate-900">{activeCount}</span>
                                         </td>
-                                        <td className="px-8 py-4 border-b border-[#f5f5f7]">
-                                            <span className="text-xs font-bold text-[#1d1d1f]">{activeCount}</span>
-                                        </td>
-                                        <td className="px-8 py-4 border-b border-[#f5f5f7]">
-                                            <span className="text-xs font-bold text-[#34c759]">{doneCount}</span>
-                                        </td>
-                                        <td className="px-8 py-4 border-b border-[#f5f5f7]">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-24 h-1.5 bg-[#f5f5f7] rounded-full overflow-hidden border border-[#e5e5ea]">
-                                                    <div 
-                                                        className={`h-full transition-all duration-1000 ${workload > 80 ? 'bg-[#ff3b30]' : workload > 50 ? 'bg-[#ff9500]' : 'bg-[#0071e3]'}`}
-                                                        style={{ width: `${workload}%` }}
-                                                    />
-                                                </div>
-                                                <span className="text-[9px] font-black text-[#86868b]">{Math.round(workload)}%</span>
+                                        <td className="px-8 py-4">
+                                            <div className="w-32 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full transition-all duration-1000 ${workload > 80 ? 'bg-rose-400' : workload > 40 ? 'bg-blue-400' : 'bg-emerald-400'}`}
+                                                    style={{ width: `${workload}%` }}
+                                                />
                                             </div>
                                         </td>
-                                        <td className="px-8 py-4 border-b border-[#f5f5f7] text-right">
+                                        <td className="px-8 py-4 text-right">
                                             <Button 
-                                                variant="secondary" 
+                                                variant="ghost" 
                                                 onClick={() => onEmployeeClick(emp)}
-                                                className="h-9 px-4 text-[9px] font-black tracking-[0.2em] hover:bg-[#1d1d1f] hover:text-white border-none bg-[#f5f5f7] transition-all duration-300 rounded-xl flex items-center gap-2 ml-auto group/btn shadow-sm hover:shadow-md hover:scale-105"
+                                                className="h-8 px-4 text-[9px] font-bold tracking-widest text-slate-400 hover:text-slate-900 hover:bg-white transition-all rounded-lg"
                                             >
-                                                VIEW ACTIVITY
-                                                <ChevronRight size={14} className="transition-transform group-hover/btn:translate-x-1" />
+                                                VIEW STATS
                                             </Button>
                                         </td>
                                     </tr>
