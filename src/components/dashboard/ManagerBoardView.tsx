@@ -178,11 +178,23 @@ function BoardColumn({
 
                     <div className="flex items-center justify-between pt-2">
                       <div className="flex -space-x-2">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] p-[1.5px] border-2 border-white shadow-sm">
-                          <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-[8px] font-black uppercase text-[#1d1d1f]">
-                            {employee?.name?.charAt(0) || '?'}
+                        {Array.from(new Set([task.employee_id, ...(task.assignee_ids || [])])).slice(0, 3).map((id, index) => {
+                          const emp = employees.find(e => e.id === id);
+                          return (
+                            <div key={`${task.id}-${id}`} className="w-6 h-6 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] p-[1.5px] border-2 border-white shadow-sm" style={{ zIndex: 10 - index }}>
+                              <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-[8px] font-black uppercase text-[#1d1d1f]">
+                                {emp?.name?.charAt(0) || '?'}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {Array.from(new Set([task.employee_id, ...(task.assignee_ids || [])])).length > 3 && (
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] p-[1.5px] border-2 border-white shadow-sm" style={{ zIndex: 0 }}>
+                            <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-[8px] font-black uppercase text-[#1d1d1f]">
+                              +{Array.from(new Set([task.employee_id, ...(task.assignee_ids || [])])).length - 3}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-3">
