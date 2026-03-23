@@ -334,15 +334,10 @@ export async function getTasks(projectId?: string, providedOrgId?: string): Prom
         }
 
         // We query the tasks table directly to be robust against view creation failures
-        // Windowing: Only fetch tasks updated in the last 90 days to prevent 504 timeouts
-        const ninetyDaysAgo = new Date();
-        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-
         let query = supabase
             .from('tasks')
             .select('*')
-            .eq('org_id', orgId)
-            .gte('updated_at', ninetyDaysAgo.toISOString());
+            .eq('org_id', orgId);
         
         if (projectId && projectId !== 'all') {
             query = query.eq('project_id', projectId);
