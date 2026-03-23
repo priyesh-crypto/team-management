@@ -343,7 +343,9 @@ export async function getTasks(projectId?: string, providedOrgId?: string): Prom
             query = query.eq('project_id', projectId);
         }
 
-        const { data, error } = await query;
+        const { data, error } = await query
+            .order('updated_at', { ascending: false })
+            .limit(500);
         
         if (error) {
             console.error("[getTasks] Supabase Error:", error);
@@ -2510,16 +2512,24 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
     // 3. Secondary Data (Bulk fetches if tasks exist)
     let subtasks: Subtask[] = [];
     let counts = { comments: {} as Record<string, number>, attachments: {} as Record<string, number> };
-    if (tasks.length > 0) {
-        console.time(`[getDashboardData] BulkFetch_${tasks.length}_tasks`);
-        const ids = tasks.map(t => t.id);
-        const [st, c] = await Promise.all([
-            getBulkSubtasks(ids),
-            getBulkCounts(ids)
-        ]);
-        subtasks = st;
-        counts = c;
-        console.timeEnd(`[getDashboardData] BulkFetch_${tasks.length}_tasks`);
+    
+    // Safety: Limit bulk fetch to first 200 tasks to prevent parameter size limits
+    const tasksToFetch = tasks.slice(0, 200);
+
+    if (tasksToFetch.length > 0) {
+        try {
+            console.time(`[getDashboardData] BulkFetch_${tasksToFetch.length}_tasks`);
+            const ids = tasksToFetch.map(t => t.id);
+            const [st, c] = await Promise.all([
+                getBulkSubtasks(ids).catch(e => { console.error("[getDashboardData] Bulk subtasks failed:", e); return []; }),
+                getBulkCounts(ids).catch(e => { console.error("[getDashboardData] Bulk counts failed:", e); return { comments: {}, attachments: {} }; })
+            ]);
+            subtasks = st;
+            counts = c as any;
+            console.timeEnd(`[getDashboardData] BulkFetch_${tasksToFetch.length}_tasks`);
+        } catch (e) {
+            console.error("[getDashboardData] Bulk fetch fatal error:", e);
+        }
     }
 
     const duration = Date.now() - startTime;
