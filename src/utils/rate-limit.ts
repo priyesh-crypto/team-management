@@ -7,45 +7,8 @@ export async function checkActionRateLimit(
     limit: number = 5, 
     windowMs: number = 60 * 1000
 ): Promise<{ allowed: boolean; error?: string }> {
-    try {
-        const supabase = await createClient();
-        const now = new Date();
-        const windowStart = new Date(now.getTime() - windowMs);
-
-        // 1. Clean up old logs (optional)
-        if (Math.random() < 0.01) {
-            await supabase.from('rate_limit_logs')
-                .delete()
-                .lt('created_at', new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString());
-        }
-
-        // 2. Count recent attempts - LIGHTER QUERY (id only)
-        const { count, error } = await supabase
-            .from('rate_limit_logs')
-            .select('id', { count: 'exact', head: true })
-            .eq('identifier', identifier)
-            .eq('action', action)
-            .gt('created_at', windowStart.toISOString());
-
-        if (error) {
-            console.error("[RateLimit] Error counting logs:", error);
-            return { allowed: true };
-        }
-
-        if (count && count >= limit) {
-            return { allowed: false, error: `Too many attempts. Please try again in ${Math.ceil(windowMs / 60000)} minutes.` };
-        }
-
-        // 3. Log this attempt - Use fire-and-forget for better performance
-        supabase.from('rate_limit_logs').insert([{ identifier, action }]).then(({ error }) => {
-            if (error) console.error("[RateLimit] Log error:", error);
-        });
-
-        return { allowed: true };
-    } catch (e) {
-        console.error("[RateLimit] Fatal error:", e);
-        return { allowed: true };
-    }
+    // TEMPORARY: Disabled to reduce database pressure during resource exhaustion
+    return { allowed: true };
 }
 
 /**

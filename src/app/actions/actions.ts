@@ -2502,14 +2502,13 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
 
     // 2. Fetch Core Data Promise (Parallel including Auth Users)
     console.time(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
-    const [tasks, profiles, projects, projectMembers, logs, workload, authUsers] = await Promise.all([
+    const [tasks, profiles, projects, projectMembers, logs, workload] = await Promise.all([
         getTasks(projectId, orgId),
-        authUsersPromise.then(users => getProfiles(undefined, users, orgId)),
+        getProfiles(undefined, [], orgId),
         getProjects(orgId),
-        authUsersPromise.then(users => projectId ? getProfiles(projectId, users, orgId) : Promise.resolve([])),
-        getOrgActivityFeed(orgId || ''),
-        getWorkloadHeatmap(projectId, orgId),
-        authUsersPromise
+        Promise.resolve([]), // projectMembers disabled temporarily
+        Promise.resolve([]), // logs disabled temporarily
+        Promise.resolve({})  // workload heatmap disabled temporarily
     ]);
     console.timeEnd(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
 
