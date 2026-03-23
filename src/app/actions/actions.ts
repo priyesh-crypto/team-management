@@ -334,10 +334,15 @@ export async function getTasks(projectId?: string, providedOrgId?: string): Prom
         }
 
         // We query the tasks table directly to be robust against view creation failures
+        // Windowing: Only fetch tasks updated in the last 90 days to prevent 504 timeouts
+        const ninetyDaysAgo = new Date();
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
         let query = supabase
             .from('tasks')
             .select('*')
-            .eq('org_id', orgId);
+            .eq('org_id', orgId)
+            .gte('updated_at', ninetyDaysAgo.toISOString());
         
         if (projectId && projectId !== 'all') {
             query = query.eq('project_id', projectId);
@@ -2265,15 +2270,32 @@ export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: str
         const subtasks = subtasksRes.data || [];
         const activeTasks = tasksRes.data || [];
 
-        // 4. Build Result Map
+        // 4. Pre-process subtasks into a Map for O(1) lookup: Map<userId_dayStr, subtask[]>
+        const subtasksByMemberAndDay = new Map<string, any[]>();
+        subtasks.forEach(s => {
+            const key = `${s.employee_id}_${s.date_logged}`;
+            if (!subtasksByMemberAndDay.has(key)) subtasksByMemberAndDay.set(key, []);
+            subtasksByMemberAndDay.get(key)!.push(s);
+        });
+
+        // 5. Pre-process active tasks into a Map for O(1) lookup: Map<userId, task[]>
+        const tasksByMember = new Map<string, any[]>();
+        activeTasks.forEach(t => {
+            if (!tasksByMember.has(t.employee_id)) tasksByMember.set(t.employee_id, []);
+            tasksByMember.get(t.employee_id)!.push(t);
+        });
+
+        // 6. Build Result Map
         const result: WorkloadMap = {};
         members.forEach(m => {
             const uid = m.user_id;
             const name = (m as any).profiles?.name || 'Unknown';
             result[uid] = { name, days: {} };
             
+            const memberTasks = tasksByMember.get(uid) || [];
+
             days.forEach(dayStr => {
-                const sToday = subtasks.filter(s => s.employee_id === uid && s.date_logged === dayStr);
+                const sToday = subtasksByMemberAndDay.get(`${uid}_${dayStr}`) || [];
                 const hours = sToday.reduce((sum, s) => sum + (Number(s.hours_spent) || 0), 0);
                 
                 let tasksCount = 0;
@@ -2283,14 +2305,18 @@ export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: str
                     tasksCount = new Set(sToday.map(s => s.task_id)).size;
                     urgency = hours > 0 ? 1 : 0;
                 } else {
-                    const dayTasks = activeTasks.filter(t => t.employee_id === uid && dayStr >= (t.start_date?.split('T')[0] || '') && dayStr <= (t.deadline?.split('T')[0] || ''));
+                    const dayTasks = memberTasks.filter(t => {
+                        const start = t.start_date?.split('T')[0] || '';
+                        const deadline = t.deadline?.split('T')[0] || '';
+                        return dayStr >= start && dayStr <= deadline;
+                    });
                     tasksCount = dayTasks.length;
                     dayTasks.forEach(t => {
                         let score = 0;
                         if (t.priority === 'Urgent') score += 4;
                         else if (t.priority === 'High') score += 2;
                         else if (t.priority === 'Medium') score += 1;
-                        if (t.deadline?.split('T')[0] < dayStr) score += 3;
+                        if (t.deadline && t.deadline.split('T')[0] < dayStr) score += 3;
                         urgency += score;
                     });
                 }
@@ -2475,6 +2501,7 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
     const authUsersPromise = Promise.resolve([]);
 
     // 2. Fetch Core Data Promise (Parallel including Auth Users)
+    console.time(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
     const [tasks, profiles, projects, projectMembers, logs, workload, authUsers] = await Promise.all([
         getTasks(projectId, orgId),
         authUsersPromise.then(users => getProfiles(undefined, users, orgId)),
@@ -2484,11 +2511,13 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         getWorkloadHeatmap(projectId, orgId),
         authUsersPromise
     ]);
+    console.timeEnd(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
 
     // 3. Secondary Data (Bulk fetches if tasks exist)
     let subtasks: Subtask[] = [];
     let counts = { comments: {} as Record<string, number>, attachments: {} as Record<string, number> };
     if (tasks.length > 0) {
+        console.time(`[getDashboardData] BulkFetch_${tasks.length}_tasks`);
         const ids = tasks.map(t => t.id);
         const [st, c] = await Promise.all([
             getBulkSubtasks(ids),
@@ -2496,10 +2525,11 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         ]);
         subtasks = st;
         counts = c;
+        console.timeEnd(`[getDashboardData] BulkFetch_${tasks.length}_tasks`);
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[getDashboardData] Completed in ${duration}ms for project ${projectId || 'all'}`);
+    console.log(`[getDashboardData] Total Duration: ${duration}ms for project ${projectId || 'all'}`);
 
     return {
         tasks,
