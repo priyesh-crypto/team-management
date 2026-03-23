@@ -337,7 +337,7 @@ export async function getTasks(projectId?: string, providedOrgId?: string): Prom
         let query = supabase
             .from('tasks')
             .select('*')
-            .eq('org_id', orgId);
+            .or(`org_id.eq.${orgId},org_id.is.null`);
         
         if (projectId && projectId !== 'all') {
             query = query.eq('project_id', projectId);
