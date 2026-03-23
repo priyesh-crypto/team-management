@@ -217,15 +217,17 @@ export async function requireOrgContext() {
     }
 }
 
-export async function getProfiles(projectId?: string, providedAuthUsers?: any[]): Promise<Profile[]> {
+export async function getProfiles(projectId?: string, providedAuthUsers?: any[], providedOrgId?: string): Promise<Profile[]> {
     const supabase = await createClient()
     
-    let orgId;
+    let orgId = providedOrgId;
     let userId;
     try {
-        const context = await requireOrgContext();
-        orgId = context.orgId;
-        userId = context.userId;
+        if (!orgId) {
+            const context = await requireOrgContext();
+            orgId = context.orgId;
+            userId = context.userId;
+        }
     } catch (e) {
         return []; // If not logged in or no org, return empty
     }
@@ -327,22 +329,24 @@ export async function getBulkSubtasks(taskIds: string[]): Promise<Subtask[]> {
     return data || []
 }
 
-export async function getTasks(projectId?: string): Promise<Task[]> {
+export async function getTasks(projectId?: string, providedOrgId?: string): Promise<Task[]> {
     try {
         const supabase = await createClient()
-        const context = await requireOrgContext().catch(() => null);
-        
-        // If no context, return empty (likely not logged in)
-        if (!context) {
-            console.warn("[getTasks] No organization context found.");
-            return [];
+        let orgId = providedOrgId;
+        if (!orgId) {
+            const context = await requireOrgContext().catch(() => null);
+            if (!context) {
+                console.warn("[getTasks] No organization context found.");
+                return [];
+            }
+            orgId = context.orgId;
         }
 
         // We query the tasks table directly to be robust against view creation failures
         let query = supabase
             .from('tasks')
             .select('*')
-            .eq('org_id', context.orgId);
+            .eq('org_id', orgId);
         
         if (projectId && projectId !== 'all') {
             query = query.eq('project_id', projectId);
@@ -358,7 +362,7 @@ export async function getTasks(projectId?: string): Promise<Task[]> {
                 const { data: simpleData, error: simpleError } = await supabase
                     .from('tasks')
                     .select('*')
-                    .eq('org_id', context.orgId);
+                    .eq('org_id', orgId);
                 
                 if (simpleError) {
                     console.error("[getTasks] Fallback Error:", simpleError);
@@ -369,7 +373,7 @@ export async function getTasks(projectId?: string): Promise<Task[]> {
             return [];
         }
 
-        console.log(`[getTasks] Fetched ${(data || []).length} tasks for org ${context.orgId} (Project: ${projectId || 'all'})`);
+        console.log(`[getTasks] Fetched ${(data || []).length} tasks for org ${orgId} (Project: ${projectId || 'all'})`);
 
         // Map join data to expected format if needed
         const tasks = (data || []).map((t: any) => ({
@@ -387,10 +391,14 @@ export async function getTasks(projectId?: string): Promise<Task[]> {
     }
 }
 
-export async function getProjects(): Promise<Project[]> {
+export async function getProjects(providedOrgId?: string): Promise<Project[]> {
     const supabase = await createClient()
-    const context = await requireOrgContext().catch(() => null);
-    if (!context) return [];
+    let orgId = providedOrgId;
+    if (!orgId) {
+        const context = await requireOrgContext().catch(() => null);
+        if (!context) return [];
+        orgId = context.orgId;
+    }
 
     const { data, error } = await supabase
         .from('projects')
@@ -399,7 +407,7 @@ export async function getProjects(): Promise<Project[]> {
             project_members(count),
             tasks(count)
         `)
-        .eq('org_id', context.orgId)
+        .eq('org_id', orgId)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
 
@@ -2157,8 +2165,12 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
 
     revalidatePath('/dashboard')
 }
-export async function getWorkloadHeatmap(projectId?: string): Promise<WorkloadMap> {
-    const { orgId } = await requireOrgContext();
+export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: string): Promise<WorkloadMap> {
+    let orgId = providedOrgId;
+    if (!orgId) {
+        const context = await requireOrgContext();
+        orgId = context.orgId;
+    }
     const supabase = await createClient();
 
     try {
@@ -2434,12 +2446,12 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
 
     // 2. Fetch Core Data Promise (Parallel including Auth Users)
     const [tasks, profiles, projects, projectMembers, logs, workload, authUsers] = await Promise.all([
-        getTasks(projectId),
-        authUsersPromise.then(users => getProfiles(undefined, users)),
-        getProjects(),
-        authUsersPromise.then(users => projectId ? getProfiles(projectId, users) : Promise.resolve([])),
+        getTasks(projectId, orgId),
+        authUsersPromise.then(users => getProfiles(undefined, users, orgId)),
+        getProjects(orgId),
+        authUsersPromise.then(users => projectId ? getProfiles(projectId, users, orgId) : Promise.resolve([])),
         getOrgActivityFeed(orgId || ''),
-        getWorkloadHeatmap(projectId),
+        getWorkloadHeatmap(projectId, orgId),
         authUsersPromise
     ]);
 
