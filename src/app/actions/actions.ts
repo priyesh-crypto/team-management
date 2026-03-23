@@ -343,9 +343,7 @@ export async function getTasks(projectId?: string, providedOrgId?: string): Prom
             query = query.eq('project_id', projectId);
         }
 
-        const { data, error } = await query
-            .order('updated_at', { ascending: false })
-            .limit(500);
+        const { data, error } = await query;
         
         if (error) {
             console.error("[getTasks] Supabase Error:", error);
