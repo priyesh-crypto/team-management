@@ -2504,8 +2504,8 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         getProfiles(undefined, [], orgId),
         getProjects(orgId),
         projectId ? getProfiles(projectId, [], orgId) : Promise.resolve([]),
-        Promise.resolve([]), // logs disabled temporarily
-        getWorkloadHeatmap(projectId, orgId)
+        getOrgActivityFeed(orgId || '').catch(e => { console.error("Logs failed:", e); return []; }),
+        getWorkloadHeatmap(projectId, orgId).catch(e => { console.error("Heatmap failed:", e); return {}; })
     ]);
     console.timeEnd(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
 
