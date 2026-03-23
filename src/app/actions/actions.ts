@@ -2501,9 +2501,9 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         getTasks(projectId, orgId),
         getProfiles(undefined, [], orgId),
         getProjects(orgId),
-        Promise.resolve([]), // projectMembers disabled temporarily
+        projectId ? getProfiles(projectId, [], orgId) : Promise.resolve([]),
         Promise.resolve([]), // logs disabled temporarily
-        Promise.resolve({})  // workload heatmap disabled temporarily
+        getWorkloadHeatmap(projectId, orgId)
     ]);
     console.timeEnd(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
 
