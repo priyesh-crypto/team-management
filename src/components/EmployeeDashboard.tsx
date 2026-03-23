@@ -243,6 +243,17 @@ export default function EmployeeDashboard({
     }, [userId, projectId, refreshData, initialData]);
 
     useEffect(() => {
+        const saved = localStorage.getItem('activeTimers');
+        if (saved) {
+            try {
+                setActiveTimers(JSON.parse(saved));
+            } catch (e) {
+                console.error("Error loading timers:", e);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
         if (loading) {
             const timer = setTimeout(() => {
                 setLoading(false);
@@ -262,16 +273,10 @@ export default function EmployeeDashboard({
     }, []);
 
 
-    const openTaskSheet = async (task: Task) => {
+    const openTaskSheet = (task: Task) => {
         setTaskForSheet(task);
+        setSheetSubtasks(subtasksMap[task.id] || []);
         setIsSideSheetOpen(true);
-        setIsSheetLoading(true);
-        try {
-            const subtasks = await getSubtasks(task.id);
-            setSheetSubtasks(subtasks);
-        } finally {
-            setIsSheetLoading(false);
-        }
     };
 
     const closeTaskSheet = () => {
@@ -422,6 +427,24 @@ export default function EmployeeDashboard({
             alert("Failed to add work log. Your view will be refreshed.");
             throw err;
         }
+    };
+
+    const handleStartTimer = (subtaskId: string, taskId: string) => {
+        setActiveTimers(prev => ({ ...prev, [subtaskId]: new Date().toISOString() }));
+    };
+
+    const handleStopTimer = (subtaskId: string, taskId: string) => {
+        const startTimeIso = activeTimers[subtaskId];
+        if (!startTimeIso) return;
+        
+        // Remove from active timers
+        setActiveTimers(prev => {
+            const next = { ...prev };
+            delete next[subtaskId];
+            return next;
+        });
+        
+        return startTimeIso; // Caller might want the startTime
     };
 
     const handleDeleteSubtaskDirect = async (taskId: string, subtaskId: string, subtaskName: string) => {
@@ -668,7 +691,24 @@ export default function EmployeeDashboard({
 
                 {/* MODALS */}
                 {isSideSheetOpen && taskForSheet && (
-                    <TaskDetailsModal task={taskForSheet} subtasks={sheetSubtasks} employees={employees} onClose={closeTaskSheet} onUpdateStatus={handleUpdateStatusFromModal} onUpdatePriority={handleUpdatePriorityFromModal} isEditable={true} currentUserId={userId} isManager={false} refreshData={refreshData} onAddSubtask={handleAddSubtaskDirect} onDeleteSubtask={handleDeleteSubtaskDirect} onDeleteTask={handleDeleteTask} />
+                    <TaskDetailsModal 
+                        task={taskForSheet} 
+                        subtasks={sheetSubtasks} 
+                        employees={employees} 
+                        onClose={closeTaskSheet} 
+                        onUpdateStatus={handleUpdateStatusFromModal} 
+                        onUpdatePriority={handleUpdatePriorityFromModal} 
+                        isEditable={true} 
+                        currentUserId={userId} 
+                        isManager={false} 
+                        refreshData={refreshData} 
+                        onAddSubtask={handleAddSubtaskDirect} 
+                        onDeleteSubtask={handleDeleteSubtaskDirect} 
+                        onDeleteTask={handleDeleteTask}
+                        activeTimers={activeTimers}
+                        onStartTimer={handleStartTimer}
+                        onStopTimer={handleStopTimer}
+                    />
                 )}
                 {showDeleteConfirm && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

@@ -18,6 +18,9 @@ interface TaskDetailsModalProps {
     refreshData: () => void;
     onAddSubtask: (taskId: string, name: string, hours: number, date: string, startTime: string, endTime: string) => Promise<void>;
     onDeleteSubtask: (taskId: string, subtaskId: string, subtaskName: string) => Promise<void>;
+    activeTimers?: Record<string, string>;
+    onStartTimer?: (subtaskId: string, taskId: string) => void;
+    onStopTimer?: (subtaskId: string, taskId: string) => string | undefined | void | Promise<string | undefined | void>;
 }
 
 export function TaskDetailsModal({ 
@@ -33,7 +36,10 @@ export function TaskDetailsModal({
     isManager = false,
     refreshData,
     onAddSubtask,
-    onDeleteSubtask
+    onDeleteSubtask,
+    activeTimers = {},
+    onStartTimer,
+    onStopTimer
 }: TaskDetailsModalProps) {
     // Prevent background scrolling when modal is open
     React.useEffect(() => {
@@ -76,6 +82,9 @@ export function TaskDetailsModal({
                         refreshData={refreshData}
                         onAddSubtask={onAddSubtask}
                         onDeleteSubtask={onDeleteSubtask}
+                        activeTimers={activeTimers}
+                        onStartTimer={onStartTimer}
+                        onStopTimer={onStopTimer}
                     />
                 </div>
  

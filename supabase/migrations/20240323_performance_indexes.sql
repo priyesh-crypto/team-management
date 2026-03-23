@@ -27,4 +27,10 @@ CREATE INDEX IF NOT EXISTS idx_attachments_org_id ON public.attachments (org_id)
 -- Indexes for 'activity_logs' (if not adequately indexed)
 CREATE INDEX IF NOT EXISTS idx_activity_logs_task_id ON public.activity_logs (task_id);
 
+-- Indexes for 'organization_members' (CRITICAL for login/auth)
+CREATE INDEX IF NOT EXISTS idx_org_members_user_id ON public.organization_members (user_id);
+
+-- Indexes for 'rate_limit_logs' (CRITICAL for login speed)
+CREATE INDEX IF NOT EXISTS idx_rate_limit_logs_identifier_action ON public.rate_limit_logs (identifier, action, created_at);
+
 COMMIT;

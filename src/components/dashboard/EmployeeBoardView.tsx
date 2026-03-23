@@ -262,7 +262,9 @@ function BoardColumn({
                         if (task.status === 'Completed') {
                             progress = 100;
                         } else if (subtasks.length > 0) {
-                            progress = Math.round((completedSubtasks / subtasks.length) * 100);
+                            const totalWeight = subtasks.reduce((sum, s) => sum + (s.weight || s.estimated_hours || 1), 0);
+                            const completedWeight = subtasks.reduce((sum, s) => sum + (s.is_completed ? (s.weight || s.estimated_hours || 1) : 0), 0);
+                            progress = Math.round((completedWeight / totalWeight) * 100);
                             if (progress === 100) progress = 95;
                         } else {
                             switch (task.status) {

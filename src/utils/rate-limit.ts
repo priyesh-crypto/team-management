@@ -19,10 +19,10 @@ export async function checkActionRateLimit(
                 .lt('created_at', new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString());
         }
 
-        // 2. Count recent attempts
+        // 2. Count recent attempts - LIGHTER QUERY (id only)
         const { count, error } = await supabase
             .from('rate_limit_logs')
-            .select('*', { count: 'exact', head: true })
+            .select('id', { count: 'exact', head: true })
             .eq('identifier', identifier)
             .eq('action', action)
             .gt('created_at', windowStart.toISOString());
@@ -33,21 +33,13 @@ export async function checkActionRateLimit(
         }
 
         if (count && count >= limit) {
-            // Log security event for serious abuse
-            if (count >= limit * 3) {
-                // Note: requireOrgContext can't be imported easily here without circular dependency,
-                // so we just log what we have.
-                await supabase.from('activity_logs').insert([{
-                    type: 'security_event' as any,
-                    description: `Potential Brute Force/Abuse: ${action} limit hit ${count} times for ${identifier}`,
-                    metadata: { identifier, action, count, limit }
-                }]);
-            }
             return { allowed: false, error: `Too many attempts. Please try again in ${Math.ceil(windowMs / 60000)} minutes.` };
         }
 
-        // 3. Log this attempt
-        await supabase.from('rate_limit_logs').insert([{ identifier, action }]);
+        // 3. Log this attempt - Use fire-and-forget for better performance
+        supabase.from('rate_limit_logs').insert([{ identifier, action }]).then(({ error }) => {
+            if (error) console.error("[RateLimit] Log error:", error);
+        });
 
         return { allowed: true };
     } catch (e) {

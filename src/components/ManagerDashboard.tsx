@@ -225,7 +225,7 @@ export default function ManagerDashboard({
     };
 
     useEffect(() => {
-        refreshData();
+        if (!initialData) refreshData();
 
         // Initialize Supabase client for real-time
         const supabase = createClient();
@@ -374,8 +374,8 @@ export default function ManagerDashboard({
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleTaskClick = async (task: Task) => {
-        const subtasks = await getSubtasks(task.id);
+    const handleTaskClick = (task: Task) => {
+        const subtasks = subtasksMap[task.id] || [];
         setSelectedTask({ task, subtasks });
     };
 
@@ -1390,6 +1390,9 @@ export default function ManagerDashboard({
                     refreshData={refreshData}
                     onAddSubtask={handleAddSubtaskDirect}
                     onDeleteSubtask={handleDeleteSubtaskDirect}
+                    activeTimers={activeTimers}
+                    onStartTimer={handleStartTimer}
+                    onStopTimer={handleStopTimer}
                 />
             )}
 

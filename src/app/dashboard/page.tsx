@@ -14,11 +14,10 @@ export default async function DashboardPage() {
     supabase.from('organization_members')
       .select('org_id, organizations(name)')
       .eq('user_id', user.id)
-      .single()
   ]);
 
   const profile = profileRes.data;
-  const mData = mDataRes.data;
+  const mData = mDataRes.data?.[0];
 
   if (!mData) redirect('/');
 

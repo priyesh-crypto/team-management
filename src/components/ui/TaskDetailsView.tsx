@@ -17,7 +17,9 @@ import {
     Attachment, 
     getAttachments, 
     uploadAttachment, 
-    deleteAttachment 
+    deleteAttachment,
+    getTaskDetailsData,
+    updateSubtask
 } from '@/app/actions/actions';
 import { 
     Trash2, 
@@ -54,6 +56,9 @@ interface TaskDetailsViewProps {
     refreshData: () => void;
     onAddSubtask: (taskId: string, name: string, hours: number, date: string, startTime: string, endTime: string) => Promise<void>;
     onDeleteSubtask: (taskId: string, subtaskId: string, subtaskName: string) => Promise<void>;
+    activeTimers?: Record<string, string>;
+    onStartTimer?: (subtaskId: string, taskId: string) => void;
+    onStopTimer?: (subtaskId: string, taskId: string) => string | undefined | void | Promise<string | undefined | void>;
 }
 
 export function TaskDetailsView({ 
@@ -68,7 +73,10 @@ export function TaskDetailsView({
     isManager = false,
     refreshData,
     onAddSubtask,
-    onDeleteSubtask
+    onDeleteSubtask,
+    activeTimers = {},
+    onStartTimer,
+    onStopTimer
 }: TaskDetailsViewProps) {
     const [mounted, setMounted] = React.useState(false);
     React.useEffect(() => {
@@ -100,45 +108,41 @@ export function TaskDetailsView({
         startTime: '09:00',
         endTime: '17:00'
     });
-    const [timerState, setTimerState] = React.useState<{ startTime: number | null, elapsed: number }>({
-        startTime: null,
-        elapsed: 0
+    const [editingSubtaskId, setEditingSubtaskId] = React.useState<string | null>(null);
+    const [editSubtaskForm, setEditSubtaskForm] = React.useState({
+        name: '',
+        hours: 0,
+        date: '',
+        startTime: '',
+        endTime: ''
     });
     const [isAddingSubtask, setIsAddingSubtask] = React.useState(false);
+    const [isUpdatingSubtask, setIsUpdatingSubtask] = React.useState(false);
     const [subtaskToDelete, setSubtaskToDelete] = React.useState<{id: string, name: string} | null>(null);
-    const timerRef = React.useRef<NodeJS.Timeout | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+    // Timer calculation for the "New Activity" form (temporary/volatile timer for the 'new-' ID)
+    const [now, setNow] = React.useState(Date.now());
     React.useEffect(() => {
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-        };
+        const interval = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(interval);
     }, []);
 
+    const activeTimerStart = activeTimers[`new-${task.id}`];
+    const elapsed = activeTimerStart ? now - new Date(activeTimerStart).getTime() : 0;
+
     const startTimer = () => {
-        const now = new Date();
-        const startTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        
+        if (!onStartTimer) return;
+        const startTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
         setSubtaskForm(prev => ({ ...prev, startTime: startTimeStr }));
-        setTimerState({ startTime: Date.now(), elapsed: 0 });
-        
-        timerRef.current = setInterval(() => {
-            setTimerState(prev => {
-                if (!prev.startTime) return prev;
-                return { ...prev, elapsed: Date.now() - prev.startTime };
-            });
-        }, 1000);
+        onStartTimer(`new-${task.id}`, task.id);
     };
 
-    const stopTimer = () => {
-        if (timerRef.current) clearInterval(timerRef.current);
-        timerRef.current = null;
-        
-        const now = new Date();
-        const endTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        
+    const stopTimer = async () => {
+        if (!onStopTimer) return;
+        const result = await onStopTimer(`new-${task.id}`, task.id);
+        const endTimeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
         setSubtaskForm(prev => ({ ...prev, endTime: endTimeStr }));
-        setTimerState({ startTime: null, elapsed: 0 });
     };
 
     const formatElapsed = (ms: number) => {
@@ -185,6 +189,40 @@ export function TaskDetailsView({
         }
     };
 
+     const handleUpdateSubtask = async (subtaskId: string) => {
+        if (!editSubtaskForm.name.trim() || editSubtaskForm.hours <= 0) return;
+        setIsUpdatingSubtask(true);
+        try {
+            await updateSubtask({
+                id: subtaskId,
+                task_id: task.id,
+                name: editSubtaskForm.name,
+                hours_spent: editSubtaskForm.hours,
+                date_logged: editSubtaskForm.date,
+                start_time: editSubtaskForm.startTime,
+                end_time: editSubtaskForm.endTime
+            });
+            setEditingSubtaskId(null);
+            refreshData();
+            loadActivity();
+        } catch (err) {
+            alert("Failed to update work log.");
+        } finally {
+            setIsUpdatingSubtask(false);
+        }
+    };
+
+    const startEditingSubtask = (sub: Subtask) => {
+        setEditingSubtaskId(sub.id);
+        setEditSubtaskForm({
+            name: sub.name,
+            hours: sub.hours_spent || 0,
+            date: sub.date_logged || '',
+            startTime: sub.start_time || '',
+            endTime: sub.end_time || ''
+        });
+    };
+
     const confirmDeleteSubtask = async () => {
         if (!subtaskToDelete) return;
         try {
@@ -196,10 +234,19 @@ export function TaskDetailsView({
         }
     };
 
+    const loadAllData = async () => {
+        try {
+            const data = await getTaskDetailsData(task.id);
+            setComments(data.comments);
+            setAttachments(data.attachments);
+            setActivityLogs(data.activityLogs);
+        } catch (err) {
+            console.error("Failed to load bulk task details:", err);
+        }
+    };
+
     React.useEffect(() => {
-        loadComments();
-        loadAttachments();
-        loadActivity();
+        loadAllData();
         setEditData({
             name: task.name,
             notes: task.notes,
@@ -507,16 +554,16 @@ export function TaskDetailsView({
  
                                     <div className="md:col-span-4 flex flex-col gap-2">
                                         <button 
-                                            onClick={timerState.startTime ? stopTimer : startTimer}
+                                            onClick={activeTimerStart ? stopTimer : startTimer}
                                             className={cn(
                                                 "w-full h-11 rounded-2xl font-black text-[9px] uppercase tracking-[0.1em] flex items-center justify-center gap-3 transition-all shadow-sm active:scale-95",
-                                                timerState.startTime 
+                                                activeTimerStart 
                                                     ? "bg-red-500 text-white shadow-red-100" 
                                                     : "bg-[#0071e3] text-white hover:bg-[#0077ed]"
                                             )}
                                         >
-                                            <Clock size={16} strokeWidth={3} className={cn(timerState.startTime && "animate-pulse")} />
-                                            {timerState.startTime ? `Stop (${formatElapsed(timerState.elapsed)})` : "Start Timer"}
+                                            <Clock size={16} strokeWidth={3} className={cn(activeTimerStart && "animate-pulse")} />
+                                            {activeTimerStart ? `Stop (${formatElapsed(elapsed)})` : "Start Timer"}
                                         </button>
                                         <Button 
                                             onClick={handleAddSubtask} 
@@ -533,27 +580,105 @@ export function TaskDetailsView({
                         <div className="space-y-3">
                             {subtasks.length > 0 ? (
                                 subtasks.sort((a,b) => new Date(b.date_logged || '').getTime() - new Date(a.date_logged || '').getTime()).map((sub) => (
-                                    <div key={sub.id} className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between group hover:border-[#0071e3] transition-all duration-300">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-800 font-bold text-[11px]">
-                                                {sub.hours_spent}h
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-[13px] text-slate-800 leading-tight">{sub.name}</h4>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{employees.find(e => e.id === sub.employee_id)?.name}</span>
-                                                    <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
-                                                    <span className="text-[9px] font-medium text-slate-400">{sub.date_logged}</span>
+                                    <div key={sub.id} className="group">
+                                        {editingSubtaskId === sub.id ? (
+                                            <div className="p-6 bg-white rounded-2xl border-2 border-[#0071e3] space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                    <div className="md:col-span-3">
+                                                        <Input 
+                                                            value={editSubtaskForm.name}
+                                                            onChange={e => setEditSubtaskForm({...editSubtaskForm, name: e.target.value})}
+                                                            className="h-10 bg-slate-50 border-slate-200 rounded-xl px-4 text-sm font-medium"
+                                                        />
+                                                    </div>
+                                                    <Input 
+                                                        type="date"
+                                                        value={editSubtaskForm.date}
+                                                        onChange={e => setEditSubtaskForm({...editSubtaskForm, date: e.target.value})}
+                                                        className="h-10 bg-slate-50 border-slate-200 rounded-xl px-4 text-[13px] font-medium"
+                                                    />
+                                                </div>
+                                                <div className="flex items-center justify-between gap-6">
+                                                    <div className="flex items-center gap-4 flex-1">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Start</span>
+                                                            <input 
+                                                                type="time" 
+                                                                value={editSubtaskForm.startTime}
+                                                                onChange={e => {
+                                                                    const hours = calculateHours(e.target.value, editSubtaskForm.endTime);
+                                                                    setEditSubtaskForm({...editSubtaskForm, startTime: e.target.value, hours});
+                                                                }}
+                                                                className="text-sm font-bold bg-transparent outline-none tabular-nums"
+                                                            />
+                                                        </div>
+                                                        <ChevronRight size={12} className="text-slate-200" />
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">End</span>
+                                                            <input 
+                                                                type="time" 
+                                                                value={editSubtaskForm.endTime}
+                                                                onChange={e => {
+                                                                    const hours = calculateHours(editSubtaskForm.startTime, e.target.value);
+                                                                    setEditSubtaskForm({...editSubtaskForm, endTime: e.target.value, hours});
+                                                                }}
+                                                                className="text-sm font-bold bg-transparent outline-none tabular-nums"
+                                                            />
+                                                        </div>
+                                                        <div className="h-6 w-[1px] bg-slate-100 mx-2" />
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total</span>
+                                                            <span className="text-sm font-black text-[#0071e3] tabular-nums">{editSubtaskForm.hours}h</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={() => setEditingSubtaskId(null)} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
+                                                        <Button onClick={() => handleUpdateSubtask(sub.id)} disabled={isUpdatingSubtask} className="h-10 px-6 rounded-xl bg-[#0071e3] text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-blue-100">
+                                                            {isUpdatingSubtask ? '...' : 'Save'}
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        {(isManager || sub.employee_id === currentUserId) && (
-                                            <button 
-                                                onClick={() => setSubtaskToDelete({id: sub.id, name: sub.name})}
-                                                className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-red-500 transition-all rounded-lg"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                        ) : (
+                                            <div className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between hover:border-[#0071e3] transition-all duration-300">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-800 font-bold text-[11px]">
+                                                        {sub.hours_spent}h
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-[13px] text-slate-800 leading-tight">{sub.name}</h4>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{employees.find(e => e.id === sub.employee_id)?.name}</span>
+                                                            <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
+                                                            <span className="text-[9px] font-medium text-slate-400">{sub.date_logged}</span>
+                                                            {sub.start_time && (
+                                                                <>
+                                                                    <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
+                                                                    <span className="text-[9px] font-medium text-slate-400">{sub.start_time}-{sub.end_time}</span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    {(isManager || sub.employee_id === currentUserId) && (
+                                                        <>
+                                                            <button 
+                                                                onClick={() => startEditingSubtask(sub)}
+                                                                className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-[#0071e3] transition-all rounded-lg"
+                                                            >
+                                                                <PencilIcon size={14} />
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => setSubtaskToDelete({id: sub.id, name: sub.name})}
+                                                                className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-red-500 transition-all rounded-lg"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 ))

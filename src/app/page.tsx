@@ -6,7 +6,7 @@ import { headers } from 'next/headers';
 import { checkActionRateLimit } from '@/utils/rate-limit';
 import { sanitizeString, validateEmail, validatePasswordStrength } from '@/utils/security';
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: { error?: string, success?: string, msg?: string } }) {
   const supabase = await createClient();
 
   // 1. Check Auth 
@@ -17,15 +17,16 @@ export default async function Home() {
   let orgName = '';
 
   if (user) {
-    const { data: pData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-    profile = pData;
+    // Parallelize profile and org checks for logged-in users
+    const [profileRes, memberRes] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', user.id).single(),
+      supabase.from('organization_members')
+        .select('org_id, organizations(name)')
+        .eq('user_id', user.id)
+    ]);
 
-    const { data: mData } = await supabase
-      .from('organization_members')
-      .select('org_id, organizations(name)')
-      .eq('user_id', user.id);
-
-    const member = mData?.[0];
+    profile = profileRes.data;
+    const member = memberRes.data?.[0];
 
     if (member) {
       hasOrg = true;
@@ -56,7 +57,8 @@ export default async function Home() {
         }
         return redirect('/?error=invalid_credentials');
     }
-    redirect('/');
+    // Direct redirect to dashboard skip the Home render cycle
+    redirect('/dashboard');
   };
 
   const signup = async (formData: FormData) => {
@@ -138,6 +140,7 @@ export default async function Home() {
     const { error: profError } = await supabaseAdmin.from('profiles').upsert({
         id: user.id,
         name: user.user_metadata?.name || 'New Member',
+        email: user.email,
         role: 'manager'
     });
     if (profError) console.error("Profile Upsert Error:", profError);
@@ -164,8 +167,12 @@ export default async function Home() {
 
           <Card className="p-8">
             {/* Feedback Messages */}
-            <div className="mb-6">
-              {Object.entries({
+            {(() => {
+              const errorType = searchParams.error;
+              const successType = searchParams.success;
+              const customMsg = searchParams.msg;
+
+              const configs: Record<string, { msg: string, type: 'error' | 'success' }> = {
                 invalid_credentials: { msg: 'Invalid email or password.', type: 'error' },
                 email_not_verified: { msg: 'Please verify your email before logging in.', type: 'error' },
                 rate_limited: { msg: 'Too many attempts. Please try again later.', type: 'error' },
@@ -174,15 +181,17 @@ export default async function Home() {
                 reset_sent: { msg: 'Password reset link sent to your email.', type: 'success' },
                 password_updated: { msg: 'Password updated successfully. Please log in.', type: 'success' },
                 bot_detected: { msg: 'Security check failed. Please try again.', type: 'error' }
-              }).map(([key, config]) => (
-                key === (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')).get('error') || 
-                key === (new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')).get('success') ? (
-                  <div key={key} className={`p-3 rounded-lg text-sm font-bold mb-4 ${config.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
-                    {config.msg}
-                  </div>
-                ) : null
-              ))}
-            </div>
+              };
+
+              const active = (errorType && configs[errorType]) || (successType && configs[successType]);
+              if (!active) return null;
+
+              return (
+                <div className={`p-3 rounded-lg text-sm font-bold mb-6 ${active.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
+                  {customMsg || active.msg}
+                </div>
+              );
+            })()}
 
             <form action={async (fd) => {
               "use server"

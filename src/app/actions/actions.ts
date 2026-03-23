@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/utils/supabase/server"
+import { cache } from "react"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { headers } from "next/headers"
@@ -15,7 +16,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 export type Profile = {
     id: string
     name: string
-    role: 'employee' | 'manager'
+    role: 'employee' | 'manager' | 'admin' | 'owner'
     email?: string
 }
 
@@ -48,6 +49,8 @@ export type Subtask = {
     employee_id: string; // Contributor
     name: string;
     hours_spent: number;
+    weight?: number;
+    estimated_hours?: number;
     is_completed: boolean;
     start_time?: string;
     end_time?: string;
@@ -180,24 +183,26 @@ export type ProjectMember = {
 
 // Rate limiting helpers moved to @/utils/rate-limit.ts
 
-export async function requireOrgContext() {
+/**
+ * requireOrgContext fetches the current user and their organization context.
+ * We wrap this in React's cache() so that it only executes ONCE per request,
+ * even if called multiple times in Layouts, Pages, and child Components.
+ */
+export const requireOrgContext = cache(async () => {
     const supabase = await createClient()
-    console.log("[requireOrgContext] Getting user...");
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-        console.error("[requireOrgContext] Auth error:", authError);
         throw new Error("Unauthorized: Please sign in.");
     }
-    console.log("[requireOrgContext] User:", user.id);
 
     const { data: mData, error: memberError } = await supabase
         .from('organization_members')
         .select('org_id, role')
         .eq('user_id', user.id)
     
-    console.log("[requireOrgContext] Member data:", { mData, memberError });
-
-    if (memberError || !mData || mData.length === 0) throw new Error("Unauthorized: You do not belong to an organization.")
+    if (memberError || !mData || mData.length === 0) {
+        throw new Error("Unauthorized: You do not belong to an organization.");
+    }
 
     const selectedMember = mData[0];
 
@@ -212,10 +217,10 @@ export async function requireOrgContext() {
     return {
         userId: user.id,
         orgId: selectedMember.org_id,
-        role: selectedMember.role,
+        role: selectedMember.role as 'owner' | 'manager' | 'employee' | 'admin',
         workspaceId: workspace?.id
-    }
-}
+    };
+});
 
 export async function getProfiles(projectId?: string, providedAuthUsers?: any[], providedOrgId?: string): Promise<Profile[]> {
     const supabase = await createClient()
@@ -264,22 +269,8 @@ export async function getProfiles(projectId?: string, providedAuthUsers?: any[],
     }
 
     // 3. Fetch emails from Auth for these users (since profiles.email might be missing)
+    // REMOVED listUsers() for performance. Relying on profiles table for email.
     let authUsers: any[] = providedAuthUsers || [];
-    if (!providedAuthUsers && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        try {
-            const { createClient: createAdminClient } = await import('@supabase/supabase-js')
-            const supabaseAdmin = createAdminClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                process.env.SUPABASE_SERVICE_ROLE_KEY,
-                { auth: { autoRefreshToken: false, persistSession: false } }
-            )
-            // Note: listUsers() is feasible for smaller teams. For large scale, sync email to profiles table.
-            const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-            if (!authError) authUsers = users;
-        } catch (e) {
-            console.error("[getProfiles] Auth fetch error:", e);
-        }
-    }
 
     // Use MEMBERS as the source of truth to ensure everyone is listed
     return members.map(m => {
@@ -854,6 +845,20 @@ export async function addMemberDirectly(data: { name: string, email: string, rol
             return { success: false, error: "User created, but failed to link to organization." };
         }
 
+        // 3. Create Profile
+        const { error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .upsert({
+                id: newUserId,
+                name: data.name,
+                email: data.email,
+                role: data.role
+            });
+        
+        if (profileError) {
+            console.error("Error creating profile:", profileError);
+        }
+
         await logActivity({
             org_id: orgId,
             actor_id: userId,
@@ -1123,7 +1128,7 @@ export async function updateTaskStatus(taskId: string, status: Status) {
         }
     }
 
-    revalidatePath('/dashboard');
+    // Modal refresh handled by client
 }
 
 export async function updateTaskPriority(taskId: string, priority: Priority) {
@@ -1153,9 +1158,8 @@ export async function updateTaskPriority(taskId: string, priority: Priority) {
         });
     }
 
-    revalidatePath('/dashboard');
+    // Modal refresh handled by client
 }
-
 
 async function recalculateTaskHours(taskId: string) {
     const supabase = await createClient()
@@ -1180,8 +1184,7 @@ async function recalculateTaskHours(taskId: string) {
     if (updateError) {
         console.error("Error updating task total hours:", updateError)
     }
-
-    revalidatePath('/dashboard')
+    // Background recalculation doesn't need to block UI with a full re-render
 }
 
 export async function saveSubtask(subtaskData: Omit<Subtask, 'id' | 'created_at' | 'org_id'>) {
@@ -1277,7 +1280,7 @@ export async function updateSubtaskStatus(subtaskId: string, taskId: string, isC
         }
     }
 
-    revalidatePath('/dashboard')
+    // Modal refresh handled by client
 }
 
 async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
@@ -1596,6 +1599,47 @@ export async function deleteTask(taskId: string) {
     revalidatePath('/dashboard')
 }
 
+export async function getTaskDetailsData(taskId: string, providedOrgId?: string) {
+    let orgId = providedOrgId;
+    if (!orgId) {
+        const context = await requireOrgContext();
+        orgId = context.orgId;
+    }
+    const supabase = await createClient();
+
+    // Fetch task details
+    const { data: task, error: taskError } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('id', taskId)
+        .eq('org_id', orgId)
+        .single();
+
+    if (taskError) {
+        await logError("getTaskDetailsData:fetchTask", taskError, { taskId, orgId });
+        throw new Error("Failed to fetch task details: " + taskError.message);
+    }
+
+    // Fetch related data in parallel
+    const [subtasks, comments, attachments, activityLogs] = await Promise.all([
+        supabase.from('subtasks').select('*').eq('task_id', taskId).order('created_at', { ascending: true }).then(({ data, error }) => {
+            if (error) logError("getTaskDetailsData:fetchSubtasks", error, { taskId, orgId });
+            return data || [];
+        }),
+        getComments(taskId, orgId),
+        getAttachments(taskId, orgId),
+        getActivityLogs(taskId, orgId)
+    ]);
+
+    return {
+        task,
+        subtasks,
+        comments,
+        attachments,
+        activityLogs
+    };
+}
+
 // --- Logging & Security Helpers ---
 
 export async function logError(context: string, error: any, metadata: any = {}) {
@@ -1653,8 +1697,12 @@ export async function logActivity(activity: Omit<ActivityLog, 'id' | 'actor_name
     }
 }
 
-export async function getActivityLogs(taskId?: string): Promise<ActivityLog[]> {
-    const { orgId } = await requireOrgContext()
+export async function getActivityLogs(taskId?: string, providedOrgId?: string): Promise<ActivityLog[]> {
+    let orgId = providedOrgId;
+    if (!orgId) {
+        const context = await requireOrgContext();
+        orgId = context.orgId;
+    }
     const supabase = await createClient()
 
     let query = supabase
@@ -1697,8 +1745,12 @@ export async function createNotification(notificationData: Omit<Notification, 'i
     revalidatePath('/dashboard')
 }
 
-export async function getComments(taskId: string): Promise<Comment[]> {
-    const { orgId } = await requireOrgContext();
+export async function getComments(taskId: string, providedOrgId?: string): Promise<Comment[]> {
+    let orgId = providedOrgId;
+    if (!orgId) {
+        const context = await requireOrgContext();
+        orgId = context.orgId;
+    }
     const supabase = await createClient()
 
     const { data, error } = await supabase
@@ -1765,7 +1817,7 @@ export async function saveComment(commentData: Omit<Comment, 'id' | 'created_at'
         }
     }
 
-    revalidatePath('/dashboard')
+    // Modal refresh handled by client
 }
 
 export async function deleteComment(commentId: string) {
@@ -1784,11 +1836,15 @@ export async function deleteComment(commentId: string) {
         throw new Error(error.message)
     }
 
-    revalidatePath('/dashboard')
+    // Modal relies on dynamic state refreshes, avoiding full dashboard lock
 }
 
-export async function getAttachments(taskId: string): Promise<Attachment[]> {
-    const { orgId } = await requireOrgContext();
+export async function getAttachments(taskId: string, providedOrgId?: string): Promise<Attachment[]> {
+    let orgId = providedOrgId;
+    if (!orgId) {
+        const context = await requireOrgContext();
+        orgId = context.orgId;
+    }
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('attachments')
@@ -1911,8 +1967,7 @@ export async function uploadAttachment(formData: FormData): Promise<Attachment> 
         console.warn("logActivity for attachment failed (non-critical):", e);
         await logError("uploadAttachment:logActivity", e, { taskId, orgId, userId, fileName });
     }
-
-    revalidatePath('/dashboard');
+    // Modal refresh handled by client
     return data;
 }
 
@@ -1969,7 +2024,7 @@ export async function deleteAttachment(attachmentId: string, taskId: string) {
         throw new Error("Failed to delete attachment");
     }
 
-    revalidatePath('/dashboard');
+    // Modal refresh handled by client
 }
 
 export async function getBulkCounts(taskIds: string[]) {
@@ -2091,21 +2146,20 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
     let targets: { id: string, email: string }[] = [];
 
     if (userId === 'all') {
-        const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-        if (listError) throw new Error(listError.message);
-        
-        // Fetch profiles to filter only employees IN THIS ORG
-        const { data: orgMembers } = await supabaseAdmin
+        // Fetch profiles for all members of this organization
+        const { data: profiles, error: profError } = await supabaseAdmin
             .from('organization_members')
-            .select('user_id')
+            .select('user_id, profiles(email)')
             .eq('org_id', orgId);
+
+        if (profError) throw new Error(profError.message);
         
-        const orgUserIds = new Set(orgMembers?.map(m => m.user_id) || []);
-        
-        targets = users.users
-            .filter(u => orgUserIds.has(u.id))
-            .map(u => ({ id: u.id, email: u.email || '' }))
-            .filter(t => t.email);
+        targets = (profiles || [])
+            .filter(p => (p as any).profiles?.email)
+            .map(p => ({
+                id: p.user_id,
+                email: (p as any).profiles.email
+            }));
     } else {
         // Verify target is in same org
         const { data: targetMember } = await supabaseAdmin
@@ -2174,49 +2228,79 @@ export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: str
     const supabase = await createClient();
 
     try {
-        let userIds: string[] = [];
-        if (projectId) {
-            const { data: members } = await supabase
-                .from('project_members')
-                .select('user_id')
-                .eq('project_id', projectId);
-            userIds = (members || []).map(m => m.user_id);
-            if (userIds.length === 0) return {};
+        // 1. Get dates for the current week (Monday to Sunday)
+        const now = new Date();
+        const startOfWeek = new Date(now);
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
+        startOfWeek.setDate(diff);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const days: string[] = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(startOfWeek);
+            d.setDate(startOfWeek.getDate() + i);
+            days.push(d.toISOString().split('T')[0]);
         }
 
-        let query = supabase
-            .from('workload_heatmap')
-            .select('*')
-            .eq('org_id', orgId);
+        // 2. Fetch Profiles/Members
+        let profilesQuery = supabase.from('organization_members').select('user_id, profiles(name)').eq('org_id', orgId);
+        if (projectId && projectId !== 'all') {
+            const { data: projMembers } = await supabase.from('project_members').select('user_id').eq('project_id', projectId);
+            const pids = (projMembers || []).map(m => m.user_id);
+            profilesQuery = profilesQuery.in('user_id', pids);
+        }
+        const { data: members, error: mErr } = await profilesQuery;
+        if (mErr || !members) return {};
         
-        if (projectId) {
-            query = query.in('user_id', userIds);
-        }
+        const userIds = members.map(m => m.user_id);
+        const todayStr = now.toISOString().split('T')[0];
 
-        const { data, error } = await query;
+        // 3. Fetch Subtasks (Historical) and Active Tasks (Future) in parallel
+        const [subtasksRes, tasksRes] = await Promise.all([
+            supabase.from('subtasks').select('employee_id, date_logged, hours_spent, task_id').in('employee_id', userIds).gte('date_logged', days[0]).lte('date_logged', days[6]),
+            supabase.from('tasks').select('id, employee_id, start_date, deadline, priority, status').in('employee_id', userIds).neq('status', 'Completed').filter('deadline', 'gte', days[0]).filter('start_date', 'lte', days[6])
+        ]);
 
-        if (error) {
-            console.error("[getWorkloadHeatmap] Supabase Error detail:", JSON.stringify(error, null, 2));
-            return {};
-        }
+        const subtasks = subtasksRes.data || [];
+        const activeTasks = tasksRes.data || [];
 
-        if (!data) return {};
-
-        // Reshape: { [userId]: { name, days: { [date]: { tasks, hours, urgency } } } }
-        return (data as any[]).reduce((acc, row) => {
-            if (!acc[row.user_id]) {
-                acc[row.user_id] = { name: row.full_name, days: {} };
-            }
+        // 4. Build Result Map
+        const result: WorkloadMap = {};
+        members.forEach(m => {
+            const uid = m.user_id;
+            const name = (m as any).profiles?.name || 'Unknown';
+            result[uid] = { name, days: {} };
             
-            acc[row.user_id].days[row.day] = {
-                tasks: Number(row.task_count) || 0,
-                hours: Number(row.hours_logged) || 0,
-                urgency: Number(row.urgency_score) || 0,
-            };
-            return acc;
-        }, {} as WorkloadMap);
+            days.forEach(dayStr => {
+                const sToday = subtasks.filter(s => s.employee_id === uid && s.date_logged === dayStr);
+                const hours = sToday.reduce((sum, s) => sum + (Number(s.hours_spent) || 0), 0);
+                
+                let tasksCount = 0;
+                let urgency = 0;
+
+                if (dayStr < todayStr) {
+                    tasksCount = new Set(sToday.map(s => s.task_id)).size;
+                    urgency = hours > 0 ? 1 : 0;
+                } else {
+                    const dayTasks = activeTasks.filter(t => t.employee_id === uid && dayStr >= (t.start_date?.split('T')[0] || '') && dayStr <= (t.deadline?.split('T')[0] || ''));
+                    tasksCount = dayTasks.length;
+                    dayTasks.forEach(t => {
+                        let score = 0;
+                        if (t.priority === 'Urgent') score += 4;
+                        else if (t.priority === 'High') score += 2;
+                        else if (t.priority === 'Medium') score += 1;
+                        if (t.deadline?.split('T')[0] < dayStr) score += 3;
+                        urgency += score;
+                    });
+                }
+                result[uid].days[dayStr] = { tasks: tasksCount, hours, urgency };
+            });
+        });
+
+        return result;
     } catch (err: any) {
-        console.error("[getWorkloadHeatmap] Fatal Error:", err);
+        console.error("[getWorkloadHeatmap] TS Aggregate Error:", err);
         return {};
     }
 }
@@ -2365,50 +2449,10 @@ export async function updateDigestPreferences(prefs: Partial<DigestPreferences>)
 }
 
 export async function syncOverdueTasks() {
-    try {
-        const context = await requireOrgContext().catch(() => null);
-        if (!context) return { success: false, error: "No context" };
-        const { orgId, userId } = context;
-        const supabase = await createClient();
-        const todayStr = new Date().toISOString().split('T')[0];
-
-        // 1. Update tasks to 'Overdue' in the database
-        const { data, error } = await supabase
-            .from('tasks')
-            .update({ status: 'Overdue' })
-            .eq('org_id', orgId)
-            .lt('deadline', todayStr)
-            .neq('status', 'Completed')
-            .neq('status', 'Overdue')
-            .select('id, name');
-
-        if (error) {
-            console.error("[syncOverdueTasks] error:", error);
-            return { success: false, error: error.message };
-        }
-
-        if (data && data.length > 0) {
-            console.log(`[syncOverdueTasks] Automatically marked ${data.length} tasks as overdue.`);
-            
-            // Log activity for the first few (to avoid clutter)
-            const logPromises = data.slice(0, 5).map(task => 
-                logActivity({
-                    org_id: orgId,
-                    actor_id: userId,
-                    task_id: task.id,
-                    type: 'task_status_changed',
-                    description: `System automatically marked task "${task.name}" as Overdue.`,
-                    metadata: { name: task.name, status: 'Overdue' }
-                })
-            );
-            await Promise.all(logPromises);
-        }
-
-        return { success: true, count: data?.length || 0 };
-    } catch (err: any) {
-        console.error("[syncOverdueTasks] Unexpected error:", err);
-        return { success: false, error: err.message };
-    }
+    // Disabled: Overdue status is computed dynamically on the client side.
+    // Querying and updating every single dashboard load causes row locks, 
+    // check constraint violations, and statement timeouts under concurrent usage.
+    return { success: true, count: 0 };
 }
 
 export async function getDashboardData(projectId?: string, providedOrgId?: string, providedUserId?: string) {
@@ -2426,23 +2470,9 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         userId = context.userId;
     }
 
-    // 1. Prepare Auth User Fetch (Don't await yet, run in parallel)
-    const authUsersPromise = (async () => {
-        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return [];
-        try {
-            const { createClient: createAdminClient } = await import('@supabase/supabase-js')
-            const supabaseAdmin = createAdminClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                process.env.SUPABASE_SERVICE_ROLE_KEY,
-                { auth: { autoRefreshToken: false, persistSession: false } }
-            )
-            const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-            return authError ? [] : users;
-        } catch (e) {
-            console.error("[getDashboardData] Auth fetch error:", e);
-            return [];
-        }
-    })();
+    // 1. Auth Users list is no longer fetched on every load for performance.
+    // Rely on profiles table email field instead.
+    const authUsersPromise = Promise.resolve([]);
 
     // 2. Fetch Core Data Promise (Parallel including Auth Users)
     const [tasks, profiles, projects, projectMembers, logs, workload, authUsers] = await Promise.all([
