@@ -2533,6 +2533,8 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         logs,
         workload,
         subtasks,
-        counts
+        counts,
+        authUsers: [],
+        notifications: []
     };
 }
