@@ -257,13 +257,16 @@ function BoardColumn({
                         const dateInfo = { label: dateRangeLabel, color: 'bg-slate-50 text-slate-400' };
                         const subtasks = subtasksMap[task.id] || [];
                         const completedSubtasks = subtasks.filter(s => s.is_completed).length;
+                        const totalHours = subtasks.reduce((sum, s) => sum + (Number(s.hours_spent) || 0), 0);
                         let progress = 0;
-                        if (subtasks.length > 0) {
+                        if (task.status === 'Completed') {
+                            progress = 100;
+                        } else if (subtasks.length > 0) {
                             progress = Math.round((completedSubtasks / subtasks.length) * 100);
+                            if (progress === 100) progress = 95;
                         } else {
                             switch (task.status) {
-                                case 'Completed': progress = 100; break;
-                                case 'In Review': progress = 80; break;
+                                case 'In Review': progress = 85; break;
                                 case 'In Progress': progress = 50; break;
                                 case 'Blocked': progress = 15; break;
                                 default: progress = 0;
@@ -389,6 +392,12 @@ function BoardColumn({
                                             })}
                                         </div>
                                         <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400">
+                                            {totalHours > 0 && (
+                                                <div className="flex items-center gap-1.5 group-hover:text-slate-600 transition-colors">
+                                                    <span className="text-[12px]">⏱️</span>
+                                                    <span className="tabular-nums">{totalHours}h</span>
+                                                </div>
+                                            )}
                                             <div className="flex items-center gap-1.5 group-hover:text-slate-600 transition-colors">
                                                 <MessageSquare size={13} strokeWidth={2.5} />
                                                 <span className="tabular-nums">{commentCounts[task.id] || 0}</span>

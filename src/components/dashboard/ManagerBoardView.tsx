@@ -107,12 +107,14 @@ function BoardColumn({
             const subtasks = subtasksMap[task.id] || [];
             const completedSubtasks = subtasks.filter(s => s.is_completed).length;
             let progress = 0;
-            if (subtasks.length > 0) {
-              progress = (completedSubtasks / subtasks.length) * 100;
+            if (task.status === 'Completed') {
+              progress = 100;
+            } else if (subtasks.length > 0) {
+              progress = Math.round((completedSubtasks / subtasks.length) * 100);
+              if (progress === 100) progress = 95;
             } else {
               switch (task.status) {
-                case 'Completed': progress = 100; break;
-                case 'In Review': progress = 80; break;
+                case 'In Review': progress = 85; break;
                 case 'In Progress': progress = 50; break;
                 case 'Blocked': progress = 15; break;
                 default: progress = 0;
@@ -120,6 +122,7 @@ function BoardColumn({
             }
             const dateInfo = task.deadline ? formatTaskDate(task.deadline) : null;
             const isOverdueTask = isOverdue(task);
+            const totalHours = subtasks.reduce((sum, s) => sum + (Number(s.hours_spent) || 0), 0);
             
             return (
               <motion.div
@@ -198,6 +201,12 @@ function BoardColumn({
                       </div>
 
                       <div className="flex items-center gap-3">
+                        {totalHours > 0 && (
+                          <div className="flex items-center gap-1.5 text-[#86868b]">
+                            <span className="text-[10px]">⏱️</span>
+                            <span className="text-[9px] font-black tabular-nums">{totalHours}h</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1.5 text-[#86868b]">
                           <span className="text-[10px]">💬</span>
                           <span className="text-[9px] font-black tabular-nums">{commentCounts[task.id] || 0}</span>
