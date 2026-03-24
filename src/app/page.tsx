@@ -52,10 +52,11 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
+        console.error("[Login] Auth Error for", email, ":", error.message, error.status);
         if (error.message.includes('Email not confirmed')) {
             return redirect('/?error=email_not_verified');
         }
-        return redirect('/?error=invalid_credentials');
+        return redirect(`/?error=invalid_credentials&details=${encodeURIComponent(error.message)}`);
     }
     // Direct redirect to dashboard skip the Home render cycle
     redirect('/dashboard');
