@@ -993,22 +993,31 @@ export async function updateEmployeeProfile(userId: string, name: string, role: 
 }
 
 export async function updateUserPassword(userId: string, newPassword: string) {
+    if (!validatePasswordStrength(newPassword)) {
+        throw new Error("Password does not meet strength requirements (min 8 chars, mixed case, and numbers).");
+    }
+
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
         throw new Error("Missing Supabase Service Role Key.");
     }
 
-    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
-    const supabaseAdmin = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY,
-        { auth: { autoRefreshToken: false, persistSession: false } }
-    )
+    // Direct fetch instead of dynamic import to avoid Vercel build/runtime issues
+    const ADMIN_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users/${userId}`;
+    
+    const response = await fetch(ADMIN_URL, {
+        method: 'PUT',
+        headers: {
+            'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
+            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password: newPassword })
+    });
 
-    // Admin API allows password resets without the current password
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { password: newPassword });
-
-    if (error) {
-        throw new Error(error.message);
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("[updateUserPassword] Admin API Error:", errorData);
+        throw new Error(errorData.message || "Failed to update user password.");
     }
 }
 
