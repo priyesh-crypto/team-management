@@ -959,34 +959,47 @@ export async function updateEmployeeProfile(userId: string, name: string, role: 
         throw new Error("Missing Supabase Service Role Key.");
     }
 
-    // Admin client to update another user
-    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
-    const supabaseAdmin = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY,
-        { auth: { autoRefreshToken: false, persistSession: false } }
-    )
-
-    // Update their Supabase Auth metadata and email if provided
+    // 1. Update their Supabase Auth metadata and email using native fetch via Admin API
     const updateData: any = { user_metadata: { name, role } };
     if (email) {
         updateData.email = email;
-        // Optionally confirm email automatically
         updateData.email_confirm = true;
     }
     
-    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, updateData);
-    if (authError) {
-        console.error("Error updating auth user:", authError);
-        throw new Error(authError.message);
+    const ADMIN_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users/${userId}`;
+    const authResponse = await fetch(ADMIN_URL, {
+        method: 'PUT',
+        headers: {
+            'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
+            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
+    });
+
+    if (!authResponse.ok) {
+        const errorData = await authResponse.json().catch(() => ({}));
+        console.error("Error updating auth user:", errorData);
+        throw new Error(errorData.message || "Failed to update auth user.");
     }
 
-    // Update the public profiles table
-    const { error: profileError } = await supabaseAdmin.from('profiles').update({ name, role }).eq('id', userId)
+    // 2. Update the public profiles table using native fetch via PostgREST API
+    const PROFILE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`;
+    const profileResponse = await fetch(PROFILE_URL, {
+        method: 'PATCH',
+        headers: {
+            'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
+            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ name, role })
+    });
 
-    if (profileError) {
-        console.error("Error updating profile:", profileError);
-        throw new Error(profileError.message);
+    if (!profileResponse.ok) {
+        const errorData = await profileResponse.json().catch(() => ({}));
+        console.error("Error updating profile:", errorData);
+        throw new Error(errorData.message || "Failed to update profile data.");
     }
 
     revalidatePath('/dashboard')
