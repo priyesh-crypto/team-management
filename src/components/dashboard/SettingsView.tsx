@@ -29,10 +29,14 @@ export function SettingsView({ userId, userName, initialProfileName, isManager =
         setIsUpdatingProfile(true);
         setProfileMsg(null);
         try {
-            await updateProfile(userId, { name: profileName });
-            setProfileMsg({ type: 'success', text: 'Profile updated successfully!' });
+            const res = await updateProfile(userId, { name: profileName });
+            if (res && res.error) {
+                setProfileMsg({ type: 'error', text: res.error });
+            } else {
+                setProfileMsg({ type: 'success', text: 'Profile updated successfully!' });
+            }
         } catch (err: any) {
-            setProfileMsg({ type: 'error', text: err.message || 'Failed to update profile.' });
+            setProfileMsg({ type: 'error', text: err.message || 'An unexpected error occurred.' });
         } finally {
             setIsUpdatingProfile(false);
         }
@@ -46,11 +50,15 @@ export function SettingsView({ userId, userName, initialProfileName, isManager =
         }
         setIsUpdatingPassword(true);
         try {
-            await changePassword(passwords.new);
-            setProfileMsg({ type: 'success', text: 'Password changed successfully!' });
-            setPasswords({ new: '', confirm: '' });
+            const res = await changePassword(passwords.new);
+            if (res && res.error) {
+                setProfileMsg({ type: 'error', text: res.error });
+            } else {
+                setProfileMsg({ type: 'success', text: 'Password changed successfully!' });
+                setPasswords({ new: '', confirm: '' });
+            }
         } catch (err: any) {
-            setProfileMsg({ type: 'error', text: err.message || 'Failed to change password.' });
+            setProfileMsg({ type: 'error', text: err.message || 'An unexpected error occurred.' });
         } finally {
             setIsUpdatingPassword(false);
         }

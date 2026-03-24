@@ -780,15 +780,25 @@ export default function ManagerDashboard({
 
     const handleSaveEdit = async (empId: string) => {
         try {
-            await updateEmployeeProfile(empId, editEmpForm.name, editEmpForm.role, editEmpForm.email);
-            if (editEmpForm.password) {
-                await updateUserPassword(empId, editEmpForm.password);
+            const profileRes = await updateEmployeeProfile(empId, editEmpForm.name, editEmpForm.role, editEmpForm.email);
+            if (profileRes && profileRes.error) {
+                alert(profileRes.error);
+                return;
             }
+
+            if (editEmpForm.password) {
+                const passRes = await updateUserPassword(empId, editEmpForm.password);
+                if (passRes && passRes.error) {
+                    alert(passRes.error);
+                    return;
+                }
+            }
+            
             setEditingEmpId(null);
             setEditEmpForm({ name: '', role: 'employee', password: '', email: '' });
             refreshData();
         } catch (err: any) {
-            alert(err.message);
+            alert(err.message || 'An unexpected error occurred.');
         }
     };
 

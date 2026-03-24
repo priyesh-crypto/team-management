@@ -954,9 +954,9 @@ export async function acceptInvitation(token: string, name: string, password: st
     return { email: invite.email }
 }
 
-export async function updateEmployeeProfile(userId: string, name: string, role: string, email?: string) {
+export async function updateEmployeeProfile(userId: string, name: string, role: string, email?: string): Promise<{ success?: boolean; error?: string }> {
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        throw new Error("Missing Supabase Service Role Key.");
+        return { error: "Missing Supabase Service Role Key." };
     }
 
     // 1. Update their Supabase Auth metadata and email using native fetch via Admin API
@@ -980,7 +980,7 @@ export async function updateEmployeeProfile(userId: string, name: string, role: 
     if (!authResponse.ok) {
         const errorData = await authResponse.json().catch(() => ({}));
         console.error("Error updating auth user:", errorData);
-        throw new Error(errorData.message || "Failed to update auth user.");
+        return { error: errorData.message || "Failed to update auth user." };
     }
 
     // 2. Update the public profiles table using native fetch via PostgREST API
@@ -999,19 +999,20 @@ export async function updateEmployeeProfile(userId: string, name: string, role: 
     if (!profileResponse.ok) {
         const errorData = await profileResponse.json().catch(() => ({}));
         console.error("Error updating profile:", errorData);
-        throw new Error(errorData.message || "Failed to update profile data.");
+        return { error: errorData.message || "Failed to update profile data." };
     }
 
     revalidatePath('/dashboard')
+    return { success: true };
 }
 
-export async function updateUserPassword(userId: string, newPassword: string) {
+export async function updateUserPassword(userId: string, newPassword: string): Promise<{ success?: boolean; error?: string }> {
     if (!validatePasswordStrength(newPassword)) {
-        throw new Error("Password does not meet strength requirements (min 8 chars, mixed case, and numbers).");
+        return { error: "Password does not meet strength requirements (min 8 chars, mixed case, and numbers)." };
     }
 
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        throw new Error("Missing Supabase Service Role Key.");
+        return { error: "Missing Supabase Service Role Key." };
     }
 
     // Direct fetch instead of dynamic import to avoid Vercel build/runtime issues
@@ -1030,8 +1031,10 @@ export async function updateUserPassword(userId: string, newPassword: string) {
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("[updateUserPassword] Admin API Error:", errorData);
-        throw new Error(errorData.message || "Failed to update user password.");
+        return { error: errorData.message || "Failed to update user password." };
     }
+
+    return { success: true };
 }
 
 export async function updateOwnPassword(password: string) {
@@ -1469,7 +1472,7 @@ export async function deleteSubtask(subtaskId: string, taskId: string) {
     await recalculateTaskHours(taskId)
 }
 
-export async function updateProfile(userId: string, data: { name: string }) {
+export async function updateProfile(userId: string, data: { name: string }): Promise<{ success?: boolean; error?: string }> {
     const { userId: currentUserId, orgId } = await requireOrgContext();
     const supabase = await createClient()
 
@@ -1483,7 +1486,7 @@ export async function updateProfile(userId: string, data: { name: string }) {
     
     if (memberError || !targetMember) {
         await logError("updateProfile:memberCheck", memberError, { targetUserId: userId, orgId, currentUserId });
-        throw new Error("Unauthorized: User not in your organization.");
+        return { error: "Unauthorized: User not in your organization." };
     }
 
     // 2. Allow self-update OR update by manager
@@ -1495,7 +1498,7 @@ export async function updateProfile(userId: string, data: { name: string }) {
             .single();
         if (profileError || currentUserProfile?.role !== 'manager') {
             await logError("updateProfile:roleCheck", profileError, { targetUserId: userId, orgId, currentUserId, currentRole: currentUserProfile?.role });
-            throw new Error("Unauthorized: Only managers can update other profiles.");
+            return { error: "Unauthorized: Only managers can update other profiles." };
         }
     }
 
@@ -1507,12 +1510,13 @@ export async function updateProfile(userId: string, data: { name: string }) {
     if (error) {
         console.error("Error updating profile:", error)
         await logError("updateProfile:update", error, { targetUserId: userId, data });
-        throw new Error(error.message)
+        return { error: error.message };
     }
     revalidatePath('/dashboard')
+    return { success: true };
 }
 
-export async function changePassword(newPassword: string) {
+export async function changePassword(newPassword: string): Promise<{ success?: boolean; error?: string }> {
     const supabase = await createClient()
     const { error } = await supabase.auth.updateUser({
         password: newPassword
@@ -1521,8 +1525,9 @@ export async function changePassword(newPassword: string) {
     if (error) {
         console.error("Error changing password:", error)
         await logError("changePassword", error);
-        throw new Error(error.message)
+        return { error: error.message };
     }
+    return { success: true };
 }
 
 // Notification Actions
