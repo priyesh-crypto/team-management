@@ -37,10 +37,10 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
   // --- SERVER ACTIONS ---
   const login = async (formData: FormData) => {
     "use server"
-    const email = sanitizeString(formData.get('email') as string);
+    const email = (formData.get('email') as string)?.trim().toLowerCase();
     const password = formData.get('password') as string;
     
-    if (!validateEmail(email)) return redirect('/?error=invalid_credentials');
+    if (!email || !password) return redirect('/?error=invalid_credentials&details=Missing%20credentials');
     
     const supabase = await createClient();
 
