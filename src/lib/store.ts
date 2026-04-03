@@ -23,10 +23,10 @@ export interface Employee {
 }
 
 const defaultEmployees: Employee[] = [
-    { id: '1', name: 'Alice Smith', email: 'alice@company.com', password: 'password', role: 'employee' },
-    { id: '2', name: 'Bob Jones', email: 'bob@company.com', password: 'password', role: 'employee' },
-    { id: '3', name: 'Charlie Brown', email: 'charlie@company.com', password: 'password', role: 'employee' },
-    { id: 'admin', name: 'System Admin', email: 'admin@company.com', password: 'admin', role: 'manager' }
+    { id: '1', name: 'Alice Smith', email: 'alice@company.com', role: 'employee' },
+    { id: '2', name: 'Bob Jones', email: 'bob@company.com', role: 'employee' },
+    { id: '3', name: 'Charlie Brown', email: 'charlie@company.com', role: 'employee' },
+    { id: 'admin', name: 'System Admin', email: 'admin@company.com', role: 'manager' }
 ];
 
 const defaultTasks: Task[] = [

@@ -2,13 +2,10 @@
 
 import dynamic from 'next/dynamic';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Task, Subtask, Profile, Priority, Status, Project, getTasks, getProfiles, getProjects, saveTask, saveSubtask, inviteMember, addMemberDirectly, updateEmployeeProfile, updateUserPassword, updateOwnPassword, updateTaskPriority, updateTaskStatus, deleteTask, deleteSubtask, getSubtasks, getBulkSubtasks, updateProfile, changePassword, updateTask, getNotifications, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, getBulkCounts, getAttachments, Attachment, getWorkloadHeatmap, WorkloadMap, ActivityLog, getTaskAuditLog, getMemberActivity, getOrgActivityFeed, logout, syncOverdueTasks, getDashboardData } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, Project, getTasks, saveTask, saveSubtask, inviteMember, addMemberDirectly, updateEmployeeProfile, updateUserPassword, updateTaskPriority, updateTaskStatus, deleteTask, deleteSubtask, getSubtasks, updateTask, markNotificationAsRead, markAllNotificationsAsRead, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, WorkloadMap, ActivityLog, getOrgActivityFeed, logout, syncOverdueTasks, getDashboardData } from '@/app/actions/actions';
 import { formatAuditEntry } from '@/utils/audit-formatters';
-import { useRouter } from 'next/navigation';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
-import { ProjectSwitcher } from '@/components/ProjectSwitcher';
 import { ManagerSidebar } from './layout/ManagerSidebar';
 import { ManagerHeader } from './layout/ManagerHeader';
 import { ManagerBoardView } from './dashboard/ManagerBoardView';
@@ -23,35 +20,40 @@ const WorkloadHeatmap = dynamic(() => import('@/components/WorkloadHeatmap').the
     ssr: false,
     loading: () => <div className="h-64 w-full animate-pulse bg-slate-100 rounded-2xl flex items-center justify-center font-bold text-slate-400">Loading Workload...</div>
 });
-const DigestSettings = dynamic(() => import('@/components/DigestSettings').then(m => ({ default: m.DigestSettings })), { 
-    ssr: false,
-    loading: () => <div className="h-64 w-full animate-pulse bg-slate-100 rounded-2xl flex items-center justify-center font-bold text-slate-400">Loading Settings...</div>
-});
-import { Pencil, Trash2, Menu, X, Calendar, Clock, Bell, Settings, Search, Layout, Plus, Users, Shield, Briefcase, ChevronRight, Zap, Activity } from 'lucide-react';
+import { Pencil, Trash2, Clock } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import { cn } from '@/lib/utils';
 
-export default function ManagerDashboard({ 
-    userId, 
-    userName, 
-    projectId, 
-    userRole, 
+type InitialDashboardData = {
+    tasks: Task[];
+    profiles: Profile[];
+    projectMembers: Profile[];
+    projects: Project[];
+    subtasks: Subtask[];
+    notifications: Notification[];
+    workload: WorkloadMap;
+    logs: ActivityLog[];
+    counts: { comments: Record<string, number>; attachments: Record<string, number> };
+}
+
+export default function ManagerDashboard({
+    userId,
+    userName,
+    projectId,
+    userRole,
     orgId,
     initialData
-}: { 
-    userId: string, 
-    userName: string, 
-    projectId?: string, 
-    userRole: 'employee' | 'manager', 
+}: {
+    userId: string,
+    userName: string,
+    projectId?: string,
+    userRole: 'employee' | 'manager',
     orgId: string,
-    initialData?: any
+    initialData?: InitialDashboardData
 }) {
-    const router = useRouter();
     const [activeTab, setActiveTab] = useState<'board' | 'mine' | 'planning' | 'team' | 'settings'>('board');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTask, setSelectedTask] = useState<{ task: Task, subtasks: Subtask[] } | null>(null);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-    const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const mainRef = React.useRef<HTMLElement>(null);
 
@@ -80,12 +82,8 @@ export default function ManagerDashboard({
     const [attachmentCounts, setAttachmentCounts] = useState<Record<string, number>>(initialData?.counts?.attachments || {});
     const [auditLogs, setAuditLogs] = useState<ActivityLog[]>(initialData?.logs || []);
 
-    // Profile State
-    const [profileName, setProfileName] = useState(userName);
-    const [passwords, setPasswords] = useState({ new: '', confirm: '' });
-    const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
-    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+    // Profile State (profile editing is handled by SettingsView)
+    const [profileName] = useState(userName);
 
     // Team Management Form State
     const [inviteForm, setInviteForm] = useState({ email: '', role: 'employee' });
@@ -94,9 +92,9 @@ export default function ManagerDashboard({
     const [inviteResult, setInviteResult] = useState<{type: 'error' | 'success', text: string} | null>(null);
     const [editingEmpId, setEditingEmpId] = useState<string | null>(null);
     const [editEmpForm, setEditEmpForm] = useState({ name: '', role: 'employee', password: '', email: '' });
-    const [notifications, setNotifications] = useState<Notification[]>(initialData?.notifications || []);
+    const [notifications] = useState<Notification[]>(initialData?.notifications || []);
     const [showNotifications, setShowNotifications] = useState(false);
-    const [unreadCount, setUnreadCount] = useState((initialData?.notifications || []).filter((n: any) => !n.is_read).length);
+    const unreadCount = notifications.filter(n => !n.is_read).length;
     const [workloadData, setWorkloadData] = useState<WorkloadMap>(initialData?.workload || {});
     const [showBroadcastModal, setShowBroadcastModal] = useState(false);
     const [broadcastForm, setBroadcastForm] = useState({ message: '', type: 'system' as 'urgent' | 'system' });
@@ -107,7 +105,7 @@ export default function ManagerDashboard({
     const [showEmployeeDeleteConfirm, setShowEmployeeDeleteConfirm] = useState(false);
     const [employeeToDelete, setEmployeeToDelete] = useState<{ id: string, name: string } | null>(null);
 
-    // Custom Task Delete State
+
     const [isDeletingTask, setIsDeletingTask] = useState(false);
 
     // Notification Click-Outside Ref
@@ -332,39 +330,6 @@ export default function ManagerDashboard({
     };
 
     // --- Timeline Logic ---
-    const timelineData = useMemo(() => {
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-        const end = new Date();
-        end.setHours(23, 59, 59, 999);
-
-        if (viewMode === 'day') {
-            start.setDate(start.getDate() - 1);
-            end.setDate(end.getDate() + 2);
-        } else if (viewMode === 'month') {
-            start.setDate(start.getDate() - 5);
-            end.setDate(end.getDate() + 25);
-        } else {
-            // Default: Week (approx 2 weeks)
-            start.setDate(start.getDate() - 2);
-            end.setDate(end.getDate() + 12);
-        }
-
-        const days = [];
-        let curr = new Date(start);
-        while (curr <= end) {
-            days.push(new Date(curr));
-            curr.setDate(curr.getDate() + 1);
-        }
-
-        // Group tasks by employee
-        const employeeTasks: Record<string, Task[]> = {};
-        employees.filter(e => e.role === 'employee').forEach(emp => {
-            employeeTasks[emp.id] = tasks.filter(t => t.employee_id === emp.id);
-        });
-
-        return { days, employeeTasks, startDate: start, endDate: end };
-    }, [tasks, employees, viewMode]);
 
 
     const handleEmployeeActivityClick = (employee: Profile) => {
@@ -379,7 +344,7 @@ export default function ManagerDashboard({
         setSelectedTask({ task, subtasks });
     };
 
-    const handleLogSubmit = async (e: React.FormEvent) => {
+    const handleLogSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         setLogError(null);
         setIsSavingLog(true);
@@ -446,7 +411,7 @@ export default function ManagerDashboard({
         return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
     };
 
-    const handleStartTimer = (subtaskId: string, taskId: string) => {
+    const handleStartTimer = (subtaskId: string, _taskId: string) => {
         setActiveTimers(prev => ({ ...prev, [subtaskId]: new Date().toISOString() }));
     };
 
@@ -555,7 +520,7 @@ export default function ManagerDashboard({
         }
     };
 
-    const handleDeleteSubtaskDirect = async (taskId: string, subtaskId: string, subtaskName: string) => {
+    const handleDeleteSubtaskDirect = async (taskId: string, subtaskId: string, _subtaskName: string) => {
         try {
             await deleteSubtask(subtaskId, taskId);
             refreshData(true);
@@ -629,10 +594,6 @@ export default function ManagerDashboard({
         } catch (err: any) {
             alert(err.message || "Failed to update work log.");
         }
-    };
-
-    const getEmployeeName = (id: string) => {
-        return employees.find(e => e.id === id)?.name || 'Unknown';
     };
 
     const handleUpdateStatusFromModal = async (taskId: string, status: Status) => {
@@ -709,39 +670,7 @@ export default function ManagerDashboard({
     }, [tasks, employees]);
 
     // --- Handlers ---
-    const handleUpdateProfile = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsUpdatingProfile(true);
-        setProfileMsg(null);
-        try {
-            await updateProfile(userId, { name: profileName });
-            setProfileMsg({ type: 'success', text: 'Profile updated successfully!' });
-        } catch (err: any) {
-            setProfileMsg({ type: 'error', text: err.message || 'Failed to update profile.' });
-        } finally {
-            setIsUpdatingProfile(false);
-        }
-    };
-
-    const handleChangePassword = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (passwords.new !== passwords.confirm) {
-            setProfileMsg({ type: 'error', text: 'Passwords do not match.' });
-            return;
-        }
-        setIsUpdatingPassword(true);
-        try {
-            await changePassword(passwords.new);
-            setProfileMsg({ type: 'success', text: 'Password changed successfully!' });
-            setPasswords({ new: '', confirm: '' });
-        } catch (err: any) {
-            setProfileMsg({ type: 'error', text: err.message || 'Failed to change password.' });
-        } finally {
-            setIsUpdatingPassword(false);
-        }
-    };
-
-    const handleDirectAdd = async (e: React.FormEvent) => {
+    const handleDirectAdd = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         setInviteResult(null);
         try {
@@ -758,7 +687,7 @@ export default function ManagerDashboard({
         }
     };
 
-    const handleInviteMember = async (e: React.FormEvent) => {
+    const handleInviteMember = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         setInviteResult(null);
         try {
@@ -839,12 +768,13 @@ export default function ManagerDashboard({
 
     const confirmDeleteTask = async () => {
         if (!taskToDelete) return;
-        
+
         const taskId = taskToDelete.id;
         const originalTasks = [...tasks];
         const originalSelectedTask = selectedTask;
-        
-        // 1. Optimistic Update: Remove from local state immediately
+
+        setIsDeletingTask(true);
+        // Optimistic Update: Remove from local state immediately
         setTasks(prev => prev.filter(t => t.id !== taskId));
         setShowTaskDeleteConfirm(false);
         setTaskToDelete(null);
@@ -860,6 +790,8 @@ export default function ManagerDashboard({
             setTasks(originalTasks);
             setSelectedTask(originalSelectedTask);
             alert(err.message || "Failed to delete task. Reverting state.");
+        } finally {
+            setIsDeletingTask(false);
         }
     };
 
@@ -868,7 +800,7 @@ export default function ManagerDashboard({
         setTaskToDelete(null);
     };
 
-    const handleAssignTask = async (e: React.FormEvent) => {
+    const handleAssignTask = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         if (!assignForm.employee_id || !assignForm.name) return;
         setAssignError(null);
@@ -892,7 +824,7 @@ export default function ManagerDashboard({
         }
     };
 
-    const handleBroadcastAlert = async (e: React.FormEvent) => {
+    const handleBroadcastAlert = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         if (!broadcastForm.message) return;
         setIsBroadcasting(true);
@@ -1593,7 +1525,7 @@ export default function ManagerDashboard({
                         <div className="h-10 w-[1px] bg-white/10"></div>
                         <button 
                             onClick={() => {
-                                const [subtaskId, startTime] = Object.entries(activeTimers)[0];
+                                const [subtaskId] = Object.entries(activeTimers)[0];
                                 const taskId = subtaskId.startsWith('new-') 
                                     ? subtaskId.replace('new-', '') 
                                     : Object.keys(subtasksMap).find(tId => subtasksMap[tId].some(s => s.id === subtaskId));

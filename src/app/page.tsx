@@ -12,26 +12,15 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
   // 1. Check Auth 
   const { data: { user } } = await supabase.auth.getUser();
 
-  let profile = null;
   let hasOrg = false;
-  let orgName = '';
 
   if (user) {
-    // Parallelize profile and org checks for logged-in users
-    const [profileRes, memberRes] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('organization_members')
-        .select('org_id, organizations(name)')
-        .eq('user_id', user.id)
-    ]);
-
-    profile = profileRes.data;
-    const member = memberRes.data?.[0];
-
-    if (member) {
-      hasOrg = true;
-      orgName = (member.organizations as any)?.name || 'Your Workspace';
-    }
+    const { data: members } = await supabase
+      .from('organization_members')
+      .select('org_id')
+      .eq('user_id', user.id)
+      .limit(1);
+    hasOrg = (members?.length ?? 0) > 0;
   }
 
   // --- SERVER ACTIONS ---
@@ -126,7 +115,10 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
 
     // 2. Create Default Workspace
     const { error: wsError } = await supabaseAdmin.from('workspaces').insert({ org_id: org.id, name: 'Default Workspace' });
-    if (wsError) console.error("Workspace Creation Error:", wsError);
+    if (wsError) {
+        console.error("Workspace Creation Error:", wsError);
+        return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent('Workspace setup failed: ' + wsError.message)}`);
+    }
 
     // 3. Add to Organization Members as Owner
     const { error: memError } = await supabaseAdmin.from('organization_members').insert({
@@ -134,7 +126,10 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
       user_id: user.id,
       role: 'owner'
     });
-    if (memError) console.error("Member Creation Error:", memError);
+    if (memError) {
+        console.error("Member Creation Error:", memError);
+        return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent('Member setup failed: ' + memError.message)}`);
+    }
 
     // 4. Ensure profile exists and has manager/owner role
     // We use upsert here to guarantee the profile exists for the UI
@@ -144,7 +139,10 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
         email: user.email,
         role: 'manager'
     });
-    if (profError) console.error("Profile Upsert Error:", profError);
+    if (profError) {
+        console.error("Profile Upsert Error:", profError);
+        return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent('Profile setup failed: ' + profError.message)}`);
+    }
 
     redirect('/');
   };

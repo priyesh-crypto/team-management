@@ -4,7 +4,6 @@ import { createClient } from "@/utils/supabase/server"
 import { cache } from "react"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { headers } from "next/headers"
 import { applyRateLimit } from "@/utils/rate-limit"
 import { Resend } from 'resend'
 import { formatDistanceToNow, format } from 'date-fns'
@@ -226,12 +225,10 @@ export async function getProfiles(projectId?: string, providedAuthUsers?: any[],
     const supabase = await createClient()
     
     let orgId = providedOrgId;
-    let userId;
     try {
         if (!orgId) {
             const context = await requireOrgContext();
             orgId = context.orgId;
-            userId = context.userId;
         }
     } catch (e) {
         return []; // If not logged in or no org, return empty
@@ -692,7 +689,6 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
     try {
         await applyRateLimit('inviteMember', 10, 60 * 60 * 1000);
         if (!validateEmail(email)) return { success: false, error: "Invalid email address format." };
-        const sanitizedEmail = email.toLowerCase().trim();
         const { userId, orgId, role: currentUserRole } = await requireOrgContext();
         if (currentUserRole !== 'owner' && currentUserRole !== 'admin' && currentUserRole !== 'manager') {
             return { success: false, error: "Unauthorized to invite members." };
@@ -743,7 +739,7 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
             const orgName = org?.name || "an organization";
 
             try {
-                const { data, error } = await resend.emails.send({
+                const { error } = await resend.emails.send({
                     from: fromEmail,
                     to: email,
                     subject: `You have been invited to join ${orgName}`,
@@ -1888,9 +1884,6 @@ export async function getAttachments(taskId: string, providedOrgId?: string): Pr
     return data || []
 }
 
-// Helper to keep Attachments type-safe if we add org_id later to type
-type AttachmentWithOrg = Attachment & { org_id?: string };
-
 export async function uploadAttachment(formData: FormData): Promise<Attachment> {
     const { orgId, userId } = await requireOrgContext();
     const supabase = await createClient();
@@ -2086,9 +2079,9 @@ export async function deleteEmployee(userId: string) {
         throw new Error("Missing Supabase Service Role Key. Please add SUPABASE_SERVICE_ROLE_KEY to your .env.local file.");
     }
 
-    // Relaxed check to allow both traditional JWT and newer sb_secret_ prefixes
+    // Accept both traditional JWT (ey…) and newer sb_secret_ prefixes
     if (!serviceKey.startsWith('ey') && !serviceKey.startsWith('sb_secret_')) {
-        console.error("[DeleteEmployee] Invalid key format. Received:", serviceKey.substring(0, 10) + '...');
+        console.error("[DeleteEmployee] Invalid Service Role Key format.");
         throw new Error("Invalid Service Role Key format. Please check your Supabase Dashboard > Project Settings > API.");
     }
 
@@ -2506,8 +2499,6 @@ export async function syncOverdueTasks() {
 export async function getDashboardData(projectId?: string, providedOrgId?: string, providedUserId?: string) {
     const startTime = Date.now();
     console.log(`[getDashboardData] Starting fetch for project: ${projectId || 'all'}`);
-    const supabase = await createClient()
-    
     let orgId = providedOrgId;
     let userId = providedUserId;
 
@@ -2518,11 +2509,8 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         userId = context.userId;
     }
 
-    // 1. Auth Users list is no longer fetched on every load for performance.
-    // Rely on profiles table email field instead.
-    const authUsersPromise = Promise.resolve([]);
-
-    // 2. Fetch Core Data Promise (Parallel including Auth Users)
+    // 1. Fetch Core Data in parallel. Auth users are not fetched here —
+    // rely on the profiles table email field instead.
     console.time(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
     const [tasks, profiles, projects, projectMembers, logs, workload] = await Promise.all([
         getTasks(projectId, orgId),

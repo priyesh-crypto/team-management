@@ -10,8 +10,6 @@ export async function proxy(request: NextRequest) {
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     
-    // Determine the environment URLs
-    const isProdVercel = process.env.VERCEL_ENV === 'production';
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     let supabaseHost = '';
     
@@ -21,23 +19,20 @@ export async function proxy(request: NextRequest) {
         console.warn("Could not parse supabase URL for CSP");
     }
 
-    // Set production URL explicitly if available
-    const appUrl = isProdVercel ? 'https://team-management-pink-three.vercel.app' :
-                  (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
-    
-    // Very permissive CSP for testing, tightening later
-    const csp = `
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval';
-        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-        img-src 'self' data: blob: ${supabaseHost ? supabaseHost : '*'} https://*;
-        font-src 'self' https://fonts.gstatic.com;
-        connect-src 'self' ${supabaseUrl} wss://${supabaseHost} https://*;
-        frame-ancestors 'none';
-        object-src 'none';
-        base-uri 'self';
-        form-action 'self';
-    `.replace(/\s{2,}/g, ' ').trim();
+    const csp = [
+        "default-src 'self'",
+        // Next.js requires 'unsafe-inline' for styles and inline scripts it generates.
+        // 'unsafe-eval' is removed; avoid it unless a dependency requires it.
+        "script-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        `img-src 'self' data: blob: ${supabaseHost ? `https://${supabaseHost}` : ''}`.trimEnd(),
+        "font-src 'self' https://fonts.gstatic.com",
+        `connect-src 'self' ${supabaseUrl}${supabaseHost ? ` wss://${supabaseHost}` : ''}`,
+        "frame-ancestors 'none'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+    ].join('; ');
 
     response.headers.set('Content-Security-Policy', csp);
     

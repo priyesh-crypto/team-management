@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, use } from 'react'
+import { useState, use, useEffect, useRef } from 'react'
 import { acceptInvitation } from '@/app/actions/actions'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, CheckCircle2 } from "lucide-react"
@@ -15,21 +15,27 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current)
+    }
+  }, [])
+
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
-    
+
     try {
       await acceptInvitation(token, name, password)
       setSuccess(true)
-      // Redirect to login or home after a short delay
-      setTimeout(() => {
+      redirectTimerRef.current = setTimeout(() => {
         router.push('/')
       }, 2000)
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while accepting the invitation.')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred while accepting the invitation.')
     } finally {
       setIsLoading(false)
     }
