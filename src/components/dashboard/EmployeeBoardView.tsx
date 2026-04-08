@@ -5,6 +5,7 @@ import { Zap, CheckCircle2, Activity, MessageSquare, Paperclip, Pencil, X } from
 import { Card, Badge, Button, Input } from '@/components/ui/components';
 import { cn } from '@/lib/utils';
 import { Task, Subtask, Profile, Priority, Status, Project } from '@/app/actions/actions';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 // --- UI PRIMITIVES ---
 
@@ -50,7 +51,7 @@ function MorningBriefing({
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
                 <div className="space-y-2">
                     <div className="flex items-center gap-3">
-                        <div className="px-2.5 py-0.5 rounded-full bg-[#0071e3]/10 text-[#0071e3] text-[8px] font-bold tracking-widest uppercase border border-[#0071e3]/10">
+                        <div className="px-2.5 py-0.5 rounded-full bg-[#0c64ef]/10 text-[#0c64ef] text-[8px] font-bold tracking-widest uppercase border border-[#0c64ef]/10">
                             Command Center
                         </div>
                         <span className="text-slate-400 text-[8px] font-bold uppercase tracking-widest">
@@ -62,7 +63,7 @@ function MorningBriefing({
                     </h1>
                     <p className="text-xs text-slate-500 font-medium max-w-2xl">
                         You have <span className="text-[#1d1d1f] font-bold">{criticalTasks.length} critical tasks</span>. 
-                        Efficiency: <span className="text-[#0071e3] font-bold">{Math.round(efficiencyPercentage)}%</span>.
+                        Efficiency: <span className="text-[#0c64ef] font-bold">{Math.round(efficiencyPercentage)}%</span>.
                     </p>
                 </div>
                 
@@ -135,7 +136,7 @@ function OverviewStats({ tasks, projects, efficiencyPercentage }: { tasks: Task[
                     </Card>
                     <Card className="p-6 bg-white border-[#f0f0f2] rounded-[24px] shadow-sm">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-xl bg-[#0071e3]/10 flex items-center justify-center text-[#0071e3] shadow-sm"><Activity size={18} /></div>
+                            <div className="w-10 h-10 rounded-xl bg-[#0c64ef]/10 flex items-center justify-center text-[#0c64ef] shadow-sm"><Activity size={18} /></div>
                             <div>
                                 <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Active Velocity</div>
                                 <div className="text-xl font-bold text-[#1d1d1f] tracking-tight">{Math.round(efficiencyPercentage)}%</div>
@@ -145,7 +146,7 @@ function OverviewStats({ tasks, projects, efficiencyPercentage }: { tasks: Task[
                             <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: `${efficiencyPercentage}%` }}
-                                className="h-full bg-[#0071e3] rounded-full"
+                                className="h-full bg-[#0c64ef] rounded-full"
                             />
                         </div>
                     </Card>
@@ -153,7 +154,7 @@ function OverviewStats({ tasks, projects, efficiencyPercentage }: { tasks: Task[
 
                 <Card className="p-8 bg-white border-[#f0f0f2] rounded-[24px] shadow-sm">
                     <h4 className="text-[10px] font-bold text-[#1d1d1f] uppercase tracking-widest mb-8 flex items-center gap-2">
-                        <Zap size={14} className="text-[#0071e3]" />
+                        <Zap size={14} className="text-[#0c64ef]" />
                         <span>Project Overview</span>
                     </h4>
                     <div className="space-y-6">
@@ -167,7 +168,7 @@ function OverviewStats({ tasks, projects, efficiencyPercentage }: { tasks: Task[
                                     <motion.div 
                                         initial={{ width: 0 }}
                                         animate={{ width: `${p.progress}%` }}
-                                        className="h-full bg-[#0071e3] rounded-full"
+                                        className="h-full bg-[#0c64ef] rounded-full"
                                     />
                                 </div>
                             </div>
@@ -182,7 +183,7 @@ function OverviewStats({ tasks, projects, efficiencyPercentage }: { tasks: Task[
 
             <div className="space-y-6">
                 <Card className="p-8 bg-[#1d1d1f] text-white border-none rounded-[24px] shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#0071e3] rounded-full blur-[60px] opacity-20 group-hover:opacity-30 transition-opacity duration-700" />
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#0c64ef] rounded-full blur-[60px] opacity-20 group-hover:opacity-30 transition-opacity duration-700" />
                     <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-10 relative z-10">Total Impact</h4>
                     <div className="space-y-8 relative z-10">
                         <div>
@@ -238,7 +239,7 @@ function BoardColumn({
                     <div className={cn(
                         "w-2 h-2 rounded-full shadow-sm", 
                         title.includes('Overdue') ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
-                        title.includes('To Do') ? 'bg-[#0071e3]' : 
+                        title.includes('To Do') ? 'bg-[#0c64ef]' : 
                         title.includes('Progress') ? 'bg-orange-400' : 
                         title.includes('Blocked') ? 'bg-red-400' : 'bg-emerald-400'
                     )} />
@@ -336,7 +337,7 @@ function BoardColumn({
                                                 <div className="flex gap-1 ml-auto">
                                                     <button 
                                                         onClick={() => handleUpdateTask(task.id)}
-                                                        className="p-1 bg-[#0071e3] text-white rounded-md hover:bg-[#005bb7] transition-colors"
+                                                        className="p-1 bg-[#0c64ef] text-white rounded-md hover:bg-[#005bb7] transition-colors"
                                                     >
                                                         <CheckCircle2 size={12} strokeWidth={3} />
                                                     </button>
@@ -350,7 +351,7 @@ function BoardColumn({
                                             </div>
                                         </div>
                                     ) : (
-                                        <h4 className="text-[13px] font-bold text-slate-800 leading-snug tracking-tight group-hover:text-[#0071e3] transition-colors line-clamp-2 flex items-center justify-between gap-2">
+                                        <h4 className="text-[13px] font-bold text-slate-800 leading-snug tracking-tight group-hover:text-[#0c64ef] transition-colors line-clamp-2 flex items-center justify-between gap-2">
                                             {task.name}
                                             <button 
                                                 onClick={(e) => { 
@@ -358,7 +359,7 @@ function BoardColumn({
                                                     setEditingTaskId(task.id); 
                                                     setEditTaskData(task); 
                                                 }} 
-                                                className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-[#0071e3] transition-all p-1 hover:bg-[#0071e3]/5 rounded-md"
+                                                className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-[#0c64ef] transition-all p-1 hover:bg-[#0c64ef]/5 rounded-md"
                                             >
                                                 <Pencil size={11} strokeWidth={2.5} />
                                             </button>
@@ -374,7 +375,7 @@ function BoardColumn({
                                             <motion.div 
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${progress}%` }}
-                                                className="h-full bg-gradient-to-r from-[#0071e3] to-[#00c6ff] rounded-full transition-all duration-1000"
+                                                className="h-full bg-gradient-to-r from-[#0c64ef] to-[#00c6ff] rounded-full transition-all duration-1000"
                                             />
                                         </div>
                                     </div>
@@ -384,12 +385,13 @@ function BoardColumn({
                                             {[task.employee_id, ...(task.assignee_ids || [])].slice(0, 3).map(id => {
                                                 const emp = employees.find(e => e.id === id);
                                                 return (
-                                                    <div 
-                                                        key={`${task.id}-${id}`} 
-                                                        className="w-7 h-7 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm"
-                                                    >
-                                                        {emp?.name?.charAt(0) || '?'}
-                                                    </div>
+                                                    <UserAvatar
+                                                        key={`${task.id}-${id}`}
+                                                        name={emp?.name || '?'}
+                                                        avatarUrl={emp?.avatar_url}
+                                                        className="w-7 h-7 rounded-full border-2 border-white bg-slate-100 shadow-sm"
+                                                        textClassName="text-[9px] font-bold text-slate-500"
+                                                    />
                                                 );
                                             })}
                                         </div>
@@ -505,7 +507,7 @@ export function EmployeeBoardView({
                 <div className="fade-in h-[calc(100vh-200px)] flex flex-col">
                     <div className="flex items-center justify-between mb-5 shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-[#0071e3]/10 flex items-center justify-center text-[#0071e3]"><Zap size={18} strokeWidth={2.5} /></div>
+                            <div className="w-9 h-9 rounded-xl bg-[#0c64ef]/10 flex items-center justify-center text-[#0c64ef]"><Zap size={18} strokeWidth={2.5} /></div>
                             <h3 className="text-xl font-black text-[#1d1d1f] tracking-tight">My Workspace</h3>
                         </div>
                         <div className="px-3 py-1.5 bg-white rounded-xl border border-[#f0f0f2] shadow-sm flex items-center gap-2">
@@ -543,7 +545,7 @@ export function EmployeeBoardView({
                 </div>
             ) : (
                 <div className="max-w-4xl mx-auto fade-in pb-6">
-                    <Card className="bg-gradient-to-br from-[#0071e3] to-[#00c6ff] border-none mb-5 p-5 text-white">
+                    <Card className="bg-gradient-to-br from-[#0c64ef] to-[#00c6ff] border-none mb-5 p-5 text-white">
                         <h3 className="text-xl font-black mb-1">Team Hub</h3>
                         <p className="text-sm opacity-80">Real-time collaboration across the team.</p>
                     </Card>

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Task, Profile, Priority, Status } from '@/app/actions/actions';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Card, Button, Badge } from '@/components/ui/components';
 import { 
     ChevronLeft, 
@@ -187,7 +188,7 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                             placeholder="Find member or task..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-10 pl-10 pr-4 rounded-xl bg-slate-50/50 border border-slate-100 text-[11px] font-medium outline-none focus:bg-white focus:border-[#0071e3]/30 transition-all w-full sm:w-48 lg:w-64"
+                            className="h-10 pl-10 pr-4 rounded-xl bg-slate-50/50 border border-slate-100 text-[11px] font-medium outline-none focus:bg-white focus:border-[#0c64ef]/30 transition-all w-full sm:w-48 lg:w-64"
                         />
                     </div>
                     <div className="flex gap-2">
@@ -232,7 +233,7 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                                         key={i} 
                                         className={`w-[var(--col-width)] py-4 text-center border-l first:border-l-0 border-slate-50 transition-all relative ${active ? 'bg-slate-50/50 today-column' : ''}`}
                                     >
-                                        <p className={`text-[8px] font-bold uppercase tracking-widest mb-1 ${active ? 'text-[#0071e3]' : 'text-slate-400'}`}>
+                                        <p className={`text-[8px] font-bold uppercase tracking-widest mb-1 ${active ? 'text-[#0c64ef]' : 'text-slate-400'}`}>
                                             {mounted ? date.toLocaleDateString('en-US', { weekday: 'short' }) : '...'}
                                         </p>
                                         <div className="relative inline-block">
@@ -240,7 +241,7 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                                                 {date.getDate()}
                                             </p>
                                             {active && (
-                                                <div className="absolute inset-x-[-6px] inset-y-[-2px] bg-[#0071e3] rounded-md -z-10 shadow-sm" />
+                                                <div className="absolute inset-x-[-6px] inset-y-[-2px] bg-[#0c64ef] rounded-md -z-10 shadow-sm" />
                                             )}
                                         </div>
                                     </div>
@@ -256,9 +257,12 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                                 <div key={emp.id} className="flex min-h-[90px] border-b border-slate-50 group transition-colors hover:bg-slate-50/30">
                                     {/* Sticky Profile Column */}
                                     <div className="w-[var(--sticky-width)] border-r border-slate-50 shrink-0 p-5 flex items-center gap-4 sticky left-0 bg-white group-hover:bg-slate-50/30 z-20 transition-all">
-                                        <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-[11px] font-bold text-slate-600">
-                                            {emp.name.charAt(0)}
-                                        </div>
+                                        <UserAvatar
+                                            name={emp.name}
+                                            avatarUrl={emp.avatar_url}
+                                            className="w-9 h-9 rounded-lg bg-slate-100"
+                                            textClassName="text-[11px] font-bold text-slate-600"
+                                        />
                                         <div className="min-w-0">
                                             <p className="text-[12px] font-bold text-slate-800 truncate leading-tight mb-0.5">{emp.name}</p>
                                             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">

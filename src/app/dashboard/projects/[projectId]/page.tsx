@@ -25,10 +25,11 @@ export default async function ProjectPage({
   const orgName = (mData.organizations as any)?.name || 'Your Workspace';
 
   return (
-    <DashboardContainer 
+    <DashboardContainer
       userId={user.id}
       userName={profile?.name || ''}
       userRole={profile?.role || 'employee'}
+      userAvatarUrl={profile?.avatar_url ?? null}
       orgName={orgName}
       orgId={mData.org_id}
       projectId={projectId}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Calendar, Clock } from 'lucide-react';
 import { Task, Subtask, Profile } from '@/app/actions/actions';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Card, Badge, Button } from '@/components/ui/components';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +24,7 @@ function MorningBriefing({ userName, tasks }: MorningBriefingProps) {
   
   return (
     <Card glass className="p-5 mb-4 overflow-hidden relative group border-none">
-      <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-[#0071e3] rounded-full blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity duration-700" />
+      <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-[#0c64ef] rounded-full blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity duration-700" />
       
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2">
@@ -32,7 +33,7 @@ function MorningBriefing({ userName, tasks }: MorningBriefingProps) {
         </div>
         
         <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight mb-2">
-          {mounted ? (new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening') : '...'}, <span className="text-[#0071e3]">{userName.split(' ')[0]}</span>.
+          {mounted ? (new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening') : '...'}, <span className="text-[#0c64ef]">{userName.split(' ')[0]}</span>.
         </h1>
         
         <p className="text-sm font-bold text-[#86868b] max-w-2xl leading-relaxed">
@@ -85,7 +86,7 @@ function BoardColumn({
           <div className={cn(
             "w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor]",
             title.toUpperCase().includes('OVERDUE') ? 'text-[#ff3b30] bg-[#ff3b30]' : 
-            title.toUpperCase().includes('TO DO') ? 'text-[#0071e3] bg-[#0071e3]' : 
+            title.toUpperCase().includes('TO DO') ? 'text-[#0c64ef] bg-[#0c64ef]' : 
             title.toUpperCase().includes('IN PROGRESS') ? 'text-[#ff9500] bg-[#ff9500]' : 
             title.toUpperCase().includes('BLOCKED') ? 'text-[#ff3b30] bg-[#ff3b30]' : 'text-[#34c759] bg-[#34c759]'
           )} />
@@ -134,9 +135,9 @@ function BoardColumn({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 onClick={() => onTaskClick(task)}
-                className="group relative bg-white rounded-3xl p-5 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-[#0071e3]/5 hover:-translate-y-1 transition-all duration-500 cursor-pointer overflow-hidden"
+                className="group relative bg-white rounded-3xl p-5 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-[#0c64ef]/5 hover:-translate-y-1 transition-all duration-500 cursor-pointer overflow-hidden"
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#0071e3]/[0.02] rounded-full -mr-10 -mt-10 group-hover:bg-[#0071e3]/[0.05] transition-colors" />
+                <div className="absolute top-0 right-0 w-24 h-24 bg-[#0c64ef]/[0.02] rounded-full -mr-10 -mt-10 group-hover:bg-[#0c64ef]/[0.05] transition-colors" />
                 
                 <div className="relative z-10">
                   <div className="flex justify-between items-start mb-4">
@@ -144,7 +145,7 @@ function BoardColumn({
                       "text-[8px] font-black px-2 py-0.5 rounded-lg border-none",
                       task.priority === 'Urgent' ? 'bg-[#ff3b30] text-white shadow-lg shadow-[#ff3b30]/20' : 
                       task.priority === 'High' ? 'bg-[#ff9500] text-white' : 
-                      task.priority === 'Medium' ? 'bg-[#0071e3] text-white' : 'bg-[#34c759] text-white'
+                      task.priority === 'Medium' ? 'bg-[#0c64ef] text-white' : 'bg-[#34c759] text-white'
                     )}>
                       {task.priority.toUpperCase()}
                     </Badge>
@@ -155,7 +156,7 @@ function BoardColumn({
                     )}
                   </div>
 
-                  <h4 className="text-sm font-black text-[#1d1d1f] mb-2 leading-tight group-hover:text-[#0071e3] transition-colors line-clamp-2">{task.name}</h4>
+                  <h4 className="text-sm font-black text-[#1d1d1f] mb-2 leading-tight group-hover:text-[#0c64ef] transition-colors line-clamp-2">{task.name}</h4>
                   
                   {task.notes && (
                     <p className="text-[10px] font-bold text-[#86868b] line-clamp-2 mb-4 leading-relaxed group-hover:text-[#424245]">
@@ -168,11 +169,11 @@ function BoardColumn({
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-center text-[8px] font-black text-[#86868b] uppercase tracking-widest">
                           <span>Progression</span>
-                          <span className="text-[#0071e3] tabular-nums">{Math.round(progress)}%</span>
+                          <span className="text-[#0c64ef] tabular-nums">{Math.round(progress)}%</span>
                         </div>
                         <div className="h-1 w-full bg-[#f5f5f7] rounded-full overflow-hidden">
                           <motion.div 
-                            className="h-full bg-gradient-to-r from-[#0071e3] to-[#4096ee] rounded-full"
+                            className="h-full bg-gradient-to-r from-[#0c64ef] to-[#4096ee] rounded-full"
                             initial={{ width: 0 }}
                             animate={{ width: `${progress}%` }}
                             transition={{ duration: 1, ease: "easeOut" }}
@@ -187,9 +188,12 @@ function BoardColumn({
                           const emp = employees.find(e => e.id === id);
                           return (
                             <div key={`${task.id}-${id}`} className="w-6 h-6 rounded-full bg-gradient-to-br from-[#1d1d1f] to-[#434343] p-[1.5px] border-2 border-white shadow-sm" style={{ zIndex: 10 - index }}>
-                              <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-[8px] font-black uppercase text-[#1d1d1f]">
-                                {emp?.name?.charAt(0) || '?'}
-                              </div>
+                              <UserAvatar
+                                name={emp?.name || '?'}
+                                avatarUrl={emp?.avatar_url}
+                                className="w-full h-full rounded-full bg-white text-[#1d1d1f]"
+                                textClassName="text-[8px] font-black uppercase"
+                              />
                             </div>
                           );
                         })}
@@ -311,7 +315,7 @@ export function ManagerBoardView({
                 <circle cx="64" cy="64" r="56" className="stroke-[#f0f0f2] stroke-[10] fill-none" />
                 <circle 
                   cx="64" cy="64" r="56" 
-                  className="stroke-[#0071e3] stroke-[10] fill-none transition-all duration-1000 ease-out"
+                  className="stroke-[#0c64ef] stroke-[10] fill-none transition-all duration-1000 ease-out"
                   style={{ 
                     strokeDasharray: '352',
                     strokeDashoffset: 352 - (352 * (boardStats.completed / (boardStats.total || 1)))
@@ -327,7 +331,7 @@ export function ManagerBoardView({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-sm">
               <div className="p-4 bg-[#f5f5f7] rounded-3xl border border-white/50">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-[#0071e3]"></div>
+                  <div className="w-2 h-2 rounded-full bg-[#0c64ef]"></div>
                   <span className="text-[9px] font-black text-[#86868b] tracking-wider uppercase">Total Assigned</span>
                 </div>
                 <p className="text-2xl font-black text-[#1d1d1f]">{boardStats.total}</p>

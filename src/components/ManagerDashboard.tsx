@@ -21,6 +21,7 @@ const WorkloadHeatmap = dynamic(() => import('@/components/WorkloadHeatmap').the
     loading: () => <div className="h-64 w-full animate-pulse bg-slate-100 rounded-2xl flex items-center justify-center font-bold text-slate-400">Loading Workload...</div>
 });
 import { Pencil, Trash2, Clock } from 'lucide-react';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { createClient } from '@/utils/supabase/client';
 
 type InitialDashboardData = {
@@ -38,6 +39,7 @@ type InitialDashboardData = {
 export default function ManagerDashboard({
     userId,
     userName,
+    userAvatarUrl,
     projectId,
     userRole,
     orgId,
@@ -45,6 +47,7 @@ export default function ManagerDashboard({
 }: {
     userId: string,
     userName: string,
+    userAvatarUrl?: string | null,
     projectId?: string,
     userRole: 'employee' | 'manager',
     orgId: string,
@@ -859,7 +862,7 @@ export default function ManagerDashboard({
     if (loading && tasks.length === 0) {
         return (
             <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
-                <div className="w-12 h-12 border-4 border-[#0071e3] border-t-transparent rounded-full animate-spin mb-4"></div>
+                <div className="w-12 h-12 border-4 border-[#0c64ef] border-t-transparent rounded-full animate-spin mb-4"></div>
                 <div className="text-xl font-bold text-[#1d1d1f] animate-pulse">Initializing Management System...</div>
             </div>
         );
@@ -867,8 +870,9 @@ export default function ManagerDashboard({
 
     return (
         <div className="flex h-screen bg-[#f5f5f7] overflow-hidden">
-            <ManagerSidebar 
+            <ManagerSidebar
                 userName={userName}
+                userAvatarUrl={userAvatarUrl}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isMobileMenuOpen={isMobileMenuOpen}
@@ -955,9 +959,12 @@ export default function ManagerDashboard({
                                         .slice(0, 20) // Limit to top 20 for performance
                                         .map((log) => (
                                             <div key={log.id} className="flex gap-4 p-4 rounded-2xl hover:bg-[#f5f5f7] transition-all border border-transparent hover:border-[#eceef0] group/log">
-                                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0 font-black text-[12px] text-[#1d1d1f] border border-[#eceef0] shadow-sm group-hover/log:border-[#0071e3] group-hover/log:text-[#0071e3] transition-colors">
-                                                    {log.actor_name?.charAt(0) || 'S'}
-                                                </div>
+                                                <UserAvatar
+                                                    name={log.actor_name || 'S'}
+                                                    avatarUrl={employees.find(e => e.id === log.actor_id)?.avatar_url}
+                                                    className="w-10 h-10 rounded-full bg-white flex-shrink-0 border border-[#eceef0] shadow-sm group-hover/log:border-[#0c64ef] transition-colors"
+                                                    textClassName="font-black text-[12px] text-[#1d1d1f]"
+                                                />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[13px] font-medium text-[#1d1d1f] leading-relaxed group-hover/log:text-black transition-colors">
                                                         {formatAuditEntry(log)}
@@ -983,7 +990,7 @@ export default function ManagerDashboard({
                                     <h3 className="text-base font-black text-[#1d1d1f] tracking-tight">Communication Center</h3>
                                     <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-widest mt-0.5">Alert Broadcast System</p>
                                 </div>
-                                <Button onClick={() => setShowBroadcastModal(true)} className="w-full sm:w-auto rounded-lg h-9 px-6 bg-[#0071e3] text-white font-bold text-[10px] tracking-tight shadow-sm hover:bg-[#005bb7] transition-colors">📢 BROADCAST ALERT</Button>
+                                <Button onClick={() => setShowBroadcastModal(true)} className="w-full sm:w-auto rounded-lg h-9 px-6 bg-[#0c64ef] text-white font-bold text-[10px] tracking-tight shadow-sm hover:bg-[#005bb7] transition-colors">📢 BROADCAST ALERT</Button>
                             </div>
                             
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -993,13 +1000,13 @@ export default function ManagerDashboard({
                                     <div className="flex bg-[#f5f5f7] p-0.5 rounded-lg border border-[#e5e5ea]">
                                         <button 
                                             onClick={() => setMemberFormMode('invite')} 
-                                            className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tight transition-all ${memberFormMode === 'invite' ? 'bg-white shadow-sm text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+                                            className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tight transition-all ${memberFormMode === 'invite' ? 'bg-white shadow-sm text-[#0c64ef]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
                                         >
                                             INVITE
                                         </button>
                                         <button 
                                             onClick={() => setMemberFormMode('direct')} 
-                                            className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tight transition-all ${memberFormMode === 'direct' ? 'bg-white shadow-sm text-[#0071e3]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+                                            className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tight transition-all ${memberFormMode === 'direct' ? 'bg-white shadow-sm text-[#0c64ef]' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
                                         >
                                             DIRECT
                                         </button>
@@ -1010,14 +1017,14 @@ export default function ManagerDashboard({
                                     <form onSubmit={handleInviteMember} className="space-y-4">
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
-                                            <input type="email" required value={inviteForm.email} onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })} placeholder="colleague@company.com" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
+                                            <input type="email" required value={inviteForm.email} onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })} placeholder="colleague@company.com" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0c64ef]" />
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>
                                             <select 
                                                 value={inviteForm.role} 
                                                 onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
-                                                className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0071e3]"
+                                                className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#0c64ef]"
                                             >
                                                 <option value="employee">Employee</option>
                                                 <option value="manager">Manager</option>
@@ -1029,14 +1036,14 @@ export default function ManagerDashboard({
                                                 {inviteResult.text}
                                             </p>
                                         )}
-                                        <button type="submit" className="w-full h-10 rounded-xl bg-[#0071e3] text-white font-black tracking-widest text-[10px] mt-2 shadow-sm hover:bg-[#005bb7] transition-colors">SEND INVITATION</button>
+                                        <button type="submit" className="w-full h-10 rounded-xl bg-[#0c64ef] text-white font-black tracking-widest text-[10px] mt-2 shadow-sm hover:bg-[#005bb7] transition-colors">SEND INVITATION</button>
                                     </form>
                                 ) : (
                                     <form onSubmit={handleDirectAdd} className="space-y-4">
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1.5">
                                                 <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
-                                                <input required value={directAddForm.name} onChange={e => setDirectAddForm({ ...directAddForm, name: e.target.value })} placeholder="John Doe" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
+                                                <input required value={directAddForm.name} onChange={e => setDirectAddForm({ ...directAddForm, name: e.target.value })} placeholder="John Doe" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0c64ef]" />
                                             </div>
                                             <div className="space-y-1.5">
                                                 <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>
@@ -1052,11 +1059,11 @@ export default function ManagerDashboard({
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
-                                            <input type="email" required value={directAddForm.email} onChange={e => setDirectAddForm({ ...directAddForm, email: e.target.value })} placeholder="email@example.com" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
+                                            <input type="email" required value={directAddForm.email} onChange={e => setDirectAddForm({ ...directAddForm, email: e.target.value })} placeholder="email@example.com" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0c64ef]" />
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Temp Password</label>
-                                            <input type="text" required value={directAddForm.password} onChange={e => setDirectAddForm({ ...directAddForm, password: e.target.value })} placeholder="Min 6 chars" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" />
+                                            <input type="text" required value={directAddForm.password} onChange={e => setDirectAddForm({ ...directAddForm, password: e.target.value })} placeholder="Min 6 chars" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0c64ef]" />
                                         </div>
                                         
                                         {inviteResult && (
@@ -1075,15 +1082,18 @@ export default function ManagerDashboard({
                                 </h3>
                                 <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                                     {(projectId ? projectMembers : employees).filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map(emp => (
-                                        <div key={emp.id} className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] flex items-center justify-between group hover:border-[#0071e3] transition-colors min-w-0">
+                                        <div key={emp.id} className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea] flex items-center justify-between group hover:border-[#0c64ef] transition-colors min-w-0">
                                             <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                <div className="w-8 h-8 rounded-full bg-white border border-[#e5e5ea] flex items-center justify-center text-[10px] font-black shadow-sm group-hover:bg-[#0071e3] group-hover:text-white transition-all flex-shrink-0">
-                                                    {emp.name.charAt(0)}
-                                                </div>
+                                                <UserAvatar
+                                                    name={emp.name}
+                                                    avatarUrl={emp.avatar_url}
+                                                    className="w-8 h-8 rounded-full bg-white border border-[#e5e5ea] shadow-sm group-hover:bg-[#0c64ef] transition-all flex-shrink-0"
+                                                    textClassName="text-[10px] font-black text-[#1d1d1f] group-hover:text-white"
+                                                />
                                                     <div className="min-w-0">
                                                         <div className="flex items-center gap-1.5">
                                                             <p className="text-[11px] font-bold text-[#1d1d1f] truncate leading-tight">{emp.name}</p>
-                                                            {emp.role === 'manager' && <Badge className="bg-[#0071e3] text-white border-none text-[7px] px-1.5 flex-shrink-0">ADMIN</Badge>}
+                                                            {emp.role === 'manager' && <Badge className="bg-[#0c64ef] text-white border-none text-[7px] px-1.5 flex-shrink-0">ADMIN</Badge>}
                                                         </div>
                                                         <p className="text-[9px] font-medium text-[#86868b] truncate leading-none">{emp.email}</p>
                                                     </div>
@@ -1162,10 +1172,11 @@ export default function ManagerDashboard({
 
                     {activeTab === 'settings' && (
                         <div className="fade-in">
-                            <SettingsView 
-                                userId={userId} 
-                                userName={userName} 
-                                initialProfileName={profileName} 
+                            <SettingsView
+                                userId={userId}
+                                userName={userName}
+                                initialProfileName={profileName}
+                                initialAvatarUrl={userAvatarUrl}
                                 isManager={true}
                             />
                         </div>
@@ -1205,7 +1216,7 @@ export default function ManagerDashboard({
                                 <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">New Password (leave blank to keep current)</label>
                                 <Input type="password" value={editEmpForm.password} onChange={e => setEditEmpForm({ ...editEmpForm, password: e.target.value })} placeholder="••••••••" className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
                             </div>
-                            <Button type="submit" className="w-full h-16 rounded-[28px] font-black tracking-widest shadow-2xl shadow-[#0071e3]/30 mt-4">SAVE CHANGES</Button>
+                            <Button type="submit" className="w-full h-16 rounded-[28px] font-black tracking-widest shadow-2xl shadow-[#0c64ef]/30 mt-4">SAVE CHANGES</Button>
                         </form>
                     </Card>
                 </div>
@@ -1266,7 +1277,7 @@ export default function ManagerDashboard({
                                                                 : [...current, emp.id];
                                                             setAssignForm({ ...assignForm, assignee_ids: next });
                                                         }}
-                                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${isSelected ? 'bg-[#0071e3] text-white shadow-md' : 'bg-white text-[#86868b] hover:bg-[#e5e5ea]'}`}
+                                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${isSelected ? 'bg-[#0c64ef] text-white shadow-md' : 'bg-white text-[#86868b] hover:bg-[#e5e5ea]'}`}
                                                     >
                                                         {emp.name}
                                                     </button>
@@ -1310,7 +1321,7 @@ export default function ManagerDashboard({
                                 </div>
                             </div>
 
-                            <Button type="submit" className="w-full h-16 rounded-[28px] font-black tracking-widest shadow-2xl shadow-[#0071e3]/30 mt-4">DISPATCH TASK</Button>
+                            <Button type="submit" className="w-full h-16 rounded-[28px] font-black tracking-widest shadow-2xl shadow-[#0c64ef]/30 mt-4">DISPATCH TASK</Button>
                         </form>
                     </Card>
                 </div>
@@ -1362,7 +1373,7 @@ export default function ManagerDashboard({
                                     value={broadcastForm.message} 
                                     onChange={e => setBroadcastForm({ ...broadcastForm, message: e.target.value })} 
                                     placeholder="Type your message to all employees..."
-                                    className="w-full h-40 rounded-3xl bg-[#f5f5f7] border-none p-6 text-sm font-bold resize-none outline-none ring-2 ring-transparent focus:ring-[#0071e3]/20"
+                                    className="w-full h-40 rounded-3xl bg-[#f5f5f7] border-none p-6 text-sm font-bold resize-none outline-none ring-2 ring-transparent focus:ring-[#0c64ef]/20"
                                 />
                             </div>
                             <Button type="submit" disabled={isBroadcasting} className="w-full h-16 rounded-[28px] font-black tracking-widest shadow-2xl shadow-[#ff9500]/30 mt-4 bg-[#ff9500] hover:bg-[#ff8c00]">

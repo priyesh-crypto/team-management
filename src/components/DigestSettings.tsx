@@ -48,7 +48,7 @@ export function DigestSettings() {
     if (loading) {
         return (
             <div className="flex items-center justify-center p-12">
-                <Loader2 className="w-6 h-6 animate-spin text-[#0071e3]" />
+                <Loader2 className="w-6 h-6 animate-spin text-[#0c64ef]" />
             </div>
         );
     }
@@ -58,7 +58,7 @@ export function DigestSettings() {
             <div className="bg-[#f5f5f7] rounded-3xl p-8 border border-[#e5e5ea]/50">
                 <div className="flex items-start gap-4 mb-8">
                     <div className="p-3 bg-white rounded-2xl shadow-sm border border-[#e5e5ea]">
-                        <Bell className="w-5 h-5 text-[#0071e3]" />
+                        <Bell className="w-5 h-5 text-[#0c64ef]" />
                     </div>
                     <div>
                         <h4 className="text-lg font-black text-[#1d1d1f] tracking-tight mb-1">Daily Task Digest</h4>
@@ -80,7 +80,7 @@ export function DigestSettings() {
                                     className={cn(
                                         "px-4 py-3 rounded-2xl text-xs font-bold transition-all duration-300 border-2",
                                         prefs.channel === c
-                                            ? "bg-white border-[#0071e3] text-[#0071e3] shadow-md"
+                                            ? "bg-white border-[#0c64ef] text-[#0c64ef] shadow-md"
                                             : "bg-[#f5f5f7] border-transparent text-[#86868b] hover:bg-white hover:border-[#e5e5ea]"
                                     )}
                                 >
@@ -101,7 +101,7 @@ export function DigestSettings() {
                                 value={prefs.slack_user_id || ''}
                                 onChange={(e) => setPrefs({ ...prefs, slack_user_id: e.target.value })}
                                 placeholder="e.g. U0123456789"
-                                className="w-full bg-white border border-[#e5e5ea] rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0071e3]/20 focus:border-[#0071e3] transition-all"
+                                className="w-full bg-white border border-[#e5e5ea] rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20 focus:border-[#0c64ef] transition-all"
                             />
                         </div>
                     )}
@@ -115,7 +115,7 @@ export function DigestSettings() {
                             type="time"
                             value={prefs.send_time || '08:00'}
                             onChange={(e) => setPrefs({ ...prefs, send_time: e.target.value })}
-                            className="w-full bg-white border border-[#e5e5ea] rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0071e3]/20 focus:border-[#0071e3] transition-all"
+                            className="w-full bg-white border border-[#e5e5ea] rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20 focus:border-[#0c64ef] transition-all"
                         />
                     </div>
 
@@ -127,7 +127,7 @@ export function DigestSettings() {
                         <select
                             value={prefs.timezone || 'Asia/Kolkata'}
                             onChange={(e) => setPrefs({ ...prefs, timezone: e.target.value })}
-                            className="w-full bg-white border border-[#e5e5ea] rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0071e3]/20 focus:border-[#0071e3] transition-all appearance-none cursor-pointer"
+                            className="w-full bg-white border border-[#e5e5ea] rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20 focus:border-[#0c64ef] transition-all appearance-none cursor-pointer"
                         >
                             <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
                             <option value="UTC">UTC</option>

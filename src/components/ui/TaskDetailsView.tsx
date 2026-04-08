@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Card, Button, Badge, Select, Input } from './components';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { 
     Task, 
     Subtask, 
@@ -388,7 +389,7 @@ export function TaskDetailsView({
             <div className="px-10 pt-10 pb-6 bg-white sticky top-0 z-20">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#0071e3] shadow-sm">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#0c64ef] shadow-sm">
                             <LayoutDashboard size={22} strokeWidth={2} />
                         </div>
                         <div>
@@ -468,14 +469,14 @@ export function TaskDetailsView({
                                         />
                                     </div>
                                 </div>
-                                <Button onClick={handleSaveEdit} disabled={isSaving} className="w-full h-12 rounded-xl bg-[#0071e3] hover:bg-[#0077ed] text-white font-bold tracking-widest text-[10px] uppercase shadow-lg shadow-blue-100">
+                                <Button onClick={handleSaveEdit} disabled={isSaving} className="w-full h-12 rounded-xl bg-[#0c64ef] hover:bg-[#0077ed] text-white font-bold tracking-widest text-[10px] uppercase shadow-lg shadow-blue-100">
                                     {isSaving ? 'Saving...' : 'Save Changes'}
                                 </Button>
                             </div>
                         ) : (
                             <div className="space-y-6">
                                 <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-3">
-                                    <Info size={14} className="text-[#0071e3]" strokeWidth={2.5} />
+                                    <Info size={14} className="text-[#0c64ef]" strokeWidth={2.5} />
                                     <span>Description</span>
                                 </h3>
                                 <div className="bg-slate-50/50 p-6 rounded-[24px] border border-slate-100">
@@ -491,7 +492,7 @@ export function TaskDetailsView({
                     <section>
                         <div className="flex items-center justify-between mb-8">
                             <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-3">
-                                <Timer size={14} className="text-[#0071e3]" strokeWidth={2.5} />
+                                <Timer size={14} className="text-[#0c64ef]" strokeWidth={2.5} />
                                 <span>Work Logs & Time Tracking</span>
                                 <Badge variant="secondary" className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 rounded-lg">{subtasks.length}</Badge>
                             </h3>
@@ -546,8 +547,8 @@ export function TaskDetailsView({
                                         <div className="flex flex-col items-end shrink-0 min-w-[70px]">
                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Total</span>
                                             <div className="flex items-baseline gap-1">
-                                                <span className="text-base font-black text-[#0071e3] tabular-nums">{isNaN(subtaskForm.hours) ? '0' : subtaskForm.hours}</span>
-                                                <span className="text-[8px] font-black text-[#0071e3] uppercase tracking-widest">Hrs</span>
+                                                <span className="text-base font-black text-[#0c64ef] tabular-nums">{isNaN(subtaskForm.hours) ? '0' : subtaskForm.hours}</span>
+                                                <span className="text-[8px] font-black text-[#0c64ef] uppercase tracking-widest">Hrs</span>
                                             </div>
                                         </div>
                                     </div>
@@ -559,7 +560,7 @@ export function TaskDetailsView({
                                                 "w-full h-11 rounded-2xl font-black text-[9px] uppercase tracking-[0.1em] flex items-center justify-center gap-3 transition-all shadow-sm active:scale-95",
                                                 activeTimerStart 
                                                     ? "bg-red-500 text-white shadow-red-100" 
-                                                    : "bg-[#0071e3] text-white hover:bg-[#0077ed]"
+                                                    : "bg-[#0c64ef] text-white hover:bg-[#0077ed]"
                                             )}
                                         >
                                             <Clock size={16} strokeWidth={3} className={cn(activeTimerStart && "animate-pulse")} />
@@ -582,7 +583,7 @@ export function TaskDetailsView({
                                 subtasks.sort((a,b) => new Date(b.date_logged || '').getTime() - new Date(a.date_logged || '').getTime()).map((sub) => (
                                     <div key={sub.id} className="group">
                                         {editingSubtaskId === sub.id ? (
-                                            <div className="p-6 bg-white rounded-2xl border-2 border-[#0071e3] space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                                            <div className="p-6 bg-white rounded-2xl border-2 border-[#0c64ef] space-y-4 animate-in fade-in zoom-in-95 duration-200">
                                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                                     <div className="md:col-span-3">
                                                         <Input 
@@ -628,19 +629,19 @@ export function TaskDetailsView({
                                                         <div className="h-6 w-[1px] bg-slate-100 mx-2" />
                                                         <div className="flex flex-col items-end">
                                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total</span>
-                                                            <span className="text-sm font-black text-[#0071e3] tabular-nums">{editSubtaskForm.hours}h</span>
+                                                            <span className="text-sm font-black text-[#0c64ef] tabular-nums">{editSubtaskForm.hours}h</span>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <button onClick={() => setEditingSubtaskId(null)} className="h-10 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">Cancel</button>
-                                                        <Button onClick={() => handleUpdateSubtask(sub.id)} disabled={isUpdatingSubtask} className="h-10 px-6 rounded-xl bg-[#0071e3] text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-blue-100">
+                                                        <Button onClick={() => handleUpdateSubtask(sub.id)} disabled={isUpdatingSubtask} className="h-10 px-6 rounded-xl bg-[#0c64ef] text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-blue-100">
                                                             {isUpdatingSubtask ? '...' : 'Save'}
                                                         </Button>
                                                     </div>
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between hover:border-[#0071e3] transition-all duration-300">
+                                            <div className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between hover:border-[#0c64ef] transition-all duration-300">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-800 font-bold text-[11px]">
                                                         {sub.hours_spent}h
@@ -665,7 +666,7 @@ export function TaskDetailsView({
                                                         <>
                                                             <button 
                                                                 onClick={() => startEditingSubtask(sub)}
-                                                                className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-[#0071e3] transition-all rounded-lg"
+                                                                className="opacity-0 group-hover:opacity-100 p-2 text-slate-300 hover:text-[#0c64ef] transition-all rounded-lg"
                                                             >
                                                                 <PencilIcon size={14} />
                                                             </button>
@@ -693,7 +694,7 @@ export function TaskDetailsView({
                     {/* Attachments grid */}
                     <section>
                         <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-3">
-                            <Paperclip size={14} className="text-[#0071e3]" strokeWidth={2.5} />
+                            <Paperclip size={14} className="text-[#0c64ef]" strokeWidth={2.5} />
                             <span>Resources</span>
                             <Badge variant="secondary" className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 rounded-lg">{attachments.length}</Badge>
                         </h3>
@@ -705,7 +706,7 @@ export function TaskDetailsView({
                             onClick={() => fileInputRef.current?.click()}
                             className={`mb-8 p-10 rounded-[24px] border-2 border-dashed cursor-pointer transition-all duration-300 flex flex-col items-center justify-center gap-3 ${
                                 isDragging
-                                    ? 'border-[#0071e3] bg-[#0071e3]/5 shadow-inner'
+                                    ? 'border-[#0c64ef] bg-[#0c64ef]/5 shadow-inner'
                                     : isUploading
                                     ? 'border-slate-200 bg-slate-50'
                                     : 'border-slate-200 bg-slate-50/30 hover:bg-slate-50 hover:border-slate-300'
@@ -719,7 +720,7 @@ export function TaskDetailsView({
                                 onChange={(e) => handleFileUpload(e.target.files)}
                             />
                             <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-slate-400">
-                                {isUploading ? <div className="w-5 h-5 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin"></div> : <Upload size={20} />}
+                                {isUploading ? <div className="w-5 h-5 border-2 border-[#0c64ef] border-t-transparent rounded-full animate-spin"></div> : <Upload size={20} />}
                             </div>
                             <div className="text-center">
                                 <p className="text-[10px] font-bold text-slate-900 uppercase tracking-widest">{isUploading ? 'Uploading...' : 'Drop files here'}</p>
@@ -730,7 +731,7 @@ export function TaskDetailsView({
                         {attachments.length > 0 && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {attachments.map((file) => (
-                                    <div key={file.id} className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between group/file hover:border-[#0071e3] transition-all duration-300">
+                                    <div key={file.id} className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between group/file hover:border-[#0c64ef] transition-all duration-300">
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
                                                 <Paperclip size={16} />
@@ -743,7 +744,7 @@ export function TaskDetailsView({
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-1 ml-auto">
-                                            <a href={file.file_url} target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-[#0071e3] transition-colors rounded-lg">
+                                            <a href={file.file_url} target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-[#0c64ef] transition-colors rounded-lg">
                                                 <ExternalLink size={14} />
                                             </a>
                                             {(isManager || file.uploader_id === currentUserId) && (
@@ -773,9 +774,12 @@ export function TaskDetailsView({
                         <div className="space-y-8 mb-8">
                             {comments.map((comment) => (
                                 <div key={comment.id} className="flex gap-4 group">
-                                    <div className="w-10 h-10 bg-[#1d1d1f] rounded-xl flex items-center justify-center text-white font-black text-[12px] flex-shrink-0 shadow-lg shadow-black/10">
-                                        {comment.author_name?.charAt(0)}
-                                    </div>
+                                    <UserAvatar
+                                        name={comment.author_name || '?'}
+                                        avatarUrl={comment.author_avatar_url}
+                                        className="w-10 h-10 rounded-xl bg-[#1d1d1f] flex-shrink-0 shadow-lg shadow-black/10"
+                                        textClassName="text-white font-black text-[12px]"
+                                    />
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-2 px-1">
                                             <div className="flex items-center gap-3">
@@ -794,7 +798,7 @@ export function TaskDetailsView({
                                                 </button>
                                             )}
                                         </div>
-                                        <div className="bg-slate-50/50 px-5 py-4 rounded-[20px] border border-slate-100 group-hover:border-[#0071e3]/30 transition-all">
+                                        <div className="bg-slate-50/50 px-5 py-4 rounded-[20px] border border-slate-100 group-hover:border-[#0c64ef]/30 transition-all">
                                             <p className="text-sm text-slate-700 font-medium leading-relaxed">{comment.content}</p>
                                         </div>
                                     </div>
@@ -807,7 +811,7 @@ export function TaskDetailsView({
                                 value={newComment}
                                 onChange={e => setNewComment(e.target.value)}
                                 placeholder="Write a comment..."
-                                className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#0071e3]/30 text-slate-800 rounded-[20px] px-5 py-4 text-sm font-medium min-h-[100px] outline-none transition-all placeholder-slate-400 resize-none shadow-inner"
+                                className="w-full bg-slate-50 border border-slate-100 focus:bg-white focus:border-[#0c64ef]/30 text-slate-800 rounded-[20px] px-5 py-4 text-sm font-medium min-h-[100px] outline-none transition-all placeholder-slate-400 resize-none shadow-inner"
                                 onKeyDown={e => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                         e.preventDefault();
@@ -819,7 +823,7 @@ export function TaskDetailsView({
                                 <button 
                                     onClick={handleAddComment}
                                     disabled={isCommenting || !newComment.trim()}
-                                    className="px-4 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-[#0071e3] transition-all disabled:opacity-30 font-bold text-[9px] uppercase tracking-widest"
+                                    className="px-4 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-[#0c64ef] transition-all disabled:opacity-30 font-bold text-[9px] uppercase tracking-widest"
                                 >
                                     {isCommenting ? '...' : 'Send'}
                                 </button>
@@ -875,7 +879,7 @@ export function TaskDetailsView({
                         {/* Assignees */}
                         <div className="space-y-4">
                             <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Users size={12} className="text-[#0071e3]" />
+                                <Users size={12} className="text-[#0c64ef]" />
                                 <span>Collaborators</span>
                             </h4>
                             <div className="space-y-2.5">
@@ -884,9 +888,12 @@ export function TaskDetailsView({
                                     if (!emp) return null;
                                     return (
                                         <div key={`view-assignee-${id}`} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group">
-                                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[11px] font-bold text-slate-600">
-                                                {emp.name?.charAt(0) || '?'}
-                                            </div>
+                                            <UserAvatar
+                                                name={emp.name || '?'}
+                                                avatarUrl={emp.avatar_url}
+                                                className="w-8 h-8 rounded-lg bg-slate-100"
+                                                textClassName="text-[11px] font-bold text-slate-600"
+                                            />
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-[12px] font-bold text-slate-800 leading-tight truncate">{emp.name}</p>
                                                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{id === task.employee_id ? 'Author' : 'Member'}</p>
@@ -909,7 +916,7 @@ export function TaskDetailsView({
                                                                 : [...current, emp.id];
                                                             setEditData({ ...editData, assignee_ids: next });
                                                         }}
-                                                        className={`px-2 py-1.5 rounded-lg text-[8px] font-bold transition-all border uppercase tracking-widest ${isSelected ? 'bg-[#0071e3] text-white border-transparent' : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100'}`}
+                                                        className={`px-2 py-1.5 rounded-lg text-[8px] font-bold transition-all border uppercase tracking-widest ${isSelected ? 'bg-[#0c64ef] text-white border-transparent' : 'bg-slate-50 text-slate-400 border-transparent hover:bg-slate-100'}`}
                                                     >
                                                         {emp.name}
                                                     </button>

@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Card, Button } from '@/components/ui/components';
-import { updateProfile, changePassword } from '@/app/actions/actions';
+import { Card } from '@/components/ui/components';
+import { updateProfile, changePassword, uploadAvatar } from '@/app/actions/actions';
+import { DataSummaryTable } from '@/components/dashboard/DataSummaryTable';
+import { RequestExportButton, RequestDeletionButton } from '@/components/dashboard/GdprControls';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 const DigestSettings = dynamic(() => import('@/components/DigestSettings').then(m => ({ default: m.DigestSettings })), { 
     ssr: false,
@@ -14,15 +17,42 @@ interface SettingsViewProps {
     userId: string;
     userName: string;
     initialProfileName: string;
+    initialAvatarUrl?: string | null;
     isManager?: boolean;
 }
 
-export function SettingsView({ userId, userName, initialProfileName, isManager = false }: SettingsViewProps) {
+export function SettingsView({ userId, userName, initialProfileName, initialAvatarUrl, isManager = false }: SettingsViewProps) {
     const [profileName, setProfileName] = useState(initialProfileName);
     const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
     const [passwords, setPasswords] = useState({ new: '', confirm: '' });
     const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
     const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [avatarUrl, setAvatarUrl] = useState<string | null | undefined>(initialAvatarUrl);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsUploadingAvatar(true);
+        setProfileMsg(null);
+        try {
+            const fd = new FormData();
+            fd.append('avatar', file);
+            const res = await uploadAvatar(fd);
+            if (res.error) {
+                setProfileMsg({ type: 'error', text: res.error });
+            } else {
+                setAvatarUrl(res.url);
+                setProfileMsg({ type: 'success', text: 'Profile picture updated!' });
+            }
+        } catch (err: any) {
+            setProfileMsg({ type: 'error', text: err.message || 'Upload failed.' });
+        } finally {
+            setIsUploadingAvatar(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -67,14 +97,40 @@ export function SettingsView({ userId, userName, initialProfileName, isManager =
     return (
         <div className="max-w-2xl mx-auto space-y-6 py-4 pb-20">
             <div className="flex items-center gap-6 mb-10 pb-8 border-b border-[#f0f0f2]">
-                <div className="w-16 h-16 bg-[#0071e3] rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-sm">
-                    {(profileName || userName).charAt(0)}
+                <div className="relative group shrink-0">
+                    <UserAvatar
+                        name={profileName || userName}
+                        avatarUrl={avatarUrl}
+                        className="w-16 h-16 rounded-2xl bg-[#0c64ef] shadow-sm"
+                        textClassName="text-white text-2xl font-black"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingAvatar}
+                        className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity disabled:cursor-wait"
+                        title="Change photo"
+                    >
+                        {isUploadingAvatar
+                            ? <span className="text-white text-[10px] font-black">...</span>
+                            : <span className="text-white text-lg">📷</span>
+                        }
+                    </button>
+                    <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleAvatarUpload} />
                 </div>
                 <div>
                     <h2 className="text-xl font-black text-[#1d1d1f] tracking-tight">{profileName || userName}</h2>
                     <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest leading-none mt-1">
                         {isManager ? 'Workspace Admin' : 'Team Member'}
                     </p>
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingAvatar}
+                        className="mt-2 text-[9px] font-black uppercase tracking-widest text-[#0c64ef] hover:underline disabled:opacity-50"
+                    >
+                        {isUploadingAvatar ? 'Uploading...' : 'Change photo'}
+                    </button>
                 </div>
             </div>
 
@@ -91,6 +147,47 @@ export function SettingsView({ userId, userName, initialProfileName, isManager =
                     <h3 className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.3em] mb-6">Task Digest</h3>
                     <DigestSettings />
                 </section>
+
+                {/* ── Privacy & Data ─────────────────────────────── */}
+                <section>
+                    <h3 className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.3em] mb-6">Privacy &amp; Data</h3>
+                    <div className="space-y-4">
+
+                        <Card className="p-6 rounded-2xl border-[#eceef0]">
+                            <h4 className="text-[10px] font-black mb-1 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">📦</span>
+                                Download your data
+                            </h4>
+                            <p className="text-[11px] text-[#86868b] mb-4 leading-relaxed">
+                                Get a copy of everything we hold about you — tasks, comments, audit
+                                activity, and preferences — as a JSON file.
+                            </p>
+                            <RequestExportButton />
+                        </Card>
+
+                        <Card className="p-6 rounded-2xl border-[#eceef0]">
+                            <h4 className="text-[10px] font-black mb-1 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-lg bg-red-50 flex items-center justify-center text-xs">🗑</span>
+                                Delete your account
+                            </h4>
+                            <p className="text-[11px] text-[#86868b] mb-4 leading-relaxed">
+                                Your personal details will be anonymised immediately. Tasks you
+                                created stay visible to your team, attributed to &ldquo;Deleted User&rdquo;.
+                                This cannot be undone.
+                            </p>
+                            <RequestDeletionButton />
+                        </Card>
+
+                        <Card className="p-6 rounded-2xl border-[#eceef0] bg-[#fafafa]">
+                            <h4 className="text-[10px] font-black mb-4 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">🔍</span>
+                                What we store about you
+                            </h4>
+                            <DataSummaryTable />
+                        </Card>
+
+                    </div>
+                </section>
                 
                 <Card className="p-6 rounded-2xl border-[#eceef0]">
                     <h3 className="text-[10px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
@@ -103,7 +200,7 @@ export function SettingsView({ userId, userName, initialProfileName, isManager =
                             <input 
                                 value={profileName} 
                                 onChange={e => setProfileName(e.target.value)} 
-                                className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" 
+                                className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0c64ef]" 
                             />
                         </div>
                         <button 
@@ -129,7 +226,7 @@ export function SettingsView({ userId, userName, initialProfileName, isManager =
                                     type="password" 
                                     value={passwords.new} 
                                     onChange={e => setPasswords({ ...passwords, new: e.target.value })} 
-                                    className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" 
+                                    className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0c64ef]" 
                                     placeholder="••••••••" 
                                 />
                             </div>
@@ -139,7 +236,7 @@ export function SettingsView({ userId, userName, initialProfileName, isManager =
                                     type="password" 
                                     value={passwords.confirm} 
                                     onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} 
-                                    className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0071e3]" 
+                                    className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0c64ef]" 
                                     placeholder="••••••••" 
                                 />
                             </div>

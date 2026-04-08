@@ -24,18 +24,20 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 
-export default function EmployeeDashboard({ 
-    userId, 
-    userName, 
-    projectId, 
-    userRole, 
+export default function EmployeeDashboard({
+    userId,
+    userName,
+    userAvatarUrl,
+    projectId,
+    userRole,
     orgId,
     initialData
-}: { 
-    userId: string, 
-    userName: string, 
-    projectId?: string, 
-    userRole: 'employee' | 'manager', 
+}: {
+    userId: string,
+    userName: string,
+    userAvatarUrl?: string | null,
+    projectId?: string,
+    userRole: 'employee' | 'manager',
     orgId: string,
     initialData?: any
 }) {
@@ -608,8 +610,9 @@ export default function EmployeeDashboard({
 
     return (
         <div className="flex h-screen bg-[#F9FAFB] overflow-hidden text-[#1d1d1f]">
-            <EmployeeSidebar 
+            <EmployeeSidebar
                 userName={userName}
+                userAvatarUrl={userAvatarUrl}
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 isMobileMenuOpen={isMobileMenuOpen}
@@ -679,10 +682,11 @@ export default function EmployeeDashboard({
 
                         {activeTab === 'settings' && (
                             <div className="fade-in">
-                                <SettingsView 
-                                    userId={userId} 
-                                    userName={userName} 
-                                    initialProfileName={profileName || userName} 
+                                <SettingsView
+                                    userId={userId}
+                                    userName={userName}
+                                    initialProfileName={profileName || userName}
+                                    initialAvatarUrl={userAvatarUrl}
                                 />
                             </div>
                         )}

@@ -17,6 +17,7 @@ export type Profile = {
     name: string
     role: 'employee' | 'manager' | 'admin' | 'owner'
     email?: string
+    avatar_url?: string | null
 }
 
 export type Priority = 'Urgent' | 'High' | 'Medium' | 'Low'
@@ -76,6 +77,7 @@ export type Comment = {
     content: string;
     created_at: string;
     author_name?: string;
+    author_avatar_url?: string | null;
 }
 
 export type Notification = {
@@ -120,6 +122,7 @@ export type WorkloadDayData = {
 
 export type WorkloadMemberData = {
     name: string;
+    avatar_url?: string | null;
     days: {
         [date: string]: WorkloadDayData;
     };
@@ -278,7 +281,8 @@ export async function getProfiles(projectId?: string, providedAuthUsers?: any[],
             id: m.user_id,
             name: p?.name || 'Team Member',
             email: p?.email || a?.email || '',
-            role: p?.role || m.role || 'employee'
+            role: p?.role || m.role || 'employee',
+            avatar_url: p?.avatar_url || null
         } as Profile;
     });
 }
@@ -337,8 +341,13 @@ export async function getTasks(projectId?: string, providedOrgId?: string): Prom
             .or(`org_id.eq.${orgId},org_id.is.null`);
         
         if (projectId && projectId !== 'all') {
+            // Specific project view — filter to that project only
             query = query.eq('project_id', projectId);
+        } else if (!projectId) {
+            // Main inbox view — only tasks with no project assigned
+            query = query.is('project_id', null);
         }
+        // projectId === 'all': no filter, return everything
 
         const { data, error } = await query;
         
@@ -748,7 +757,7 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
                             <h2 style="color: #1d1d1f; margin-bottom: 24px;">You've been invited!</h2>
                             <p style="color: #424245; line-height: 1.5;">You have been invited to join <strong>${orgName}</strong> as a <strong>${role}</strong>.</p>
                             <p style="color: #424245; line-height: 1.5; margin-bottom: 32px;">Click the button below to set up your account and get started:</p>
-                            <a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0071e3; color: white; text-decoration: none; border-radius: 980px; font-weight: 600; font-size: 14px;">Accept Invitation</a>
+                            <a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0c64ef; color: white; text-decoration: none; border-radius: 980px; font-weight: 600; font-size: 14px;">Accept Invitation</a>
                             <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e1e1e1;">
                                 <p style="font-size: 12px; color: #86868b; line-height: 1.4;">If you're having trouble clicking the button, copy and paste this URL into your browser:<br/>${inviteUrl}</p>
                                 <p style="font-size: 12px; color: #86868b; margin-top: 12px;">If you didn't expect this invitation, you can safely ignore this email.</p>
@@ -1347,7 +1356,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
             
             <div style="padding: 32px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">System Bot has completed a sub-task you are involved in</p>
-                ${isLastSubtask ? '<p style="margin: 0 0 24px 0; font-size: 14px; color: #0071e3; font-weight: 600;">You are now able to complete the parent task</p>' : ''}
+                ${isLastSubtask ? '<p style="margin: 0 0 24px 0; font-size: 14px; color: #0c64ef; font-weight: 600;">You are now able to complete the parent task</p>' : ''}
                 
                 <div style="margin-bottom: 32px;">
                     <div style="font-size: 12px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Parent Task</div>
@@ -1364,7 +1373,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
                         <tr>
                             <td style="padding: 6px 0; color: #86868b; font-weight: 600;">Progress</td>
                             <td style="padding: 6px 0;">
-                                <span style="color: #0071e3; font-weight: 800;">${progress}%</span>
+                                <span style="color: #0c64ef; font-weight: 800;">${progress}%</span>
                                 <span style="font-size: 11px; color: #86868b; margin-left: 4px;">(${completedCount}/${totalCount} sub-tasks)</span>
                             </td>
                         </tr>
@@ -1374,7 +1383,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
                         </tr>
                         <tr>
                             <td style="padding: 6px 0; color: #86868b; font-weight: 600;">Priority</td>
-                            <td style="padding: 6px 0;"><span style="background-color: ${task.priority === 'Urgent' ? '#ff3b30' : task.priority === 'High' ? '#ff9500' : '#0071e3'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase;">${task.priority}</span></td>
+                            <td style="padding: 6px 0;"><span style="background-color: ${task.priority === 'Urgent' ? '#ff3b30' : task.priority === 'High' ? '#ff9500' : '#0c64ef'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase;">${task.priority}</span></td>
                         </tr>
                         <tr>
                             <td style="padding: 12px 0 6px 0; color: #86868b; font-weight: 600;" colspan="2">Timeline</td>
@@ -1384,7 +1393,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
                         </tr>
                     </table>
                     
-                    <a href="${dashboardUrl}" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background-color: #0071e3; color: white; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 700;">View Task in Dashboard</a>
+                    <a href="${dashboardUrl}" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background-color: #0c64ef; color: white; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 700;">View Task in Dashboard</a>
                 </div>
 
                 <div style="border-top: 1px solid #e5e5ea; padding-top: 24px; font-size: 12px; color: #86868b; line-height: 1.5;">
@@ -1510,6 +1519,41 @@ export async function updateProfile(userId: string, data: { name: string }): Pro
     }
     revalidatePath('/dashboard')
     return { success: true };
+}
+
+export async function uploadAvatar(formData: FormData): Promise<{ url?: string; error?: string }> {
+    const context = await requireOrgContext().catch(() => null);
+    if (!context) return { error: 'Not authenticated' };
+
+    const file = formData.get('avatar') as File;
+    if (!file || file.size === 0) return { error: 'No file provided' };
+    if (file.size > 5 * 1024 * 1024) return { error: 'Image must be under 5 MB' };
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowed.includes(file.type)) return { error: 'Only JPEG, PNG, WebP, or GIF allowed' };
+
+    const supabase = await createClient();
+    const ext = file.type === 'image/jpeg' ? 'jpg' : file.type.split('/')[1];
+    const path = `${context.userId}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (uploadError) return { error: uploadError.message };
+
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+    // Append a version stamp so the browser doesn't serve a stale cached image
+    const avatar_url = `${urlData.publicUrl}?v=${Date.now()}`;
+
+    const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url })
+        .eq('id', context.userId);
+
+    if (updateError) return { error: updateError.message };
+
+    revalidatePath('/dashboard');
+    return { url: avatar_url };
 }
 
 export async function changePassword(newPassword: string): Promise<{ success?: boolean; error?: string }> {
@@ -1780,7 +1824,7 @@ export async function getComments(taskId: string, providedOrgId?: string): Promi
         .from('comments')
         .select(`
             *,
-            profiles:author_id (name)
+            profiles:author_id (name, avatar_url)
         `)
         .eq('task_id', taskId)
         .eq('org_id', orgId)
@@ -1794,7 +1838,8 @@ export async function getComments(taskId: string, providedOrgId?: string): Promi
 
     return (data || []).map(c => ({
         ...c,
-        author_name: (c as any).profiles?.name || 'Unknown'
+        author_name: (c as any).profiles?.name || 'Unknown',
+        author_avatar_url: (c as any).profiles?.avatar_url || null
     }))
 }
 
@@ -2239,7 +2284,7 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
 
     revalidatePath('/dashboard')
 }
-export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: string): Promise<WorkloadMap> {
+export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: string, weekOffset: number = 0): Promise<WorkloadMap> {
     let orgId = providedOrgId;
     if (!orgId) {
         const context = await requireOrgContext();
@@ -2248,11 +2293,12 @@ export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: str
     const supabase = await createClient();
 
     try {
-        // 1. Get dates for the current week (Monday to Sunday)
+        // 1. Get dates for the target week (Monday to Sunday), offset by weekOffset
         const now = new Date();
+        now.setDate(now.getDate() + weekOffset * 7);
         const startOfWeek = new Date(now);
         const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
         startOfWeek.setDate(diff);
         startOfWeek.setHours(0, 0, 0, 0);
 
@@ -2263,17 +2309,45 @@ export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: str
             days.push(d.toISOString().split('T')[0]);
         }
 
-        // 2. Fetch Profiles/Members
-        let profilesQuery = supabase.from('organization_members').select('user_id, profiles(name)').eq('org_id', orgId);
+        // 2. Fetch Members — two-step because organization_members.user_id references
+        //    auth.users, not profiles, so PostgREST has no FK path for an embedded join.
+        let membershipQuery = supabase
+            .from('organization_members')
+            .select('user_id')
+            .eq('org_id', orgId);
+
         if (projectId && projectId !== 'all') {
-            const { data: projMembers } = await supabase.from('project_members').select('user_id').eq('project_id', projectId);
-            const pids = (projMembers || []).map(m => m.user_id);
-            profilesQuery = profilesQuery.in('user_id', pids);
+            const { data: projMembers } = await supabase
+                .from('project_members')
+                .select('user_id')
+                .eq('project_id', projectId);
+            const pids = (projMembers || []).map((m: any) => m.user_id);
+            if (pids.length === 0) return {};
+            membershipQuery = membershipQuery.in('user_id', pids);
         }
-        const { data: members, error: mErr } = await profilesQuery;
-        if (mErr || !members) return {};
-        
-        const userIds = members.map(m => m.user_id);
+
+        const { data: memberships, error: mErr } = await membershipQuery;
+        if (mErr || !memberships || memberships.length === 0) return {};
+
+        const userIds = memberships.map((m: any) => m.user_id);
+
+        // Step 2: fetch names + avatar from profiles
+        const { data: profileRows } = await supabase
+            .from('profiles')
+            .select('id, name, avatar_url')
+            .in('id', userIds);
+
+        const profileMap: Record<string, { name: string; avatar_url: string | null }> = {};
+        (profileRows || []).forEach((p: any) => {
+            profileMap[p.id] = { name: p.name || 'Unknown', avatar_url: p.avatar_url || null };
+        });
+
+        // Shim: keep same shape the rest of the function expects
+        const members = userIds.map((uid: string) => ({
+            user_id: uid,
+            profileName: profileMap[uid]?.name || 'Unknown',
+            avatarUrl: profileMap[uid]?.avatar_url || null
+        }));
         const todayStr = now.toISOString().split('T')[0];
 
         // 3. Fetch Subtasks (Historical) and Active Tasks (Future) in parallel
@@ -2304,8 +2378,8 @@ export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: str
         const result: WorkloadMap = {};
         members.forEach(m => {
             const uid = m.user_id;
-            const name = (m as any).profiles?.name || 'Unknown';
-            result[uid] = { name, days: {} };
+            const name = m.profileName;
+            result[uid] = { name, avatar_url: m.avatarUrl, days: {} };
             
             const memberTasks = tasksByMember.get(uid) || [];
 
@@ -2560,4 +2634,202 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         authUsers: [],
         notifications: []
     };
+}
+
+// ============================================================
+// GDPR — Right of Access, Erasure, and Request Tracking
+// ============================================================
+
+export type GdprRequest = {
+    id: string;
+    user_id: string;
+    org_id: string;
+    type: 'export' | 'delete';
+    status: 'pending' | 'processing' | 'completed' | 'failed';
+    requested_at: string;
+    due_at: string;
+    completed_at: string | null;
+    download_url: string | null;
+    notes: string | null;
+};
+
+/** Returns all GDPR requests for the currently authenticated user. */
+export async function getMyGdprRequests(): Promise<GdprRequest[]> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { data, error } = await supabase
+        .from('gdpr_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('requested_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return (data ?? []) as GdprRequest[];
+}
+
+/**
+ * Right of Access — packages all personal data belonging to the current user,
+ * uploads it to the private `gdpr-exports` Storage bucket, and returns a
+ * signed URL valid for 7 days.
+ *
+ * Prerequisite: create a private bucket named "gdpr-exports" in Supabase Storage.
+ */
+export async function requestDataExport(): Promise<GdprRequest> {
+    const { userId, orgId } = await requireOrgContext();
+    const supabase = await createClient();
+
+    // Block duplicate in-flight requests
+    const { data: existing } = await supabase
+        .from('gdpr_requests')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('type', 'export')
+        .in('status', ['pending', 'processing'])
+        .maybeSingle();
+
+    if (existing) throw new Error("An export is already in progress. Check back shortly.");
+
+    // Create the tracking record
+    const { data: request, error: insertError } = await supabase
+        .from('gdpr_requests')
+        .insert({ user_id: userId, org_id: orgId, type: 'export', status: 'processing' })
+        .select()
+        .single();
+
+    if (insertError || !request) throw new Error(insertError?.message ?? "Failed to create export request");
+
+    try {
+        // Collect every table that holds personal data for this user
+        const [
+            { data: profile },
+            { data: tasks },
+            { data: subtasks },
+            { data: comments },
+            { data: auditLogs },
+            { data: digestPrefs },
+            { data: attachments },
+        ] = await Promise.all([
+            supabase.from('profiles').select('id, name, role, created_at').eq('id', userId).single(),
+            supabase.from('tasks').select('id, name, status, priority, deadline, notes, created_at').eq('employee_id', userId),
+            supabase.from('subtasks').select('id, task_id, name, is_completed, hours_spent, created_at').eq('employee_id', userId),
+            supabase.from('comments').select('id, task_id, content, created_at').eq('author_id', userId),
+            supabase.from('audit_logs').select('id, table_name, action, target_name, created_at').eq('actor_id', userId),
+            supabase.from('digest_preferences').select('channel, send_time, timezone, send_on_weekends, is_active').eq('user_id', userId).maybeSingle(),
+            supabase.from('attachments').select('id, task_id, file_name, file_type, file_size, created_at').eq('uploader_id', userId),
+        ]);
+
+        const exportPayload = {
+            exported_at: new Date().toISOString(),
+            gdpr_request_id: request.id,
+            subject: { id: userId },
+            data: {
+                profile:      profile ?? {},
+                tasks:        tasks ?? [],
+                subtasks:     subtasks ?? [],
+                comments:     comments ?? [],
+                audit_logs:   auditLogs ?? [],
+                digest_prefs: digestPrefs ?? null,
+                attachments:  attachments ?? [],
+            },
+        };
+
+        const json = JSON.stringify(exportPayload, null, 2);
+        const storagePath = `${userId}/${request.id}.json`;
+
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+        const { createClient: createAdminClient } = await import('@supabase/supabase-js');
+        const adminClient = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY
+        );
+
+        const { error: uploadError } = await adminClient.storage
+            .from('gdpr-exports')
+            .upload(storagePath, json, { contentType: 'application/json', upsert: true });
+
+        if (uploadError) throw new Error(`Storage upload failed: ${uploadError.message}`);
+
+        const { data: signedData } = await adminClient.storage
+            .from('gdpr-exports')
+            .createSignedUrl(storagePath, 60 * 60 * 24 * 7); // 7-day link
+
+        const { data: completed, error: updateError } = await supabase
+            .from('gdpr_requests')
+            .update({
+                status:       'completed',
+                completed_at: new Date().toISOString(),
+                download_url: signedData?.signedUrl ?? null,
+            })
+            .eq('id', request.id)
+            .select()
+            .single();
+
+        if (updateError) throw new Error(updateError.message);
+        return completed as GdprRequest;
+
+    } catch (err: any) {
+        await supabase
+            .from('gdpr_requests')
+            .update({ status: 'failed', notes: err.message })
+            .eq('id', request.id);
+        throw err;
+    }
+}
+
+/**
+ * Right to Erasure — anonymises all personal data and deletes the auth account.
+ * The user's tasks/comments/audit entries remain but lose identifying information.
+ * This action is irreversible.
+ */
+export async function requestAccountDeletion(): Promise<{ success: boolean }> {
+    const { userId, orgId } = await requireOrgContext();
+    const supabase = await createClient();
+
+    const { data: existing } = await supabase
+        .from('gdpr_requests')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('type', 'delete')
+        .in('status', ['pending', 'processing'])
+        .maybeSingle();
+
+    if (existing) throw new Error("A deletion request is already in progress.");
+
+    const { data: request, error: insertError } = await supabase
+        .from('gdpr_requests')
+        .insert({ user_id: userId, org_id: orgId, type: 'delete', status: 'processing' })
+        .select()
+        .single();
+
+    if (insertError || !request) throw new Error(insertError?.message ?? "Failed to create deletion request");
+
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+    const { createClient: createAdminClient } = await import('@supabase/supabase-js');
+    const adminClient = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    try {
+        // anonymise_user strips PII, removes digest_prefs, and deletes the auth.users row
+        const { error: anonError } = await adminClient.rpc('anonymise_user', { p_user_id: userId });
+        if (anonError) throw new Error(`Anonymisation failed: ${anonError.message}`);
+
+        // User is now deleted — use admin client to close out the request
+        await adminClient
+            .from('gdpr_requests')
+            .update({ status: 'completed', completed_at: new Date().toISOString() })
+            .eq('id', request.id);
+
+        return { success: true };
+
+    } catch (err: any) {
+        await adminClient
+            .from('gdpr_requests')
+            .update({ status: 'failed', notes: err.message })
+            .eq('id', request.id);
+        throw err;
+    }
 }

@@ -3,9 +3,11 @@
 import React from 'react';
 import { X, LogOut, Zap, Activity, Clock, CheckCircle2 } from 'lucide-react';
 import { ProjectSwitcher } from '@/components/ProjectSwitcher';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 interface EmployeeSidebarProps {
     userName: string;
+    userAvatarUrl?: string | null;
     activeTab: string;
     setActiveTab: (tab: any) => void;
     isMobileMenuOpen: boolean;
@@ -20,7 +22,7 @@ const NavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, labe
         onClick={onClick}
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group ${
             active 
-            ? 'bg-[#0071e3] text-white shadow-lg shadow-[#0071e3]/20 font-bold translate-x-1' 
+            ? 'bg-[#0c64ef] text-white shadow-lg shadow-[#0c64ef]/20 font-bold translate-x-1' 
             : 'text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] font-medium'
         }`}
     >
@@ -36,6 +38,7 @@ const NavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, labe
 
 export function EmployeeSidebar({
     userName,
+    userAvatarUrl,
     activeTab,
     setActiveTab,
     isMobileMenuOpen,
@@ -53,7 +56,7 @@ export function EmployeeSidebar({
                     <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-6 shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
                         <div className="flex items-center justify-between mb-10 px-2 shrink-0">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-[#0071e3] rounded-xl flex items-center justify-center text-white font-black text-lg">MB</div>
+                                <img src="/logo.avif" alt="Mindbird Logo" className="w-10 h-10 rounded-xl object-cover shadow-sm" />
                                 <span className="text-xl font-black tracking-tight text-[#1d1d1f]">Mindbird.ai</span>
                             </div>
                             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"><X size={20} /></button>
@@ -84,7 +87,7 @@ export function EmployeeSidebar({
             {/* DESKTOP SIDEBAR */}
             <aside className="w-56 bg-white border-r border-[#e5e5ea] flex flex-col p-5 hidden lg:flex shrink-0">
                 <div className="flex items-center gap-3 mb-8 px-1">
-                    <div className="w-8 h-8 bg-[#0071e3] rounded-lg flex items-center justify-center text-white font-black text-sm shadow-sm">MB</div>
+                    <img src="/logo.avif" alt="Mindbird Logo" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
                     <div>
                         <span className="text-sm font-black tracking-tight text-[#1d1d1f] leading-none block">Mindbird.ai</span>
                         <span className="text-[10px] text-[#86868b] uppercase tracking-widest font-bold">Pro Edition</span>
@@ -105,9 +108,12 @@ export function EmployeeSidebar({
 
                 <div className="mt-auto pt-6 border-t border-slate-100">
                     <div className="flex items-center gap-3 px-2 py-3 rounded-2xl border border-transparent hover:border-slate-100 transition-all cursor-pointer group">
-                        <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 font-bold overflow-hidden ring-2 ring-white">
-                            {userName.charAt(0)}
-                        </div>
+                        <UserAvatar
+                            name={userName}
+                            avatarUrl={userAvatarUrl}
+                            className="w-9 h-9 rounded-xl bg-slate-100 ring-2 ring-white"
+                            textClassName="text-[11px] font-bold text-slate-500"
+                        />
                         <div className="flex-1 min-w-0">
                             <h2 className="text-xs font-bold text-[#1d1d1f] truncate">{userName}</h2>
                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Pro Account</p>

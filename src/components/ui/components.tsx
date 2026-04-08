@@ -27,7 +27,7 @@ export function Button({
     ...props
 }: HTMLMotionProps<"button"> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost' }) {
     const variants = {
-        primary: "bg-gradient-to-b from-[#0071e3] to-[#0066cc] hover:from-[#0077ED] hover:to-[#0071e3] text-white shadow-[0_4px_12px_rgba(0,113,227,0.15)]",
+        primary: "bg-gradient-to-b from-[#0c64ef] to-[#0a57d1] hover:from-[#0a57d1] hover:to-[#0c64ef] text-white shadow-[0_4px_12px_rgba(12,100,239,0.2)]",
         secondary: "bg-white hover:bg-slate-50 text-slate-900 border border-slate-100 shadow-sm",
         danger: "bg-gradient-to-b from-[#ff3b30] to-[#e03126] hover:from-[#ff453a] hover:to-[#ff3b30] text-white shadow-[0_4px_12px_rgba(255,59,48,0.15)]",
         ghost: "bg-transparent hover:bg-slate-50 text-slate-400 hover:text-slate-900"
@@ -50,7 +50,7 @@ export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInp
     return (
         <input
             className={cn(
-                "bg-slate-50/50 border border-slate-100 text-slate-900 rounded-xl px-5 py-3 outline-none transition-all duration-300 focus:bg-white focus:border-[#0071e3]/30 focus:ring-4 focus:ring-[#0071e3]/5 placeholder-slate-400 font-medium text-[13px]",
+                "bg-slate-50/50 border border-slate-100 text-slate-900 rounded-xl px-5 py-3 outline-none transition-all duration-300 focus:bg-white focus:border-[#0c64ef]/30 focus:ring-4 focus:ring-[#0c64ef]/5 placeholder-slate-400 font-medium text-[13px]",
                 className
             )}
             {...props}
@@ -63,14 +63,14 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
         <div className="relative group">
             <select
                 className={cn(
-                    "w-full bg-slate-50/50 border border-slate-100 text-slate-900 rounded-xl px-5 py-3 outline-none transition-all duration-300 focus:bg-white focus:border-[#0071e3]/30 focus:ring-4 focus:ring-[#0071e3]/5 appearance-none font-bold text-[9px] uppercase tracking-widest cursor-pointer",
+                    "w-full bg-slate-50/50 border border-slate-100 text-slate-900 rounded-xl px-5 py-3 outline-none transition-all duration-300 focus:bg-white focus:border-[#0c64ef]/30 focus:ring-4 focus:ring-[#0c64ef]/5 appearance-none font-bold text-[9px] uppercase tracking-widest cursor-pointer",
                     className
                 )}
                 {...props}
             >
                 {children}
             </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-[#0071e3] transition-colors">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 group-hover:text-[#0c64ef] transition-colors">
                 <svg width="8" height="5" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -99,7 +99,7 @@ export function Badge({ children, variant = 'default', className }: { children: 
     );
 }
 
-export function CircularProgress({ percentage, color = '#0071e3', size = 100, strokeWidth = 8 }: { percentage: number, color?: string, size?: number, strokeWidth?: number }) {
+export function CircularProgress({ percentage, color = '#0c64ef', size = 100, strokeWidth = 8 }: { percentage: number, color?: string, size?: number, strokeWidth?: number }) {
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
     const offset = circumference - (percentage / 100) * circumference;

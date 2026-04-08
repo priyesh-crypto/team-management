@@ -26,11 +26,16 @@ export default async function DashboardPage() {
   // 2. Prefetch dashboard data with provided context to avoid redundancy
   const initialData = await getDashboardData(undefined, mData.org_id, user.id);
 
+  // Source avatar from initialData.profiles — same path used by board/team views (avoids cache staleness)
+  const myProfile = (initialData?.profiles as any[])?.find((p: any) => p.id === user.id);
+  const userAvatarUrl = myProfile?.avatar_url ?? profile?.avatar_url ?? null;
+
   return (
-    <DashboardContainer 
+    <DashboardContainer
       userId={user.id}
       userName={profile?.name || ''}
       userRole={profile?.role || 'employee'}
+      userAvatarUrl={userAvatarUrl}
       orgName={orgName}
       orgId={mData.org_id}
       initialData={initialData}

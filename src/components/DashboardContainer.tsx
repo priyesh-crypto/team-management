@@ -15,16 +15,18 @@ interface DashboardContainerProps {
   userId: string;
   userName: string;
   userRole: 'employee' | 'manager';
+  userAvatarUrl?: string | null;
   orgName: string;
   orgId: string;
   projectId?: string;
   initialData?: any;
 }
 
-export default function DashboardContainer({ 
-  userId, 
-  userName, 
-  userRole, 
+export default function DashboardContainer({
+  userId,
+  userName,
+  userRole,
+  userAvatarUrl,
   orgId,
   projectId,
   initialData
@@ -32,20 +34,22 @@ export default function DashboardContainer({
   return (
     <div className="min-h-screen bg-[#f8f9fb]">
       {userRole === 'employee' ? (
-        <EmployeeDashboard 
-          userId={userId} 
-          userName={userName} 
+        <EmployeeDashboard
+          userId={userId}
+          userName={userName}
           userRole={userRole}
-          projectId={projectId} 
+          userAvatarUrl={userAvatarUrl}
+          projectId={projectId}
           orgId={orgId}
           initialData={initialData}
         />
       ) : (
-        <ManagerDashboard 
-          userId={userId} 
-          userName={userName} 
+        <ManagerDashboard
+          userId={userId}
+          userName={userName}
           userRole={userRole}
-          projectId={projectId} 
+          userAvatarUrl={userAvatarUrl}
+          projectId={projectId}
           orgId={orgId}
           initialData={initialData}
         />
