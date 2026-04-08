@@ -222,7 +222,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
             {totalMembers > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
                     <SummaryPill
-                        icon={<AlertTriangle size={14} />}
+                        icon={<AlertTriangle size={20} strokeWidth={2.5} />}
                         label="Overloaded"
                         value={teamStats.overloaded}
                         total={totalMembers}
@@ -230,7 +230,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                         bg="bg-[#fee2e2]"
                     />
                     <SummaryPill
-                        icon={<TrendingUp size={14} />}
+                        icon={<TrendingUp size={20} strokeWidth={2.5} />}
                         label="Busy"
                         value={teamStats.busy}
                         total={totalMembers}
@@ -238,7 +238,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                         bg="bg-[#ffedd5]"
                     />
                     <SummaryPill
-                        icon={<Users size={14} />}
+                        icon={<Users size={20} strokeWidth={2.5} />}
                         label="Moderate"
                         value={teamStats.moderate}
                         total={totalMembers}
@@ -246,7 +246,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                         bg="bg-[#fef9c3]"
                     />
                     <SummaryPill
-                        icon={<CheckCircle2 size={14} />}
+                        icon={<CheckCircle2 size={20} strokeWidth={2.5} />}
                         label="Available"
                         value={teamStats.free}
                         total={totalMembers}
@@ -568,7 +568,7 @@ function SummaryPill({
             className={cn('rounded-[24px] p-5 flex items-center gap-4 border transition-all duration-500', bg, 'border-white/40 shadow-[0_4px_12px_rgba(0,0,0,0.02)]')}
         >
             <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-black/5', color)}>
-                {React.cloneElement(icon as React.ReactElement, { size: 20, strokeWidth: 2.5 })}
+                {icon}
             </div>
             <div className="min-w-0">
                 <p className={cn('text-2xl font-black leading-tight tracking-tighter', color)}>{value}</p>
