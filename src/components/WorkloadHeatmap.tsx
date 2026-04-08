@@ -564,7 +564,7 @@ function SummaryPill({
 }) {
     return (
         <motion.div 
-            whileHover={{ y: -4, shadow: '0 12px 24px rgba(0,0,0,0.05)' }}
+            whileHover={{ y: -4, boxShadow: '0 12px 24px rgba(0,0,0,0.05)' }}
             className={cn('rounded-[24px] p-5 flex items-center gap-4 border transition-all duration-500', bg, 'border-white/40 shadow-[0_4px_12px_rgba(0,0,0,0.02)]')}
         >
             <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-black/5', color)}>
