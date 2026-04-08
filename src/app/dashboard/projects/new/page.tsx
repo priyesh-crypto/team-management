@@ -16,7 +16,7 @@ export default async function NewProjectPage() {
       <div className="max-w-2xl mx-auto">
         <header className="mb-12 flex items-center justify-between">
            <div className="flex items-center gap-4">
-               <Logo showText={false} className="w-10 h-10" />
+               <Logo className="w-10 h-10" />
                <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Create New Project</h1>
            </div>
         </header>
