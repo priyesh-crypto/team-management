@@ -210,7 +210,7 @@ function BoardColumn({
                         {totalHours > 0 && (
                           <div className="flex items-center gap-1.5 text-[#86868b]">
                             <span className="text-[10px]">⏱️</span>
-                            <span className="text-[9px] font-black tabular-nums">{totalHours}h</span>
+                            <span className="text-[9px] font-black tabular-nums">{Math.round(totalHours * 10) / 10}h</span>
                           </div>
                         )}
                         <div className="flex items-center gap-1.5 text-[#86868b]">
