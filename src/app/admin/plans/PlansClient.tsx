@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { updatePlan, createPlan, upsertPlanPrice, deletePlanPrice } from "../actions";
 import {
     Card,
@@ -79,7 +80,7 @@ export function PlansClient({
                 setEditing(null);
                 router.refresh();
             } catch (e: unknown) {
-                alert(e instanceof Error ? e.message : "Save failed");
+                toast.error(e instanceof Error ? e.message : "Save failed");
             }
         });
 
@@ -371,7 +372,7 @@ function RegionalPricing({ planId, prices }: { planId: string; prices: PlanPrice
                 setDraft({ country_code: "", currency: "USD", price_monthly_cents: 0, stripe_price_id: "" });
                 router.refresh();
             } catch (e: unknown) {
-                alert(e instanceof Error ? e.message : "Save failed");
+                toast.error(e instanceof Error ? e.message : "Save failed");
             }
         });
 
@@ -382,7 +383,7 @@ function RegionalPricing({ planId, prices }: { planId: string; prices: PlanPrice
                 await deletePlanPrice(id);
                 router.refresh();
             } catch (e: unknown) {
-                alert(e instanceof Error ? e.message : "Delete failed");
+                toast.error(e instanceof Error ? e.message : "Delete failed");
             }
         });
 
@@ -572,7 +573,7 @@ function CreatePlanModal({
                                         });
                                         onCreated();
                                     } catch (e: unknown) {
-                                        alert(e instanceof Error ? e.message : "Create failed");
+                                        toast.error(e instanceof Error ? e.message : "Create failed");
                                     }
                                 })
                             }

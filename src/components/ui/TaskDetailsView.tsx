@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { Card, Button, Badge, Select, Input } from './components';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { 
@@ -207,7 +208,7 @@ export function TaskDetailsView({
             refreshData();
             loadActivity();
         } catch (err) {
-            alert("Failed to update work log.");
+            toast.error("Failed to update work log.");
         } finally {
             setIsUpdatingSubtask(false);
         }
@@ -231,7 +232,7 @@ export function TaskDetailsView({
             setSubtaskToDelete(null);
             loadActivity();
         } catch (err) {
-            alert("Failed to delete work log.");
+            toast.error("Failed to delete work log.");
         }
     };
 
@@ -279,7 +280,7 @@ export function TaskDetailsView({
         try {
             for (const file of Array.from(files)) {
                 if (file.size > 50 * 1024 * 1024) {
-                    alert(`File "${file.name}" is too large (max 50MB).`);
+                    toast.error(`File "${file.name}" is too large (max 50MB).`);
                     continue;
                 }
                 const formData = new FormData();
@@ -290,7 +291,7 @@ export function TaskDetailsView({
             loadAttachments();
             loadActivity();
         } catch (err: any) {
-            alert(err.message || "Failed to upload file.");
+            toast.error(err.message || "Failed to upload file.");
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -304,7 +305,7 @@ export function TaskDetailsView({
             loadAttachments();
             loadActivity();
         } catch (err: any) {
-            alert(err.message || "Failed to delete attachment.");
+            toast.error(err.message || "Failed to delete attachment.");
         }
     };
 
@@ -342,7 +343,7 @@ export function TaskDetailsView({
             refreshData();
             loadActivity();
         } catch (err) {
-            alert("Failed to update task.");
+            toast.error("Failed to update task.");
         } finally {
             setIsSaving(false);
         }
@@ -361,7 +362,7 @@ export function TaskDetailsView({
             loadComments();
             loadActivity();
         } catch (err) {
-            alert("Failed to add comment.");
+            toast.error("Failed to add comment.");
         } finally {
             setIsCommenting(false);
         }
@@ -377,7 +378,7 @@ export function TaskDetailsView({
             loadActivity();
         } catch (err) {
             console.error("Error deleting comment:", err);
-            alert("Failed to delete comment.");
+            toast.error("Failed to delete comment.");
         } finally {
             setIsDeleting(false);
         }

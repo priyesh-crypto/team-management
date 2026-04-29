@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
     setOrgPlan,
     extendTrial,
@@ -82,7 +83,7 @@ export function OrgDetailClient({
                 router.refresh();
             } catch (e: unknown) {
                 const msg = e instanceof Error ? e.message : "Action failed";
-                alert(msg);
+                toast.error(msg);
             }
         });
 
@@ -345,7 +346,7 @@ export function OrgDetailClient({
                                             await deleteOrganization(org.id, deleteConfirm);
                                             router.push("/admin/orgs");
                                         } catch (e: unknown) {
-                                            alert(e instanceof Error ? e.message : "Delete failed");
+                                            toast.error(e instanceof Error ? e.message : "Delete failed");
                                         }
                                     })
                                 }

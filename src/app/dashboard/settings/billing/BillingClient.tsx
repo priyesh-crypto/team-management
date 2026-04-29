@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 type Org = {
     id: string;
@@ -62,7 +63,7 @@ export function BillingClient({
             });
             const json = await res.json();
             if (json.url) window.location.href = json.url;
-            else alert(json.error ?? "Checkout failed");
+            else toast.error(json.error ?? "Checkout failed");
         } finally {
             setLoading(null);
         }
@@ -78,7 +79,7 @@ export function BillingClient({
             });
             const json = await res.json();
             if (json.url) window.location.href = json.url;
-            else alert(json.error ?? "Could not open billing portal");
+            else toast.error(json.error ?? "Could not open billing portal");
         } finally {
             setLoading(null);
         }

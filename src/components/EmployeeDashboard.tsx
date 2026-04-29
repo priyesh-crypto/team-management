@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
 import { TaskDetailsView } from '@/components/ui/TaskDetailsView';
+import { toast } from 'sonner';
 
 const TimelineSchedule = dynamic(() => import('@/components/ui/TimelineSchedule'), { 
     ssr: false,
@@ -369,13 +370,13 @@ export default function EmployeeDashboard({
             setEditingTaskId(null);
             refreshData(true);
         } catch (err: any) {
-            alert(err.message || "Failed to update task.");
+            toast.error(err.message || "Failed to update task.");
         }
     };
 
     const handleAddSubtaskDirect = async (taskId: string, name: string, hours: number, date: string, startTime: string, endTime: string) => {
         if (taskId.startsWith('temp-')) {
-            alert("Please wait for the task to finish saving before adding a work log.");
+            toast.error("Please wait for the task to finish saving before adding a work log.");
             return;
         }
 
@@ -426,7 +427,7 @@ export default function EmployeeDashboard({
             console.error("Failed to save subtask:", err);
             // Revert optimistic update on failure (optional, but safer)
             refreshData(true); 
-            alert("Failed to add work log. Your view will be refreshed.");
+            toast.error("Failed to add work log. Your view will be refreshed.");
             throw err;
         }
     };
@@ -454,7 +455,7 @@ export default function EmployeeDashboard({
             await deleteSubtask(subtaskId, taskId);
             await refreshData();
         } catch (err: any) {
-            alert("Failed to delete work log.");
+            toast.error("Failed to delete work log.");
             throw err;
         }
     };
@@ -467,7 +468,7 @@ export default function EmployeeDashboard({
             setSubtaskToDelete(null);
             await refreshData();
         } catch (err: any) {
-            alert(err.message || "Failed to delete subtask.");
+            toast.error(err.message || "Failed to delete subtask.");
         } finally {
             setIsDeletingSubtask(false);
         }
@@ -505,7 +506,7 @@ export default function EmployeeDashboard({
             setMyTasks(originalTasks);
             // We don't have originalAllTasks but refreshData will fix it
             refreshData(false);
-            alert(err.message || "Failed to delete task. Reverting state.");
+            toast.error(err.message || "Failed to delete task. Reverting state.");
         }
     };
 

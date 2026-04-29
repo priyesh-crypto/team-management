@@ -22,6 +22,7 @@ const WorkloadHeatmap = dynamic(() => import('@/components/WorkloadHeatmap').the
 });
 import { Pencil, Trash2, Clock } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { toast } from 'sonner';
 import { createClient } from '@/utils/supabase/client';
 
 type InitialDashboardData = {
@@ -484,7 +485,7 @@ export default function ManagerDashboard({
             setEditingTaskId(null);
             refreshData(true);
         } catch (err: any) {
-            alert(err.message || "Failed to update task.");
+            toast.error(err.message || "Failed to update task.");
         }
     };
 
@@ -518,7 +519,7 @@ export default function ManagerDashboard({
             });
             refreshData(true);
         } catch (err: any) {
-            alert(err.message || "Failed to add work log.");
+            toast.error(err.message || "Failed to add work log.");
             throw err;
         }
     };
@@ -528,7 +529,7 @@ export default function ManagerDashboard({
             await deleteSubtask(subtaskId, taskId);
             refreshData(true);
         } catch (err: any) {
-            alert(err.message || "Failed to delete work log.");
+            toast.error(err.message || "Failed to delete work log.");
             throw err;
         }
     };
@@ -552,7 +553,7 @@ export default function ManagerDashboard({
             setNewSubtaskData(prev => ({ ...prev, [taskId]: { name: '', hours: 8, date_logged: new Date().toISOString().split('T')[0], start_time: '09:00', end_time: '17:00' } }));
             refreshData(true);
         } catch (err: any) {
-            alert(err.message || "Failed to add work log.");
+            toast.error(err.message || "Failed to add work log.");
         }
     };
 
@@ -569,7 +570,7 @@ export default function ManagerDashboard({
             refreshData(true);
         } catch (err: any) {
             console.error("Delete subtask error:", err);
-            alert(err.message || "Failed to delete subtask.");
+            toast.error(err.message || "Failed to delete subtask.");
         } finally {
             setIsDeletingSubtask(false);
         }
@@ -595,7 +596,7 @@ export default function ManagerDashboard({
             setEditSubtaskData({});
             refreshData(true);
         } catch (err: any) {
-            alert(err.message || "Failed to update work log.");
+            toast.error(err.message || "Failed to update work log.");
         }
     };
 
@@ -714,14 +715,14 @@ export default function ManagerDashboard({
         try {
             const profileRes = await updateEmployeeProfile(empId, editEmpForm.name, editEmpForm.role, editEmpForm.email);
             if (profileRes && profileRes.error) {
-                alert(profileRes.error);
+                toast.error(profileRes.error);
                 return;
             }
 
             if (editEmpForm.password) {
                 const passRes = await updateUserPassword(empId, editEmpForm.password);
                 if (passRes && passRes.error) {
-                    alert(passRes.error);
+                    toast.error(passRes.error);
                     return;
                 }
             }
@@ -730,7 +731,7 @@ export default function ManagerDashboard({
             setEditEmpForm({ name: '', role: 'employee', password: '', email: '' });
             refreshData();
         } catch (err: any) {
-            alert(err.message || 'An unexpected error occurred.');
+            toast.error(err.message || 'An unexpected error occurred.');
         }
     };
 
@@ -792,7 +793,7 @@ export default function ManagerDashboard({
             // Rollback on error
             setTasks(originalTasks);
             setSelectedTask(originalSelectedTask);
-            alert(err.message || "Failed to delete task. Reverting state.");
+            toast.error(err.message || "Failed to delete task. Reverting state.");
         } finally {
             setIsDeletingTask(false);
         }
@@ -835,9 +836,9 @@ export default function ManagerDashboard({
             await sendAlert('all', broadcastForm.message, broadcastForm.type as any);
             setShowBroadcastModal(false);
             setBroadcastForm({ message: '', type: 'system' });
-            alert("Broadcast alert sent successfully!");
+            toast.success("Broadcast alert sent successfully!");
         } catch (err: any) {
-            alert("Failed to send broadcast: " + err.message);
+            toast.error("Failed to send broadcast: " + err.message);
         } finally {
             setIsBroadcasting(false);
         }
