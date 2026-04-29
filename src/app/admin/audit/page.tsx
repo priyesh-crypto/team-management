@@ -12,6 +12,7 @@ const ACTION_ICONS: Record<string, string> = {
     comp_org: "🎁",
     cancel_subscription: "❌",
     adjust_seats: "👥",
+    delete_organization: "🗑️",
 };
 
 export default async function AuditPage() {

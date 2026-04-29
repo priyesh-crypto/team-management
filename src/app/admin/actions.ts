@@ -423,3 +423,55 @@ export async function adjustSeats(orgId: string, seats: number) {
     revalidatePath(`/admin/orgs/${orgId}`);
 }
 
+/**
+ * Permanently delete an organization and all its data.
+ *
+ * Safeguards:
+ * - Requires the admin to type the exact org name to confirm.
+ * - Cancels any active Stripe subscription first to stop billing.
+ * - Deletes the org row; ON DELETE CASCADE removes members, tasks, subtasks,
+ *   workspaces, comments, attachments, notifications, usage, plan-related rows.
+ * - Stripe customer is left intact (orphaned) so historical invoices remain accessible.
+ * - User accounts in auth.users are NOT deleted — users may belong to other orgs.
+ */
+export async function deleteOrganization(orgId: string, confirmName: string) {
+    const user = await requirePlatformAdmin();
+    const admin = createAdminClient();
+
+    const org = await getOrgOrThrow(admin, orgId);
+
+    if (confirmName.trim() !== org.name) {
+        throw new Error(
+            `Confirmation name does not match. Type "${org.name}" exactly to delete.`
+        );
+    }
+
+    // Cancel Stripe subscription first so we don't keep billing a deleted org
+    if (org.stripe_subscription_id) {
+        try {
+            await stripe.subscriptions.cancel(org.stripe_subscription_id);
+        } catch (e) {
+            console.warn("[deleteOrganization] failed to cancel Stripe sub", e);
+        }
+    }
+
+    // Snapshot for the audit log before the row disappears
+    const snapshot = {
+        name: org.name,
+        plan_id: org.plan_id,
+        stripe_customer_id: org.stripe_customer_id,
+        stripe_subscription_id: org.stripe_subscription_id,
+        seats_purchased: org.seats_purchased,
+    };
+
+    const { error } = await admin.from("organizations").delete().eq("id", orgId);
+    if (error) throw new Error(error.message);
+
+    // Log AFTER delete; target_org_id will be null since the FK cascaded.
+    // The action_payload preserves the org id and snapshot for traceability.
+    await logAdminAction(user.id, "delete_organization", null, { orgId, ...snapshot });
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/orgs");
+}
+
