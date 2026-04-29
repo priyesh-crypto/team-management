@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { Project, deleteProject } from '@/app/actions/actions'
 import { LayoutGrid, Plus, Folder, Trash2 } from 'lucide-react'
 import { ConfirmationModal } from './ui/ConfirmationModal'
+import { toast } from 'sonner'
 import React from 'react'
 
 export function ProjectSwitcher({ projects, userRole }: { projects: Project[], userRole?: 'employee' | 'manager' }) {
@@ -30,7 +31,7 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
       }
       setProjectToDelete(null)
     } catch (err) {
-      alert("Failed to delete project.")
+      toast.error("Failed to delete project.")
     } finally {
       setIsDeleting(false)
     }

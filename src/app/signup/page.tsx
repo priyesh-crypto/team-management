@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { Card, Button, Input } from '@/components/ui/components';
 import Logo from '@/components/ui/Logo';
+import UrlToaster from '@/components/ui/UrlToaster';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { checkActionRateLimit } from '@/utils/rate-limit';
@@ -65,16 +66,7 @@ export default async function SignupPage({
     redirect('/');
   };
 
-  const errorConfigs: Record<string, string> = {
-    bot_detected:  'Security check failed. Please try again.',
-    validation:    '',
-    signup_failed: '',
-    rate_limited:  '',
-  };
-
-  const errorMsg = searchParams.error
-    ? (searchParams.msg ? decodeURIComponent(searchParams.msg) : (errorConfigs[searchParams.error] ?? 'Something went wrong.'))
-    : null;
+  // Error logic removed as it's handled by UrlToaster
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
@@ -86,11 +78,7 @@ export default async function SignupPage({
         </div>
 
         <Card className="p-8">
-          {errorMsg && (
-            <div className="p-3 rounded-lg text-sm font-bold mb-6 bg-red-50 text-red-600 border border-red-100">
-              {errorMsg}
-            </div>
-          )}
+          <UrlToaster error={searchParams.error} msg={searchParams.msg} />
 
           <form action={signup} className="space-y-4">
             {/* Honeypot */}

@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { Card, Button, Input } from '@/components/ui/components';
 import Logo from '@/components/ui/Logo';
+import UrlToaster from '@/components/ui/UrlToaster';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { checkActionRateLimit } from '@/utils/rate-limit';
@@ -124,30 +125,7 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
 
           <Card className="p-8">
             {/* Feedback Messages */}
-            {(() => {
-              const errorType = searchParams.error;
-              const successType = searchParams.success;
-              const customMsg = searchParams.msg;
-
-              const configs: Record<string, { msg: string, type: 'error' | 'success' }> = {
-                invalid_credentials: { msg: 'Invalid email or password.', type: 'error' },
-                email_not_verified: { msg: 'Please verify your email before logging in.', type: 'error' },
-                rate_limited: { msg: 'Too many attempts. Please try again later.', type: 'error' },
-                signup_pending: { msg: 'Account created! Check your email to verify before signing in.', type: 'success' },
-                reset_sent: { msg: 'Password reset link sent to your email.', type: 'success' },
-                password_updated: { msg: 'Password updated successfully. Please log in.', type: 'success' },
-                bot_detected: { msg: 'Security check failed. Please try again.', type: 'error' }
-              };
-
-              const active = (errorType && configs[errorType]) || (successType && configs[successType]);
-              if (!active) return null;
-
-              return (
-                <div className={`p-3 rounded-lg text-sm font-bold mb-6 ${active.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
-                  {customMsg || active.msg}
-                </div>
-              );
-            })()}
+            <UrlToaster error={searchParams.error} success={searchParams.success} msg={searchParams.msg} />
 
             <form action={async (fd) => {
               "use server"
