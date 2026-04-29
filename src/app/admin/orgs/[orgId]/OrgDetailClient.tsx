@@ -325,8 +325,8 @@ export function OrgDetailClient({
                         </div>
 
                         <Field
-                            label={`Type "${org.name}" to confirm`}
-                            hint="Match exactly, including capitalization."
+                            label="Type organization name to confirm"
+                            hint={`Match exactly: ${org.name}`}
                         >
                             <Input
                                 value={deleteConfirm}

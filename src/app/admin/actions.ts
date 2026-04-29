@@ -440,7 +440,7 @@ export async function deleteOrganization(orgId: string, confirmName: string) {
 
     const org = await getOrgOrThrow(admin, orgId);
 
-    if (confirmName.trim() !== org.name) {
+    if (confirmName !== org.name) {
         throw new Error(
             `Confirmation name does not match. Type "${org.name}" exactly to delete.`
         );
