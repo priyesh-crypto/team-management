@@ -35,9 +35,9 @@ export default async function SignupPage({
 
     const supabase = await createClient();
 
-    // Rate limit: 3 signups per hour per IP
+    // Rate limit: 20 signups per hour per IP
     const ip = (await headers()).get('x-forwarded-for') || 'unknown';
-    const throttle = await checkActionRateLimit(ip, 'signup', 3, 60 * 60 * 1000);
+    const throttle = await checkActionRateLimit(ip, 'signup', 20, 60 * 60 * 1000);
     if (!throttle.allowed)
       return redirect(
         `/signup?error=rate_limited&msg=${encodeURIComponent(throttle.error || 'Too many attempts. Try again later.')}`

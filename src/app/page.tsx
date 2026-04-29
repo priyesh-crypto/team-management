@@ -32,9 +32,9 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
     
     const supabase = await createClient();
 
-    // Rate Limiting: 10 attempts per 15 minutes per IP/Email
+    // Rate Limiting: 50 attempts per 15 minutes per IP/Email
     const ip = (await headers()).get('x-forwarded-for') || 'unknown';
-    const throttle = await checkActionRateLimit(`${ip}:${email}`, 'login', 10, 15 * 60 * 1000);
+    const throttle = await checkActionRateLimit(`${ip}:${email}`, 'login', 50, 15 * 60 * 1000);
     if (!throttle.allowed) return redirect(`/?error=rate_limited&msg=${encodeURIComponent(throttle.error || '')}`);
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
