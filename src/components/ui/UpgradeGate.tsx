@@ -26,6 +26,10 @@ const FEATURE_NAMES: Record<string, string> = {
     reports_dashboards: "Reports & Dashboards",
     org_audit_log: "Audit Log",
     webhooks_api: "Webhooks & API",
+    sso: "Single Sign-On",
+    custom_roles: "Custom Roles",
+    white_labeling: "White-labeling",
+    data_export: "Data Export",
 };
 
 const FEATURE_TIER: Record<string, string> = {
@@ -51,6 +55,10 @@ const FEATURE_TIER: Record<string, string> = {
     org_audit_log: "Business",
     webhooks_api: "Business",
     email_to_task: "Business",
+    sso: "Business",
+    custom_roles: "Business",
+    white_labeling: "Business",
+    data_export: "Business",
 };
 
 interface PaywallModalProps {
