@@ -961,7 +961,7 @@ export default function ManagerDashboard({
                                 <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Timeline & Gantt</h1>
                                 <p className="text-sm text-[#86868b] mt-1">Visualize project dependencies and schedules.</p>
                             </div>
-                            <GanttView tasks={tasks} onTaskClick={handleTaskClick} />
+                            <GanttView tasks={tasks} profiles={projectId ? projectMembers : employees} onTaskClick={handleTaskClick} />
                         </div>
                     )}
 
