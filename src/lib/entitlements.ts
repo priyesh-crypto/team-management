@@ -13,19 +13,26 @@ export type Entitlement = {
 
 export async function getEntitlement(orgId: string): Promise<Entitlement | null> {
     const supabase = await createClient();
-    const [{ data, error }, { data: overrides }] = await Promise.all([
-        supabase.rpc("org_entitlement", { target_org: orgId }).single(),
-        supabase
-            .from("org_feature_overrides")
-            .select("feature_key, enabled")
-            .eq("org_id", orgId),
-    ]);
 
+    // Always fetch the base entitlement.
+    const { data, error } = await supabase
+        .rpc("org_entitlement", { target_org: orgId })
+        .single();
     if (error || !data) return null;
     const entitlement = data as Entitlement;
 
-    for (const o of overrides ?? []) {
-        entitlement.features[o.feature_key] = o.enabled;
+    // org_feature_overrides is admin_tier1; if that migration isn't applied
+    // the SELECT errors. Swallow it silently — features fall back to plan defaults.
+    try {
+        const { data: overrides } = await supabase
+            .from("org_feature_overrides")
+            .select("feature_key, enabled")
+            .eq("org_id", orgId);
+        for (const o of overrides ?? []) {
+            entitlement.features[o.feature_key] = o.enabled;
+        }
+    } catch {
+        // table missing — ignore
     }
 
     return entitlement;

@@ -6,6 +6,46 @@ import { getEntitlement } from '@/lib/entitlements';
 import { EntitlementProvider } from '@/context/EntitlementContext';
 import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 
+// All queries below are wrapped in try/catch and degrade gracefully when their
+// underlying migrations have not been applied. This prevents the entire
+// dashboard from crashing if `admin_tier1` (impersonation_sessions, suspended_*,
+// org_feature_overrides) hasn't been run yet.
+
+async function tryGetImpersonation(sessionId: string) {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from('impersonation_sessions')
+      .select('target_org_id, ended_at, organizations(name)')
+      .eq('id', sessionId)
+      .is('ended_at', null)
+      .single();
+    if (error) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+async function tryGetSuspension(orgId: string) {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from('organizations')
+      .select('suspended_at, suspended_reason, name')
+      .eq('id', orgId)
+      .single();
+    if (error) {
+      // Likely the suspended_* columns don't exist yet — fall back to a name-only query
+      const fallback = await admin.from('organizations').select('name').eq('id', orgId).single();
+      return fallback.data ? { suspended_at: null, suspended_reason: null, name: fallback.data.name } : null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -22,7 +62,7 @@ export default async function DashboardLayout({
     redirect('/?error=email_not_verified');
   }
 
-  // ── Impersonation check ──────────────────────────────────────────────────
+  // ── Impersonation check (gracefully no-ops if admin_tier1 is unapplied) ──
   const cookieStore = await cookies();
   const impersonateSessionId = cookieStore.get('__impersonate')?.value;
 
@@ -31,14 +71,7 @@ export default async function DashboardLayout({
   let impersonatedOrgName = '';
 
   if (impersonateSessionId) {
-    const adminClient = createAdminClient();
-    const { data: session } = await adminClient
-      .from('impersonation_sessions')
-      .select('target_org_id, ended_at, organizations(name)')
-      .eq('id', impersonateSessionId)
-      .is('ended_at', null)
-      .single();
-
+    const session = await tryGetImpersonation(impersonateSessionId);
     if (session) {
       orgId = session.target_org_id;
       isImpersonating = true;
@@ -60,13 +93,8 @@ export default async function DashboardLayout({
     orgId = mData[0].org_id;
   }
 
-  // ── Suspension check ────────────────────────────────────────────────────
-  const adminClient = createAdminClient();
-  const { data: orgData } = await adminClient
-    .from('organizations')
-    .select('suspended_at, suspended_reason, name')
-    .eq('id', orgId)
-    .single();
+  // ── Suspension check (gracefully no-ops if admin_tier1 is unapplied) ────
+  const orgData = await tryGetSuspension(orgId!);
 
   if (orgData?.suspended_at && !isImpersonating) {
     return (

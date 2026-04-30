@@ -162,19 +162,18 @@ async function _deliverBroadcast(
 
     if (!members || members.length === 0) return { recipients: 0, orgsTargeted: matchingOrgIds.length };
 
-    // Build payloads — populate BOTH legacy (message/is_read) and Phase 5 (title/body/read_at)
-    // shapes so any notification UI in the codebase can render them correctly.
+    // Use ONLY the legacy notifications schema (columns guaranteed to exist):
+    // org_id, user_id, type, message, is_read, task_id, created_at.
+    // Phase 5 columns (title/body/read_at/resource_*) are not portable across
+    // databases that haven't run that migration yet — sticking to legacy means
+    // broadcasts work everywhere.
     const message = `📣 ${title}\n${body}`;
     const notifications = members.map(m => ({
         org_id: m.org_id,
         user_id: m.user_id,
         type: "system",                  // legacy enum: 'urgent'|'overdue'|'comment'|'system'
-        message,                          // legacy display field
+        message,                          // legacy display field — what the bell renders
         is_read: false,                   // legacy unread flag
-        title,                            // Phase 5
-        body,                             // Phase 5
-        resource_type: "broadcast",
-        resource_id: broadcastId,
     }));
 
     const deliveries = members.map(m => ({
