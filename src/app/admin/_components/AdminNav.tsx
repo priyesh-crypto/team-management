@@ -12,6 +12,9 @@ const NAV = [
     { href: "/admin/broadcasts", label: "BROADCASTS", icon: "📣" },
     { href: "/admin/analytics", label: "ANALYTICS", icon: "📈" },
     { href: "/admin/feature-flags", label: "FEATURE FLAGS", icon: "🚩" },
+    { href: "/admin/support", label: "SUPPORT", icon: "🎫" },
+    { href: "/admin/gdpr", label: "GDPR", icon: "🔒" },
+    { href: "/admin/system", label: "SYSTEM HEALTH", icon: "🩺" },
     { href: "/admin/audit", label: "AUDIT LOG", icon: "📜" },
 ];
 
