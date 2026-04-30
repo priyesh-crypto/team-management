@@ -3,7 +3,8 @@
 import React, { useState, useTransition } from "react";
 import { ShieldAlert, Plus, Trash2, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { toast } from "sonner";
-import { createCustomRole, updateCustomRole, deleteCustomRole, ALL_PERMISSIONS, type CustomRole } from "@/app/actions/custom-roles";
+import { ALL_PERMISSIONS, type CustomRole } from "@/app/actions/custom-roles-shared";
+import { createCustomRole, updateCustomRole, deleteCustomRole } from "@/app/actions/custom-roles";
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
 
 const PERMISSION_GROUPS: { label: string; keys: string[] }[] = [

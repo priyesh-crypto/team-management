@@ -12,6 +12,13 @@ import { ManagerBoardView } from './dashboard/ManagerBoardView';
 import { ManagerMineView } from './dashboard/ManagerMineView';
 import { SettingsView } from './dashboard/SettingsView';
 
+// New Feature Imports
+import { ReportsDashboard } from '@/app/dashboard/reports/ReportsDashboard';
+import { SprintBoard } from './features/SprintBoard';
+import { GanttView } from './features/GanttView';
+import { WorkloadView } from './features/WorkloadView';
+import { AutomationsManager } from './features/AutomationsManager';
+
 const TimelineSchedule = dynamic(() => import('@/components/ui/TimelineSchedule'), { 
     ssr: false,
     loading: () => <div className="h-96 w-full animate-pulse bg-slate-100 rounded-2xl flex items-center justify-center font-bold text-slate-400">Loading Timeline...</div>
@@ -54,7 +61,7 @@ export default function ManagerDashboard({
     orgId: string,
     initialData?: InitialDashboardData
 }) {
-    const [activeTab, setActiveTab] = useState<'board' | 'mine' | 'planning' | 'team' | 'settings'>('board');
+    const [activeTab, setActiveTab] = useState<'board' | 'mine' | 'planning' | 'team' | 'settings' | 'reports' | 'sprints' | 'gantt' | 'workload' | 'automations'>('board');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTask, setSelectedTask] = useState<{ task: Task, subtasks: Subtask[] } | null>(null);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -922,6 +929,62 @@ export default function ManagerDashboard({
                         />
                     )}
 
+                    {activeTab === 'reports' && (
+                        <div className="fade-in p-8 max-w-5xl mx-auto space-y-6">
+                            <div>
+                                <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Reports & Dashboards</h1>
+                                <p className="text-sm text-[#86868b] mt-1">Live insights across your organization.</p>
+                            </div>
+                            <ReportsDashboard
+                                stats={{ total: tasks.length, completed: tasks.filter(t => t.status === 'Completed').length, overdue: tasks.filter(t => t.status === 'Overdue' || (t.deadline && new Date(t.deadline) < new Date() && t.status !== 'Completed')).length, totalHours: tasks.reduce((a, t) => a + (t.hours_spent || 0), 0), memberCount: employees.length, workspaceCount: 1 }}
+                                byStatus={['To Do', 'In Progress', 'In Review', 'Blocked', 'Completed'].map(s => ({ status: s, count: tasks.filter(t => t.status === s).length })).filter(s => s.count > 0)}
+                                byPriority={['Urgent', 'High', 'Medium', 'Low'].map(p => ({ priority: p, count: tasks.filter(t => t.priority === p).length })).filter(p => p.count > 0)}
+                                byMember={employees.map(e => ({ user_id: e.id, name: e.name, role: e.role || 'employee', count: tasks.filter(t => t.employee_id === e.id).length, hours: tasks.filter(t => t.employee_id === e.id).reduce((a, t) => a + (t.hours_spent || 0), 0) })).filter(m => m.count > 0)}
+                                weeklyTrend={[]}
+                            />
+                        </div>
+                    )}
+
+                    {activeTab === 'sprints' && (
+                        <div className="fade-in p-8 max-w-5xl mx-auto space-y-6">
+                            <div>
+                                <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Agile Sprint Board</h1>
+                                <p className="text-sm text-[#86868b] mt-1">Organize work into time-boxed iterations.</p>
+                            </div>
+                            <SprintBoard orgId={orgId} workspaceId={""} sprints={[]} sprintTasks={{}} backlogTasks={[]} />
+                        </div>
+                    )}
+
+                    {activeTab === 'gantt' && (
+                        <div className="fade-in p-8 space-y-6">
+                            <div>
+                                <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Timeline & Gantt</h1>
+                                <p className="text-sm text-[#86868b] mt-1">Visualize project dependencies and schedules.</p>
+                            </div>
+                            <GanttView tasks={tasks} onTaskClick={handleTaskClick} />
+                        </div>
+                    )}
+
+                    {activeTab === 'workload' && (
+                        <div className="fade-in p-8 max-w-7xl mx-auto space-y-6">
+                            <div>
+                                <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Team Workload</h1>
+                                <p className="text-sm text-[#86868b] mt-1">Monitor capacity and prevent burnout.</p>
+                            </div>
+                            <WorkloadView members={[]} />
+                        </div>
+                    )}
+
+                    {activeTab === 'automations' && (
+                        <div className="fade-in p-8 max-w-5xl mx-auto space-y-6">
+                            <div>
+                                <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Automations Center</h1>
+                                <p className="text-sm text-[#86868b] mt-1">Streamline your workflow with custom trigger-action rules.</p>
+                            </div>
+                            <AutomationsManager rules={[]} />
+                        </div>
+                    )}
+
                     {activeTab === 'planning' && (
                         <div className="flex flex-col gap-8 h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar pr-2 pb-10 fade-in">
                             <WorkloadHeatmap data={workloadData || {}} />
@@ -1347,6 +1410,7 @@ export default function ManagerDashboard({
                     activeTimers={activeTimers}
                     onStartTimer={handleStartTimer}
                     onStopTimer={handleStopTimer}
+                    orgId={orgId}
                 />
             )}
 

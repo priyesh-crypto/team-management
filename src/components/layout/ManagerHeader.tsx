@@ -53,6 +53,11 @@ export function ManagerHeader({
                     <h1 className="text-xs font-black text-[#1d1d1f] tracking-tight uppercase mb-0.5">
                         {activeTab === 'board' ? 'Management Board' : 
                          activeTab === 'mine' ? 'Personal Workspace' : 
+                         activeTab === 'reports' ? 'Performance Reports' :
+                         activeTab === 'sprints' ? 'Sprint Planning' :
+                         activeTab === 'gantt' ? 'Project Roadmap' :
+                         activeTab === 'workload' ? 'Resource Capacity' :
+                         activeTab === 'automations' ? 'Automations Center' :
                          activeTab === 'planning' ? 'Project Planning' : 
                          activeTab === 'team' ? 'Team Control' : 'System Settings'}
                     </h1>

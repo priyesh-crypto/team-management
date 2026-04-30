@@ -51,14 +51,10 @@ export function WorkloadView({ members, startDate }: Props) {
         <UpgradeGate feature="workload_view">
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
-                            <Users size={18} className="text-slate-600" />
-                        </div>
-                        <div>
-                            <div className="text-sm font-black text-[#1d1d1f]">Workload</div>
-                            <div className="text-xs text-slate-400">Team capacity across {DAYS} days</div>
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-black uppercase tracking-widest">
+                            Capacity across {DAYS} days
+                        </span>
                     </div>
                     <div className="flex items-center gap-1">
                         <button onClick={() => setOffset(o => o - 1)}

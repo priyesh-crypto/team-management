@@ -5,6 +5,8 @@ import { Zap, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
 import {
     AutomationRule, TRIGGER_TYPES, ACTION_TYPES,
+} from "@/app/actions/automations-shared";
+import {
     createAutomationRule, toggleAutomationRule, deleteAutomationRule,
 } from "@/app/actions/automations";
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
@@ -105,9 +107,7 @@ export function AutomationsManager({ rules }: Props) {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Zap size={16} className="text-[#ff9500]" />
-                        <h3 className="text-sm font-black text-[#1d1d1f]">Automations</h3>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ff9500]/10 text-[#ff9500] font-black">{rules.length}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ff9500]/10 text-[#ff9500] font-black uppercase tracking-widest">{rules.length} Active Rules</span>
                     </div>
                     <button onClick={() => setShowForm(true)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#ff9500] text-white text-[11px] font-black hover:bg-[#e08600] transition-colors">

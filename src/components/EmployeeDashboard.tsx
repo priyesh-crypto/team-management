@@ -713,6 +713,7 @@ export default function EmployeeDashboard({
                         activeTimers={activeTimers}
                         onStartTimer={handleStartTimer}
                         onStopTimer={handleStopTimer}
+                        orgId={orgId}
                     />
                 )}
                 {showDeleteConfirm && (

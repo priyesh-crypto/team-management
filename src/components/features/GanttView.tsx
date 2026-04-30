@@ -102,10 +102,8 @@ export function GanttView({ tasks, onTaskClick }: Props) {
                 {/* Toolbar */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
                     <div className="flex items-center gap-2">
-                        <GitBranch size={16} className="text-[#0c64ef]" />
-                        <span className="text-sm font-black text-[#1d1d1f]">Gantt Chart</span>
-                        <span className="text-[10px] font-bold text-slate-400">
-                            {filteredTasks.length} tasks with dates
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#0c64ef]/10 text-[#0c64ef] font-black uppercase tracking-widest">
+                            {filteredTasks.length} scheduled tasks
                         </span>
                     </div>
                     <div className="p-0.5 rounded-xl bg-slate-100 flex">

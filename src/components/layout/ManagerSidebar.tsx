@@ -37,6 +37,10 @@ function NavItem({ icon, label, active = false, onClick }: { icon: string, label
     );
 }
 
+function NavSection({ title }: { title: string }) {
+    return <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[#86868b] px-4 mt-6 mb-2">{title}</div>;
+}
+
 export function ManagerSidebar({
     userName,
     userAvatarUrl,
@@ -65,10 +69,22 @@ export function ManagerSidebar({
                             </button>
                         </div>
 
-                        <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2 -mr-2 mb-6">
+                        <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2 -mr-2 mb-6">
+                            <NavSection title="Workspace" />
                             <NavItem icon="📊" label="DASHBOARD" active={activeTab === 'board'} onClick={() => { setActiveTab('board'); setIsMobileMenuOpen(false); }} />
                             <NavItem icon="🎯" label="MY TASKS" active={activeTab === 'mine'} onClick={() => { setActiveTab('mine'); setIsMobileMenuOpen(false); }} />
+                            
+                            <NavSection title="Views" />
+                            <NavItem icon="🏃" label="SPRINT BOARD" active={activeTab === 'sprints'} onClick={() => { setActiveTab('sprints'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon="📉" label="GANTT CHART" active={activeTab === 'gantt'} onClick={() => { setActiveTab('gantt'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon="🧠" label="WORKLOAD" active={activeTab === 'workload'} onClick={() => { setActiveTab('workload'); setIsMobileMenuOpen(false); }} />
+
+                            <NavSection title="Tools" />
+                            <NavItem icon="📈" label="REPORTS" active={activeTab === 'reports'} onClick={() => { setActiveTab('reports'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon="🤖" label="AUTOMATIONS" active={activeTab === 'automations'} onClick={() => { setActiveTab('automations'); setIsMobileMenuOpen(false); }} />
                             <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => { setActiveTab('planning'); setIsMobileMenuOpen(false); }} />
+                            
+                            <NavSection title="Admin" />
                             <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
                             <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
                             
@@ -97,8 +113,8 @@ export function ManagerSidebar({
             )}
 
             {/* --- DESKTOP SIDEBAR --- */}
-            <div className="w-60 bg-white border-r border-[#e5e5ea] flex flex-col p-5 hidden lg:flex">
-                <div className="flex items-center gap-3 mb-8 px-1">
+            <div className="w-64 bg-[#fafafa] border-r border-[#e5e5ea] flex flex-col p-5 hidden lg:flex">
+                <div className="flex items-center gap-3 mb-6 px-1">
                     <img src="/logo.avif" alt="Mindbird Logo" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
                     <div>
                         <span className="text-sm font-black tracking-tight text-[#1d1d1f] leading-none block">Mindbird.ai</span>
@@ -106,12 +122,25 @@ export function ManagerSidebar({
                     </div>
                 </div>
 
-                <nav className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar pr-2 -mr-2">
+                <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2 -mr-2">
+                    <NavSection title="Workspace" />
                     <NavItem icon="📊" label="DASHBOARD" active={activeTab === 'board'} onClick={() => setActiveTab('board')} />
                     <NavItem icon="🎯" label="MY TASKS" active={activeTab === 'mine'} onClick={() => setActiveTab('mine')} />
+                    
+                    <NavSection title="Views" />
+                    <NavItem icon="🏃" label="SPRINT BOARD" active={activeTab === 'sprints'} onClick={() => setActiveTab('sprints')} />
+                    <NavItem icon="📉" label="GANTT CHART" active={activeTab === 'gantt'} onClick={() => setActiveTab('gantt')} />
+                    <NavItem icon="🧠" label="WORKLOAD" active={activeTab === 'workload'} onClick={() => setActiveTab('workload')} />
+                    
+                    <NavSection title="Tools" />
+                    <NavItem icon="📈" label="REPORTS" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />
+                    <NavItem icon="🤖" label="AUTOMATIONS" active={activeTab === 'automations'} onClick={() => setActiveTab('automations')} />
                     <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => setActiveTab('planning')} />
+                    
+                    <NavSection title="Admin" />
                     <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
                     <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+
                     
                     <div className="mt-4 border-t border-[#f5f5f7] pt-2">
                         <ProjectSwitcher projects={projects} userRole={userRole} />

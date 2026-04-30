@@ -2,33 +2,13 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { ALL_PERMISSIONS } from "./custom-roles-shared";
+import type { CustomRole, RoleAssignment } from "./custom-roles-shared";
 
-export const ALL_PERMISSIONS = [
-    "tasks.create", "tasks.edit", "tasks.delete", "tasks.assign",
-    "workspaces.create", "workspaces.edit", "workspaces.delete",
-    "members.invite", "members.remove",
-    "reports.view", "audit.view",
-    "integrations.manage", "billing.view",
-] as const;
+// Re-export types for consumers (types are erased at runtime)
+export type { Permission, CustomRole, RoleAssignment } from "./custom-roles-shared";
+// Note: ALL_PERMISSIONS is in custom-roles-shared.ts — import it directly from there
 
-export type Permission = typeof ALL_PERMISSIONS[number];
-
-export type CustomRole = {
-    id: string;
-    name: string;
-    description: string | null;
-    permissions: Record<string, boolean>;
-    is_system: boolean;
-    created_at: string;
-};
-
-export type RoleAssignment = {
-    id: string;
-    user_id: string;
-    custom_role_id: string;
-    assigned_at: string;
-    role_name?: string;
-};
 
 export async function getCustomRoles(orgId: string): Promise<CustomRole[]> {
     const supabase = await createClient();

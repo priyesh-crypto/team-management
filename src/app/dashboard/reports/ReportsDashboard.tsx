@@ -14,7 +14,7 @@ interface Props {
     };
     byStatus: { status: string; count: number }[];
     byPriority: { priority: string; count: number }[];
-    byMember: { user_id: string; role: string; count: number; hours: number }[];
+    byMember: { user_id: string; name: string; role: string; count: number; hours: number }[];
     weeklyTrend: { label: string; completed: number }[];
 }
 
@@ -74,14 +74,7 @@ export function ReportsDashboard({ stats, byStatus, byPriority, byMember, weekly
     const maxWeeklyCount = Math.max(...weeklyTrend.map(w => w.completed), 1);
 
     return (
-        <div className="p-8 space-y-8 max-w-5xl">
-            <div>
-                <div className="flex items-center gap-3 mb-1">
-                    <BarChart3 size={20} className="text-[#0c64ef]" />
-                    <h1 className="text-2xl font-black text-[#1d1d1f]">Reports & Dashboards</h1>
-                </div>
-                <p className="text-sm text-slate-400">Live insights across your organization.</p>
-            </div>
+        <div className="space-y-8">
 
             {/* KPI strip */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -159,7 +152,7 @@ export function ReportsDashboard({ stats, byStatus, byPriority, byMember, weekly
                             <div key={m.user_id} className="flex items-center gap-4 py-2 border-b border-slate-50 last:border-0">
                                 <div className="w-6 text-[11px] font-black text-slate-300 text-right">{i + 1}</div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="text-[11px] font-black text-[#1d1d1f] truncate">{m.user_id.slice(0, 8)}…</div>
+                                    <div className="text-[11px] font-black text-[#1d1d1f] truncate">{m.name}</div>
                                     <div className="text-[9px] font-bold text-slate-400 uppercase">{m.role}</div>
                                 </div>
                                 <div className="text-right">

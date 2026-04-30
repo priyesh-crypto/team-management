@@ -27,7 +27,7 @@ export default async function ReportsPage() {
     // Fetch aggregate data for reports
     const [tasksRes, membersRes, workspacesRes] = await Promise.all([
         supabase.from("tasks").select("id, name, status, priority, deadline, created_at, employee_id, hours_spent").eq("org_id", orgId),
-        supabase.from("organization_members").select("user_id, role").eq("org_id", orgId),
+        supabase.from("organization_members").select("user_id, role, profiles(name)").eq("org_id", orgId),
         supabase.from("workspaces").select("id, name").eq("org_id", orgId),
     ]);
 
@@ -56,6 +56,7 @@ export default async function ReportsPage() {
     // By member (top 10)
     const byMember = members.map(m => ({
         user_id: m.user_id,
+        name: (m.profiles as any)?.name || m.user_id.slice(0, 8) + '...',
         role: m.role,
         count: tasks.filter(t => t.employee_id === m.user_id).length,
         hours: tasks.filter(t => t.employee_id === m.user_id).reduce((s, t) => s + (Number(t.hours_spent) || 0), 0),
