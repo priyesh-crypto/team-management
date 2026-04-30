@@ -30,6 +30,14 @@ const FEATURE_NAMES: Record<string, string> = {
     custom_roles: "Custom Roles",
     white_labeling: "White-labeling",
     data_export: "Data Export",
+    notifications: "Notifications",
+    task_comments: "Task Comments",
+    comment_reactions: "Comment Reactions",
+    milestones: "Milestones",
+    sprints: "Sprints",
+    workload_view: "Workload View",
+    github_integration: "GitHub Integration",
+    extended_api: "Extended API",
 };
 
 const FEATURE_TIER: Record<string, string> = {
@@ -59,6 +67,14 @@ const FEATURE_TIER: Record<string, string> = {
     custom_roles: "Business",
     white_labeling: "Business",
     data_export: "Business",
+    notifications: "Pro",
+    task_comments: "Pro",
+    comment_reactions: "Pro",
+    milestones: "Pro",
+    sprints: "Pro",
+    workload_view: "Business",
+    github_integration: "Pro",
+    extended_api: "Pro",
 };
 
 interface PaywallModalProps {
