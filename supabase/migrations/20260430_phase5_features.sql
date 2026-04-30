@@ -23,16 +23,24 @@ CREATE TABLE IF NOT EXISTS public.notifications (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id        UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
     user_id       UUID NOT NULL,
-    type          TEXT NOT NULL,   -- task_assigned | comment_mention | task_due | approval_needed | etc.
+    type          TEXT NOT NULL,
     title         TEXT NOT NULL,
     body          TEXT,
-    resource_type TEXT,            -- task | comment | workspace
+    resource_type TEXT,
     resource_id   UUID,
     actor_id      UUID,
     actor_email   TEXT,
     read_at       TIMESTAMPTZ,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Guard columns in case the table already existed from a partial run
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS body          TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS resource_type TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS resource_id   UUID;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS actor_id      UUID;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS actor_email   TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS read_at       TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS notifications_user_idx ON public.notifications (user_id, read_at, created_at DESC);
 
@@ -72,6 +80,9 @@ CREATE TABLE IF NOT EXISTS public.task_comments (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE public.task_comments ADD COLUMN IF NOT EXISTS mentions  UUID[] NOT NULL DEFAULT '{}';
+ALTER TABLE public.task_comments ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ;
+
 CREATE INDEX IF NOT EXISTS task_comments_task_idx ON public.task_comments (task_id, created_at);
 
 ALTER TABLE public.task_comments ENABLE ROW LEVEL SECURITY;
@@ -105,9 +116,21 @@ CREATE TABLE IF NOT EXISTS public.comment_reactions (
     org_id     UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
     user_id    UUID NOT NULL,
     emoji      TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (comment_id, user_id, emoji)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Add unique constraint idempotently
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'comment_reactions_comment_id_user_id_emoji_key'
+    ) THEN
+        ALTER TABLE public.comment_reactions
+            ADD CONSTRAINT comment_reactions_comment_id_user_id_emoji_key
+            UNIQUE (comment_id, user_id, emoji);
+    END IF;
+END$$;
 
 ALTER TABLE public.comment_reactions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Org members can manage reactions" ON public.comment_reactions;
