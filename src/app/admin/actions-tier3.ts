@@ -31,10 +31,10 @@ export async function initiateGdprExport(orgId: string, userId: string, notes?: 
         { data: comments },
         { data: notifications },
     ] = await Promise.all([
-        admin.from("tasks").select("id, title, description, status, priority, due_date, created_at").eq("org_id", orgId),
+        admin.from("tasks").select("id, name, notes, status, priority, start_date, deadline, created_at").eq("org_id", orgId),
         admin.from("organization_members").select("user_id, role, created_at").eq("org_id", orgId),
-        admin.from("task_comments").select("id, task_id, content, created_at").eq("org_id", orgId).eq("user_id", userId),
-        admin.from("notifications").select("type, title, body, created_at, read_at").eq("org_id", orgId).eq("user_id", userId),
+        admin.from("comments").select("id, task_id, content, created_at").eq("org_id", orgId).eq("author_id", userId),
+        admin.from("notifications").select("type, message, is_read, task_id, created_at").eq("org_id", orgId).eq("user_id", userId),
     ]);
 
     const exportData = {

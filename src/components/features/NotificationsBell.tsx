@@ -2,14 +2,27 @@
 
 import React, { useState, useTransition, useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
-import { getNotifications, markAsRead, markAllRead, type Notification } from "@/app/actions/notifications";
+import { getNotificationsAlt, markAsRead, markAllReadAlt } from "@/app/actions/notifications";
+
+// Matches the actual DB schema: type, message, is_read, task_id
+type NotificationItem = {
+    id: string;
+    type: string;
+    message: string;
+    is_read: boolean;
+    task_id: string | null;
+    created_at: string;
+};
 
 const TYPE_ICONS: Record<string, string> = {
+    urgent: "🔴",
+    overdue: "⏰",
+    comment: "💬",
+    system: "⚡",
     task_assigned: "📋",
     comment_mention: "💬",
     task_due: "⏰",
     approval_needed: "✅",
-    approval_decided: "🏁",
     task_status_changed: "🔄",
     member_joined: "👋",
 };
@@ -22,7 +35,7 @@ interface Props {
 export function NotificationsBell({ initialCount, orgId }: Props) {
     const [open, setOpen] = useState(false);
     const [unread, setUnread] = useState(initialCount);
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [pending, startTransition] = useTransition();
     const ref = useRef<HTMLDivElement>(null);
@@ -39,8 +52,8 @@ export function NotificationsBell({ initialCount, orgId }: Props) {
         setOpen(o => !o);
         if (!loaded) {
             startTransition(async () => {
-                const data = await getNotifications(30);
-                setNotifications(data);
+                const data = await getNotificationsAlt(30);
+                setNotifications(data as NotificationItem[]);
                 setLoaded(true);
             });
         }
@@ -49,15 +62,15 @@ export function NotificationsBell({ initialCount, orgId }: Props) {
     function handleRead(id: string) {
         startTransition(async () => {
             await markAsRead(id);
-            setNotifications(ns => ns.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n));
+            setNotifications(ns => ns.map(n => n.id === id ? { ...n, is_read: true } : n));
             setUnread(c => Math.max(0, c - 1));
         });
     }
 
     function handleMarkAll() {
         startTransition(async () => {
-            await markAllRead(orgId);
-            setNotifications(ns => ns.map(n => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })));
+            await markAllReadAlt(orgId);
+            setNotifications(ns => ns.map(n => ({ ...n, is_read: true })));
             setUnread(0);
         });
     }
@@ -98,21 +111,20 @@ export function NotificationsBell({ initialCount, orgId }: Props) {
                         )}
                         {notifications.map(n => (
                             <div key={n.id}
-                                onClick={() => !n.read_at && handleRead(n.id)}
-                                className={`flex items-start gap-3 px-4 py-3 transition-colors ${!n.read_at ? "bg-[#0c64ef]/3 hover:bg-[#0c64ef]/5 cursor-pointer" : "hover:bg-slate-50/50"}`}>
+                                onClick={() => !n.is_read && handleRead(n.id)}
+                                className={`flex items-start gap-3 px-4 py-3 transition-colors ${!n.is_read ? "bg-[#0c64ef]/3 hover:bg-[#0c64ef]/5 cursor-pointer" : "hover:bg-slate-50/50"}`}>
                                 <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0 text-base">
                                     {TYPE_ICONS[n.type] ?? "⚡"}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className={`text-xs ${!n.read_at ? "font-black text-[#1d1d1f]" : "font-bold text-slate-600"}`}>
-                                        {n.title}
+                                    <div className={`text-xs ${!n.is_read ? "font-black text-[#1d1d1f]" : "font-bold text-slate-600"}`}>
+                                        {n.message}
                                     </div>
-                                    {n.body && <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-2">{n.body}</div>}
                                     <div className="text-[9px] text-slate-400 mt-1">
                                         {new Date(n.created_at).toLocaleString()}
                                     </div>
                                 </div>
-                                {!n.read_at && (
+                                {!n.is_read && (
                                     <div className="w-2 h-2 rounded-full bg-[#0c64ef] flex-shrink-0 mt-1.5" />
                                 )}
                             </div>
