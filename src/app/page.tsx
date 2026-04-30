@@ -28,9 +28,9 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
     "use server"
     const email = (formData.get('email') as string)?.trim().toLowerCase();
     const password = formData.get('password') as string;
-    
+
     if (!email || !password) return redirect('/?error=invalid_credentials&details=Missing%20credentials');
-    
+
     const supabase = await createClient();
 
     // Rate Limiting: 50 attempts per 15 minutes per IP/Email
@@ -39,13 +39,13 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
     if (!throttle.allowed) return redirect(`/?error=rate_limited&msg=${encodeURIComponent(throttle.error || '')}`);
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    
+
     if (error) {
-        console.error("[Login] Auth Error for", email, ":", error.message, error.status);
-        if (error.message.includes('Email not confirmed')) {
-            return redirect('/?error=email_not_verified');
-        }
-        return redirect(`/?error=invalid_credentials&details=${encodeURIComponent(error.message)}`);
+      console.error("[Login] Auth Error for", email, ":", error.message, error.status);
+      if (error.message.includes('Email not confirmed')) {
+        return redirect('/?error=email_not_verified');
+      }
+      return redirect(`/?error=invalid_credentials&details=${encodeURIComponent(error.message)}`);
     }
     // Direct redirect to dashboard skip the Home render cycle
     redirect('/dashboard');
@@ -61,22 +61,22 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
     // 1. Create Org using Service Role
     const { createClient: createAdminClient } = await import('@supabase/supabase-js')
     const supabaseAdmin = createAdminClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        { auth: { autoRefreshToken: false, persistSession: false } }
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
     const { data: org, error: orgError } = await supabaseAdmin.from('organizations').insert({ name }).select('id').single();
     if (orgError || !org) {
-        console.error("Org Creation Error:", orgError);
-        return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent(orgError?.message || '')}`);
+      console.error("Org Creation Error:", orgError);
+      return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent(orgError?.message || '')}`);
     }
 
     // 2. Create Default Workspace
     const { error: wsError } = await supabaseAdmin.from('workspaces').insert({ org_id: org.id, name: 'Default Workspace' });
     if (wsError) {
-        console.error("Workspace Creation Error:", wsError);
-        return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent('Workspace setup failed: ' + wsError.message)}`);
+      console.error("Workspace Creation Error:", wsError);
+      return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent('Workspace setup failed: ' + wsError.message)}`);
     }
 
     // 3. Add to Organization Members as Owner
@@ -86,21 +86,21 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
       role: 'owner'
     });
     if (memError) {
-        console.error("Member Creation Error:", memError);
-        return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent('Member setup failed: ' + memError.message)}`);
+      console.error("Member Creation Error:", memError);
+      return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent('Member setup failed: ' + memError.message)}`);
     }
 
     // 4. Ensure profile exists and has manager/owner role
     // We use upsert here to guarantee the profile exists for the UI
     const { error: profError } = await supabaseAdmin.from('profiles').upsert({
-        id: user.id,
-        name: user.user_metadata?.name || 'New Member',
-        email: user.email,
-        role: 'manager'
+      id: user.id,
+      name: user.user_metadata?.name || 'New Member',
+      email: user.email,
+      role: 'manager'
     });
     if (profError) {
-        console.error("Profile Upsert Error:", profError);
-        return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent('Profile setup failed: ' + profError.message)}`);
+      console.error("Profile Upsert Error:", profError);
+      return redirect(`/?error=org_creation_failed&msg=${encodeURIComponent('Profile setup failed: ' + profError.message)}`);
     }
 
     redirect('/');
@@ -156,30 +156,30 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
 
   // --- RENDER ONBOARDING (LOGGED IN BUT NO ORG) ---
   if (!hasOrg) {
-     return (
-        <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-[#f5f5f7]">
-          <div className="w-full max-w-md">
-            <div className="text-center mb-8">
-              <Logo className="mb-4 escala-110" />
-              <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Create Your Workspace</h1>
-              <p className="text-[#86868b] text-sm font-medium mt-2">Set up your company to start managing tasks</p>
-            </div>
-            <Card className="p-8 border-2 border-[#0c64ef]/20 shadow-xl shadow-[#0c64ef]/10">
-              <form action={createOrganization} className="space-y-6">
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-[#86868b] mb-3 ml-2">Company Name</label>
-                  <Input name="orgName" required placeholder="Acme Corp" className="w-full h-14 text-lg font-bold px-6 rounded-2xl bg-[#f5f5f7] border-none" />
-                </div>
-                <Button type="submit" className="w-full h-14 text-lg font-black tracking-wide rounded-2xl mt-4 bg-[#0c64ef] hover:bg-[#1a6a90] shadow-lg shadow-[#0c64ef]/30">Launch Workspace</Button>
-              </form>
-              
-              <form action={logout} className="mt-6 text-center">
-                 <button type="submit" className="text-xs font-bold text-[#86868b] hover:text-[#1d1d1f] transition-colors">Sign out instead</button>
-              </form>
-            </Card>
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-[#f5f5f7]">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <Logo className="mb-4 escala-110" />
+            <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Create Your Workspace</h1>
+            <p className="text-[#86868b] text-sm font-medium mt-2">Set up your company to start managing tasks</p>
           </div>
-        </main>
-      );
+          <Card className="p-8 border-2 border-[#0c64ef]/20 shadow-xl shadow-[#0c64ef]/10">
+            <form action={createOrganization} className="space-y-6">
+              <div>
+                <label className="block text-xs font-black uppercase tracking-widest text-[#86868b] mb-3 ml-2">Company Name</label>
+                <Input name="orgName" required placeholder="Acme Corp" className="w-full h-14 text-lg font-bold px-6 rounded-2xl bg-[#f5f5f7] border-none" />
+              </div>
+              <Button type="submit" className="w-full h-14 text-lg font-black tracking-wide rounded-2xl mt-4 bg-[#0c64ef] hover:bg-[#1a6a90] shadow-lg shadow-[#0c64ef]/30">Launch Workspace</Button>
+            </form>
+
+            <form action={logout} className="mt-6 text-center">
+              <button type="submit" className="text-xs font-bold text-[#86868b] hover:text-[#1d1d1f] transition-colors">Sign out instead</button>
+            </form>
+          </Card>
+        </div>
+      </main>
+    );
   }
 
   // --- RENDER AUTHENTICATED DASHBOARDS ---

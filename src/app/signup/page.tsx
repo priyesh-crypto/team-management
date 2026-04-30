@@ -21,8 +21,8 @@ export default async function SignupPage({
     'use server';
     if (formData.get('website')) return redirect('/signup?error=bot_detected');
 
-    const name     = sanitizeString(formData.get('name') as string);
-    const email    = sanitizeString(formData.get('email') as string);
+    const name = sanitizeString(formData.get('name') as string);
+    const email = sanitizeString(formData.get('email') as string);
     const password = formData.get('password') as string;
 
     if (!name || name.length < 2)
@@ -86,8 +86,8 @@ export default async function SignupPage({
               <input type="text" name="website" tabIndex={-1} autoComplete="off" />
             </div>
 
-            <Input name="name"     type="text"     required placeholder="Full Name"      className="w-full h-12" />
-            <Input name="email"    type="email"    required placeholder="Work Email"     className="w-full h-12" />
+            <Input name="name" type="text" required placeholder="Full Name" className="w-full h-12" />
+            <Input name="email" type="email" required placeholder="Work Email" className="w-full h-12" />
             <Input name="password" type="password" required placeholder="Choose Password" className="w-full h-12" />
 
             <Button type="submit" className="w-full h-12 text-md font-bold mt-2">

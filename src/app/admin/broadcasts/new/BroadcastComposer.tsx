@@ -40,8 +40,16 @@ export function BroadcastComposer() {
 
         startTransition(async () => {
             try {
-                await createBroadcast(title, body, target, channels, sendNow);
-                toast.success(sendNow ? "Broadcast sent!" : "Draft saved");
+                const result = await createBroadcast(title, body, target, channels, sendNow);
+                if (sendNow) {
+                    if (result.recipients === 0) {
+                        toast.error(`Sent — but 0 recipients matched (${result.orgsTargeted} orgs targeted but they have no members).`);
+                    } else {
+                        toast.success(`Sent to ${result.recipients} user${result.recipients !== 1 ? "s" : ""} across ${result.orgsTargeted} org${result.orgsTargeted !== 1 ? "s" : ""}.`);
+                    }
+                } else {
+                    toast.success("Draft saved");
+                }
                 router.push("/admin/broadcasts");
             } catch (err) {
                 toast.error(err instanceof Error ? err.message : "Failed");

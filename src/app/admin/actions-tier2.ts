@@ -110,13 +110,25 @@ export async function createBroadcast(
         .single();
     if (error || !broadcast) throw new Error(error?.message ?? "Failed to create broadcast");
 
+    let recipients = 0;
+    let orgsTargeted = 0;
     if (sendNow) {
-        await _deliverBroadcast(broadcast.id, target, body, title);
+        const result = await _deliverBroadcast(broadcast.id, target, body.trim(), title.trim());
+        recipients = result.recipients;
+        orgsTargeted = result.orgsTargeted;
     }
 
-    await logAdminAction(user.id, "create_broadcast", null, { title, channels, sendNow });
+    await logAdminAction(user.id, "create_broadcast", null, {
+        title, channels, sendNow, recipients, orgsTargeted,
+    });
     revalidatePath("/admin/broadcasts");
-    return { id: broadcast.id };
+    return { id: broadcast.id, recipients, orgsTargeted };
+}
+
+function chunk<T>(arr: T[], size: number): T[][] {
+    const out: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
 }
 
 async function _deliverBroadcast(
@@ -124,7 +136,7 @@ async function _deliverBroadcast(
     target: BroadcastTarget,
     body: string,
     title: string
-) {
+): Promise<{ recipients: number; orgsTargeted: number }> {
     const admin = createAdminClient();
 
     // Resolve matching orgs
@@ -132,43 +144,84 @@ async function _deliverBroadcast(
     if (!target.all && target.plans && target.plans.length > 0) {
         query = query.in("plan_id", target.plans);
     }
-    const { data: orgs } = await query;
+    const { data: orgs, error: orgErr } = await query;
+    if (orgErr) throw new Error(`Failed to resolve target orgs: ${orgErr.message}`);
+
     const matchingOrgIds = (orgs ?? [])
         .filter(o => !target.min_seats || o.seats_purchased >= target.min_seats)
         .map(o => o.id);
 
-    if (matchingOrgIds.length === 0) return;
+    if (matchingOrgIds.length === 0) return { recipients: 0, orgsTargeted: 0 };
 
     // Get all members of matching orgs
-    const { data: members } = await admin
+    const { data: members, error: memErr } = await admin
         .from("organization_members")
         .select("org_id, user_id")
         .in("org_id", matchingOrgIds);
+    if (memErr) throw new Error(`Failed to resolve members: ${memErr.message}`);
 
-    if (!members || members.length === 0) return;
+    if (!members || members.length === 0) return { recipients: 0, orgsTargeted: matchingOrgIds.length };
 
-    // Insert in-app notifications (batch)
+    // Build payloads — populate BOTH legacy (message/is_read) and Phase 5 (title/body/read_at)
+    // shapes so any notification UI in the codebase can render them correctly.
+    const message = `📣 ${title}\n${body}`;
     const notifications = members.map(m => ({
         org_id: m.org_id,
         user_id: m.user_id,
-        type: "broadcast",
-        title,
-        body,
+        type: "system",                  // legacy enum: 'urgent'|'overdue'|'comment'|'system'
+        message,                          // legacy display field
+        is_read: false,                   // legacy unread flag
+        title,                            // Phase 5
+        body,                             // Phase 5
         resource_type: "broadcast",
         resource_id: broadcastId,
     }));
 
-    // Insert deliveries (for tracking)
     const deliveries = members.map(m => ({
         broadcast_id: broadcastId,
         org_id: m.org_id,
         user_id: m.user_id,
     }));
 
-    await Promise.all([
-        admin.from("notifications").insert(notifications),
-        admin.from("broadcast_deliveries").insert(deliveries),
-    ]);
+    // Batch in chunks of 500 (Supabase payload limit)
+    const notifChunks = chunk(notifications, 500);
+    const delivChunks = chunk(deliveries, 500);
+
+    let inserted = 0;
+    for (const c of notifChunks) {
+        const { error: e } = await admin.from("notifications").insert(c);
+        if (e) {
+            console.error("[broadcast] notification chunk failed:", e.message);
+            throw new Error(`Notification insert failed: ${e.message}`);
+        }
+        inserted += c.length;
+    }
+    for (const c of delivChunks) {
+        const { error: e } = await admin.from("broadcast_deliveries").insert(c);
+        if (e) console.error("[broadcast] delivery chunk failed (non-fatal):", e.message);
+    }
+
+    return { recipients: inserted, orgsTargeted: matchingOrgIds.length };
+}
+
+export async function resendBroadcast(broadcastId: string) {
+    const user = await requirePlatformAdmin();
+    const admin = createAdminClient();
+
+    const { data: b } = await admin
+        .from("broadcasts")
+        .select("id, title, body, target_filter")
+        .eq("id", broadcastId)
+        .single();
+    if (!b) throw new Error("Broadcast not found");
+
+    const result = await _deliverBroadcast(b.id, b.target_filter as BroadcastTarget, b.body, b.title);
+
+    await admin.from("broadcasts").update({ sent_at: new Date().toISOString() }).eq("id", broadcastId);
+    await logAdminAction(user.id, "resend_broadcast", null, { broadcastId, ...result });
+
+    revalidatePath("/admin/broadcasts");
+    return result;
 }
 
 export async function getBroadcasts() {
