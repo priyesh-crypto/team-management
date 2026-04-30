@@ -1,5 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
+import { getEntitlement } from '@/lib/entitlements';
+import { EntitlementProvider } from '@/context/EntitlementContext';
 
 export default async function DashboardLayout({
   children,
@@ -13,12 +15,10 @@ export default async function DashboardLayout({
     redirect('/');
   }
 
-  // Security: Ensure email is confirmed before accessing dashboard
   if (!user.email_confirmed_at) {
     redirect('/?error=email_not_verified');
   }
 
-  // Check organziation membership
   const { data: mData } = await supabase
     .from('organization_members')
     .select('org_id')
@@ -28,5 +28,12 @@ export default async function DashboardLayout({
     redirect('/');
   }
 
-  return <>{children}</>;
+  const orgId = mData[0].org_id;
+  const entitlement = await getEntitlement(orgId);
+
+  return (
+    <EntitlementProvider entitlement={entitlement}>
+      {children}
+    </EntitlementProvider>
+  );
 }
