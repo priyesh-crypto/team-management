@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 import { Check, X, Sparkles, Zap, Crown, ArrowRight } from "lucide-react";
 
@@ -472,9 +472,6 @@ export function BillingClient({
         </div>
     );
 }
-
-// Need React for Fragment
-import React from "react";
 
 function UsageBar({
     label,
