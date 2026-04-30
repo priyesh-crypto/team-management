@@ -24,6 +24,10 @@ import {
     formatMoney,
     humanizeAction,
 } from "../../_components/ui";
+import { SuspendPanel } from "./SuspendPanel";
+import { CreditsPanel } from "./CreditsPanel";
+import { FeatureOverridesPanel } from "./FeatureOverridesPanel";
+import { ImpersonateButton } from "./ImpersonateButton";
 
 type Org = {
     id: string;
@@ -37,6 +41,8 @@ type Org = {
     stripe_subscription_id: string | null;
     cancel_at_period_end: boolean;
     billing_country: string | null;
+    suspended_at: string | null;
+    suspended_reason: string | null;
 };
 
 type Plan = { id: string; name: string; price_monthly_cents: number };
@@ -52,6 +58,19 @@ type AdminAction = {
     payload: Record<string, unknown> | null;
     created_at: string;
 };
+type Credit = {
+    id: string;
+    amount_cents: number;
+    currency: string;
+    reason: string;
+    created_at: string;
+    applied_at: string | null;
+};
+type FeatureOverride = {
+    feature_key: string;
+    enabled: boolean;
+    updated_at: string;
+};
 
 export function OrgDetailClient({
     org,
@@ -59,12 +78,16 @@ export function OrgDetailClient({
     usage,
     members,
     recentActions,
+    credits,
+    featureOverrides,
 }: {
     org: Org;
     plans: Plan[];
     usage: Usage;
     members: Member[];
     recentActions: AdminAction[];
+    credits: Credit[];
+    featureOverrides: FeatureOverride[];
 }) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
@@ -108,8 +131,22 @@ export function OrgDetailClient({
                                     Cancels at period end
                                 </span>
                             )}
+                            {org.suspended_at && (
+                                <span className="px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.15em] rounded-full bg-red-50 text-red-700">
+                                    Suspended
+                                </span>
+                            )}
                         </div>
                         <div className="text-[10px] font-mono text-[#86868b] mt-2.5">{org.id}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href={`/admin/orgs/${org.id}/usage`}
+                            className="px-3 py-2 rounded-xl bg-[#f5f5f7] text-[11px] font-black text-[#86868b] hover:bg-[#e5e5ea] transition-colors"
+                        >
+                            📊 Usage
+                        </Link>
+                        <ImpersonateButton orgId={org.id} />
                     </div>
                 </div>
             </div>
@@ -239,6 +276,18 @@ export function OrgDetailClient({
                     </div>
                 </Card>
             </div>
+
+            {/* Operational panels */}
+            <div className="grid grid-cols-2 gap-4">
+                <SuspendPanel
+                    orgId={org.id}
+                    suspendedAt={org.suspended_at}
+                    suspendedReason={org.suspended_reason}
+                />
+                <CreditsPanel orgId={org.id} credits={credits} />
+            </div>
+
+            <FeatureOverridesPanel orgId={org.id} overrides={featureOverrides} />
 
             {/* Danger zone */}
             <Card className="border-red-100">

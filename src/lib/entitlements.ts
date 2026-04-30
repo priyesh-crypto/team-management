@@ -13,12 +13,22 @@ export type Entitlement = {
 
 export async function getEntitlement(orgId: string): Promise<Entitlement | null> {
     const supabase = await createClient();
-    const { data, error } = await supabase
-        .rpc("org_entitlement", { target_org: orgId })
-        .single();
+    const [{ data, error }, { data: overrides }] = await Promise.all([
+        supabase.rpc("org_entitlement", { target_org: orgId }).single(),
+        supabase
+            .from("org_feature_overrides")
+            .select("feature_key, enabled")
+            .eq("org_id", orgId),
+    ]);
 
     if (error || !data) return null;
-    return data as Entitlement;
+    const entitlement = data as Entitlement;
+
+    for (const o of overrides ?? []) {
+        entitlement.features[o.feature_key] = o.enabled;
+    }
+
+    return entitlement;
 }
 
 export function canAddSeat(e: Entitlement): { ok: boolean; reason?: string } {
