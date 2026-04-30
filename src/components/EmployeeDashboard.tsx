@@ -168,10 +168,11 @@ export default function EmployeeDashboard({
             setMyTasks(myTasksFiltered);
             setEmployees(data.profiles);
             
-            // Notifications are separate but important
-            const notifs = await getNotifications(userId || '');
-            setNotifications(notifs || []);
-            setUnreadCount((notifs || []).filter((n: Notification) => !n.is_read).length);
+            // Notifications now come back with the consolidated dashboard payload —
+            // no need for a second roundtrip.
+            const notifs = data.notifications || [];
+            setNotifications(notifs);
+            setUnreadCount(notifs.filter((n: Notification) => !n.is_read).length);
 
             // Level 2: Secondary Data (Subtasks, Counts)
             const allSubtasks = data.subtasks;
@@ -224,7 +225,7 @@ export default function EmployeeDashboard({
             .channel('employee-dashboard-realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => debouncedRefresh(true))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'subtasks' }, () => debouncedRefresh(true))
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => debouncedRefresh(true))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => debouncedRefresh(true))
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_logs' }, () => debouncedRefresh(true))
             .subscribe();
 

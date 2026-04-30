@@ -17,7 +17,7 @@ export default async function OrgAuditPage() {
         .from("organization_members")
         .select("org_id, role")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
     if (!membership || !["manager", "admin", "owner"].includes(membership.role)) {
         redirect("/dashboard");
@@ -57,7 +57,7 @@ export default async function OrgAuditPage() {
                         <div className="flex-1 min-w-0">
                             <div className="text-sm font-black text-[#1d1d1f]">{log.action.replace(/_/g, " ")}</div>
                             <div className="text-[10px] font-bold text-slate-400 mt-0.5">
-                                {log.actor_email ?? log.actor_id.slice(0, 8)}
+                                {log.actor_email ?? log.actor_id?.slice(0, 8) ?? "system"}
                                 {log.resource_type && ` · ${log.resource_type}`}
                             </div>
                             {log.payload && Object.keys(log.payload).length > 0 && (

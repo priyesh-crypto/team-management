@@ -2586,13 +2586,14 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
     // 1. Fetch Core Data in parallel. Auth users are not fetched here —
     // rely on the profiles table email field instead.
     console.time(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
-    const [tasks, profiles, projects, projectMembers, logs, workload] = await Promise.all([
+    const [tasks, profiles, projects, projectMembers, logs, workload, notificationsList] = await Promise.all([
         getTasks(projectId, orgId),
         getProfiles(undefined, [], orgId),
         getProjects(orgId),
         projectId ? getProfiles(projectId, [], orgId) : Promise.resolve([]),
         getOrgActivityFeed(orgId || '').catch(e => { console.error("Logs failed:", e); return []; }),
-        getWorkloadHeatmap(projectId, orgId).catch(e => { console.error("Heatmap failed:", e); return {}; })
+        getWorkloadHeatmap(projectId, orgId).catch(e => { console.error("Heatmap failed:", e); return {}; }),
+        getNotifications(userId || '').catch(e => { console.error("Notifications failed:", e); return []; }),
     ]);
     console.timeEnd(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
 
@@ -2632,7 +2633,7 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         subtasks,
         counts,
         authUsers: [],
-        notifications: []
+        notifications: notificationsList
     };
 }
 

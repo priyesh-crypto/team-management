@@ -25,7 +25,7 @@ export default async function BillingPage() {
         .eq("user_id", user.id)
         .in("role", ["owner", "admin"])
         .limit(1)
-        .single();
+        .maybeSingle();
 
     if (!membership) {
         return (
@@ -52,7 +52,7 @@ export default async function BillingPage() {
         .from("org_usage")
         .select("*")
         .eq("org_id", org.id)
-        .single();
+        .maybeSingle();
 
     return (
         <BillingClient

@@ -103,7 +103,7 @@ export default function ManagerDashboard({
     const [inviteResult, setInviteResult] = useState<{type: 'error' | 'success', text: string} | null>(null);
     const [editingEmpId, setEditingEmpId] = useState<string | null>(null);
     const [editEmpForm, setEditEmpForm] = useState({ name: '', role: 'employee', password: '', email: '' });
-    const [notifications] = useState<Notification[]>(initialData?.notifications || []);
+    const [notifications, setNotifications] = useState<Notification[]>(initialData?.notifications || []);
     const [showNotifications, setShowNotifications] = useState(false);
     const unreadCount = notifications.filter(n => !n.is_read).length;
     const [workloadData, setWorkloadData] = useState<WorkloadMap>(initialData?.workload || {});
@@ -251,7 +251,7 @@ export default function ManagerDashboard({
             .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
                 debouncedRefresh(true);
             })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => {
                 debouncedRefresh(true);
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, () => {
@@ -307,6 +307,7 @@ export default function ManagerDashboard({
             setProjectMembers(data.projectMembers);
             setAuditLogs(data.logs);
             setWorkloadData(data.workload);
+            setNotifications(data.notifications || []);
 
             // Level 2: Secondary Data (Subtasks, Counts, etc.)
             const allSubtasks = data.subtasks;
@@ -844,6 +845,7 @@ export default function ManagerDashboard({
             setShowBroadcastModal(false);
             setBroadcastForm({ message: '', type: 'system' });
             toast.success("Broadcast alert sent successfully!");
+            refreshData(true);
         } catch (err: any) {
             toast.error("Failed to send broadcast: " + err.message);
         } finally {

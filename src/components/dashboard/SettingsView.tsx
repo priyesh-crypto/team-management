@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useRef, useState } from 'react';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Card } from '@/components/ui/components';
 import { updateProfile, changePassword, uploadAvatar } from '@/app/actions/actions';
 import { DataSummaryTable } from '@/components/dashboard/DataSummaryTable';
 import { RequestExportButton, RequestDeletionButton } from '@/components/dashboard/GdprControls';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import { CreditCard, Palette, Shield, Users as UsersIcon, Plug, FileText, Download, ChevronRight } from 'lucide-react';
 
 const DigestSettings = dynamic(() => import('@/components/DigestSettings').then(m => ({ default: m.DigestSettings })), { 
     ssr: false,
@@ -188,7 +190,42 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
 
                     </div>
                 </section>
-                
+
+                {isManager && (
+                    <Card className="p-6 rounded-2xl border-[#eceef0]">
+                        <h3 className="text-[10px] font-black mb-4 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">⚙️</span>
+                            Workspace Administration
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {[
+                                { href: "/dashboard/settings/billing",      label: "Billing & Plans",   desc: "Subscription, seats, invoices",        icon: <CreditCard size={14} /> },
+                                { href: "/dashboard/settings/branding",     label: "Branding",          desc: "Logo, colors, custom domain",          icon: <Palette size={14} /> },
+                                { href: "/dashboard/settings/sso",          label: "Single Sign-On",    desc: "SAML / OIDC configuration",            icon: <Shield size={14} /> },
+                                { href: "/dashboard/settings/roles",        label: "Custom Roles",      desc: "Fine-grained permissions",             icon: <UsersIcon size={14} /> },
+                                { href: "/dashboard/settings/integrations", label: "Integrations & API", desc: "Webhooks, API keys, Slack, GitHub",   icon: <Plug size={14} /> },
+                                { href: "/dashboard/settings/audit",        label: "Audit Log",         desc: "Org-wide activity history",            icon: <FileText size={14} /> },
+                                { href: "/dashboard/settings/export",       label: "Data Export",       desc: "Download tasks, members, time logs",   icon: <Download size={14} /> },
+                            ].map(item => (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className="group flex items-center gap-3 p-3 rounded-xl border border-[#eceef0] bg-white hover:border-[#0c64ef]/30 hover:bg-[#0c64ef]/3 transition-colors"
+                                >
+                                    <div className="w-8 h-8 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-[#1d1d1f] group-hover:bg-[#0c64ef]/10 group-hover:text-[#0c64ef] transition-colors">
+                                        {item.icon}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-xs font-black text-[#1d1d1f] truncate">{item.label}</div>
+                                        <div className="text-[10px] text-[#86868b] truncate">{item.desc}</div>
+                                    </div>
+                                    <ChevronRight size={14} className="text-[#86868b] group-hover:text-[#0c64ef] flex-shrink-0" />
+                                </Link>
+                            ))}
+                        </div>
+                    </Card>
+                )}
+
                 <Card className="p-6 rounded-2xl border-[#eceef0]">
                     <h3 className="text-[10px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
                         <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">👤</span>

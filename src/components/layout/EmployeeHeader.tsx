@@ -94,7 +94,7 @@ export function EmployeeHeader({
                                             <div className="flex gap-3">
                                                 <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.type === 'urgent' ? 'bg-[#ff3b30]' : 'bg-[#0c64ef]'}`} />
                                                 <div className="flex-1">
-                                                    <p className="text-[11px] font-bold text-[#1d1d1f]">{n.message}</p>
+                                                    <p className="text-[11px] font-bold text-[#1d1d1f]">{n.message ?? n.title ?? "Notification"}</p>
                                                     <span className="text-[9px] text-[#86868b]">{new Date(n.created_at).toLocaleDateString()}</span>
                                                 </div>
                                             </div>

@@ -13,7 +13,7 @@ export default async function IntegrationsPage() {
         .from("organization_members")
         .select("org_id, role")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
     if (!membership || !["manager", "admin", "owner"].includes(membership.role)) {
         redirect("/dashboard");
