@@ -8,7 +8,7 @@ export default async function ReportsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect("/");
 
-    const { data: membership } = await supabase.from("organization_members").select("org_id").eq("user_id", user.id).single();
+    const { data: membership } = await supabase.from("organization_members").select("org_id").eq("user_id", user.id).maybeSingle();
     if (!membership) redirect("/");
 
     const entitlement = await getEntitlement(membership.org_id);

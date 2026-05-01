@@ -21,6 +21,18 @@ export type Reaction = {
     created_at: string;
 };
 
+export async function getCommentProfiles(userIds: string[]): Promise<Record<string, string>> {
+    if (userIds.length === 0) return {};
+    const supabase = await createClient();
+    const { data } = await supabase
+        .from("profiles")
+        .select("id, name")
+        .in("id", userIds);
+    const map: Record<string, string> = {};
+    for (const p of data ?? []) map[p.id] = p.name || p.id.slice(0, 8);
+    return map;
+}
+
 export async function getComments(taskId: string): Promise<Comment[]> {
     const supabase = await createClient();
     const { data } = await supabase

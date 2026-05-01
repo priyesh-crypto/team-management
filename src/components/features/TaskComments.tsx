@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useTransition, useOptimistic } from "react";
+import React, { useState, useEffect, useTransition, useOptimistic } from "react";
 import { Send, Pencil, Trash2, SmilePlus } from "lucide-react";
 import { toast } from "sonner";
-import { addComment, editComment, deleteComment, toggleReaction, type Comment, type Reaction } from "@/app/actions/comments";
+import { addComment, editComment, deleteComment, toggleReaction, getComments, getReactions, getCommentProfiles, type Comment, type Reaction } from "@/app/actions/comments";
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
 
 const QUICK_EMOJIS = ["👍", "👎", "❤️", "😂", "🎉", "🚀", "👀", "✅"];
@@ -17,8 +17,22 @@ interface Props {
 }
 
 export function TaskComments({ taskId, orgId, currentUserId, initialComments, initialReactions }: Props) {
-    const [comments, setComments] = useOptimistic(initialComments);
+    const [loaded, setLoaded] = useState(initialComments);
+    const [comments, setComments] = useOptimistic(loaded);
     const [reactions, setReactions] = useState(initialReactions);
+    const [profiles, setProfiles] = useState<Record<string, string>>({});
+
+    useEffect(() => {
+        getComments(taskId).then(cs => {
+            setLoaded(cs);
+            const commentIds = cs.map(c => c.id);
+            const userIds = [...new Set(cs.map(c => c.user_id))];
+            Promise.all([getReactions(commentIds), getCommentProfiles(userIds)]).then(([rs, ps]) => {
+                setReactions(rs);
+                setProfiles(ps);
+            });
+        });
+    }, [taskId]);
     const [draft, setDraft] = useState("");
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState("");
@@ -102,11 +116,11 @@ export function TaskComments({ taskId, orgId, currentUserId, initialComments, in
                     {comments.map(comment => (
                         <div key={comment.id} className="group flex gap-3">
                             <div className="w-7 h-7 rounded-full bg-[#0c64ef]/10 flex items-center justify-center text-[11px] font-black text-[#0c64ef] flex-shrink-0 mt-0.5">
-                                {comment.user_id.slice(0, 2).toUpperCase()}
+                                {(profiles[comment.user_id] || comment.user_id).slice(0, 2).toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-baseline gap-2 mb-1">
-                                    <span className="text-[11px] font-black text-[#1d1d1f]">{comment.user_id.slice(0, 8)}</span>
+                                    <span className="text-[11px] font-black text-[#1d1d1f]">{profiles[comment.user_id] || comment.user_id.slice(0, 8)}</span>
                                     <span className="text-[9px] text-slate-400">
                                         {new Date(comment.created_at).toLocaleString()}
                                         {comment.edited_at && " (edited)"}

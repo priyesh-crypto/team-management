@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { Zap, Plus, Play, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
-import { createSprint, updateSprintStatus, assignTaskToSprint, type Sprint, type SprintTask } from "@/app/actions/sprints";
+import { createSprint, updateSprintStatus, assignTaskToSprint, getSprints, getSprintTasks, type Sprint, type SprintTask } from "@/app/actions/sprints";
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -33,9 +33,21 @@ export function SprintBoard({ orgId, workspaceId, sprints: initialSprints, sprin
     const [sprintTasks, setSprintTasks] = useState(initialSprintTasks);
     const [backlog, setBacklog] = useState(initialBacklog);
     const [showNew, setShowNew] = useState(false);
-    const [expandedId, setExpandedId] = useState<string | null>(sprints.find(s => s.status === "active")?.id ?? null);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
     const [form, setForm] = useState({ name: "", goal: "", start_date: "", end_date: "" });
     const [pending, startTransition] = useTransition();
+
+    useEffect(() => {
+        getSprints(orgId, workspaceId || undefined).then(async ss => {
+            setSprints(ss);
+            setExpandedId(ss.find(s => s.status === "active")?.id ?? null);
+            const taskMap: Record<string, SprintTask[]> = {};
+            await Promise.all(ss.map(async s => {
+                taskMap[s.id] = await getSprintTasks(s.id);
+            }));
+            setSprintTasks(taskMap);
+        });
+    }, [orgId, workspaceId]);
 
     function handleCreate(e: React.FormEvent) {
         e.preventDefault();
