@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { RefreshCw } from "lucide-react";
 import { resendBroadcast } from "../actions-tier2";
 
 export function ResendBroadcastButton({ broadcastId }: { broadcastId: string }) {
@@ -24,10 +25,10 @@ export function ResendBroadcastButton({ broadcastId }: { broadcastId: string }) 
                     }
                 });
             }}
-            className="p-2 rounded-lg text-[#86868b] hover:text-[#0c64ef] hover:bg-[#0c64ef]/10 transition-colors"
+            className="p-2 rounded-md text-[#86868b] hover:text-[#0c64ef] hover:bg-[#0c64ef]/10 transition-colors"
             title="Re-deliver"
         >
-            🔄
+            <RefreshCw size={14} strokeWidth={2} />
         </button>
     );
 }

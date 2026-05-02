@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Package, Lock, AlertTriangle } from "lucide-react";
 import { initiateGdprExport, anonymizeUser } from "../actions-tier3";
 import { Card, SectionLabel, Button, Field, Input } from "../_components/ui";
 
@@ -50,7 +51,7 @@ export function GdprClient() {
         <Card>
             <SectionLabel>New GDPR request</SectionLabel>
             <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="flex gap-3">
+                <div className="flex gap-4">
                     {(["export", "anonymize"] as const).map(t => (
                         <label key={t} className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -59,16 +60,20 @@ export function GdprClient() {
                                 onChange={() => setAction(t)}
                                 className="accent-[#0c64ef]"
                             />
-                            <span className="text-sm font-bold text-[#1d1d1f] capitalize">
-                                {t === "export" ? "📦 Data export" : "🔒 Anonymize (right to be forgotten)"}
+                            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[#1d1d1f]">
+                                {t === "export" ? <Package size={14} strokeWidth={2} /> : <Lock size={14} strokeWidth={2} />}
+                                {t === "export" ? "Data export" : "Anonymize (right to be forgotten)"}
                             </span>
                         </label>
                     ))}
                 </div>
 
                 {action === "anonymize" && (
-                    <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-xs text-red-800">
-                        <p className="font-black mb-1">⚠️ Irreversible action</p>
+                    <div className="bg-red-50 border border-red-100 rounded-md px-3 py-2.5 text-xs text-red-800">
+                        <p className="inline-flex items-center gap-1.5 font-medium mb-1">
+                            <AlertTriangle size={12} strokeWidth={2} />
+                            Irreversible action
+                        </p>
                         <p>This replaces the user&apos;s name with a placeholder and changes their auth email to an anonymous address. Task data and comments are retained (content only, no PII). The request is logged in the audit trail.</p>
                     </div>
                 )}

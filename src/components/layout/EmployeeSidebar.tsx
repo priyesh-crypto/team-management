@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { X, LogOut, Zap, Activity, Clock, CheckCircle2 } from 'lucide-react';
+import { X, LogOut, LayoutDashboard, Users, Calendar, Settings } from 'lucide-react';
 import { ProjectSwitcher } from '@/components/ProjectSwitcher';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 
@@ -62,9 +62,9 @@ export function EmployeeSidebar({
                             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"><X size={20} /></button>
                         </div>
                         <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2 pb-6">
-                            <NavItem icon="🏠" label="MY TASKS" active={activeTab === 'mine'} onClick={() => { setActiveTab('mine'); setIsMobileMenuOpen(false); }} />
-                            <NavItem icon="👥" label="TEAM STATUS" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
-                            <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<LayoutDashboard size={16} strokeWidth={2.5} />} label="MY TASKS" active={activeTab === 'mine'} onClick={() => { setActiveTab('mine'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<Users size={16} strokeWidth={2.5} />} label="TEAM STATUS" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<Settings size={16} strokeWidth={2.5} />} label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
                             <div className="mt-4 border-t border-[#f5f5f7] pt-2">
                                 <ProjectSwitcher projects={projects} userRole={userRole} />
                             </div>
@@ -95,10 +95,10 @@ export function EmployeeSidebar({
                 </div>
                 
                 <nav className="flex-1 space-y-1.5">
-                    <NavItem label="Dashboard" icon={<Zap size={16} strokeWidth={2.5} />} active={activeTab === 'mine'} onClick={() => setActiveTab('mine')} />
-                    <NavItem label="Team" icon={<Activity size={16} strokeWidth={2.5} />} active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
-                    <NavItem label="Schedule" icon={<Clock size={16} strokeWidth={2.5} />} active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} />
-                    <NavItem label="Settings" icon={<CheckCircle2 size={16} strokeWidth={2.5} />} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+                    <NavItem label="Dashboard" icon={<LayoutDashboard size={16} strokeWidth={2.5} />} active={activeTab === 'mine'} onClick={() => setActiveTab('mine')} />
+                    <NavItem label="Team" icon={<Users size={16} strokeWidth={2.5} />} active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
+                    <NavItem label="Schedule" icon={<Calendar size={16} strokeWidth={2.5} />} active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} />
+                    <NavItem label="Settings" icon={<Settings size={16} strokeWidth={2.5} />} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
                     
                     <div className="mt-8 pt-4 border-t border-slate-100">
                         <div className="px-4 mb-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Projects</div>

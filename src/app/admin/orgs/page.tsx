@@ -33,26 +33,26 @@ export default async function OrgsListPage({
     const { data: orgs } = await query;
 
     return (
-        <div className="p-10 max-w-7xl">
+        <div className="p-8 max-w-7xl">
             <PageHeader
                 title="Organizations"
                 subtitle={`${orgs?.length ?? 0} customer organizations`}
             />
 
-            <Card className="mb-6" padding="p-4">
+            <Card className="mb-4" padding="p-3">
                 <form className="flex gap-2 items-center">
                     <Input
                         name="q"
                         defaultValue={params.q ?? ""}
                         placeholder="Search by name…"
                     />
-                    <Select name="plan" defaultValue={params.plan ?? ""} className="!w-44">
+                    <Select name="plan" defaultValue={params.plan ?? ""} className="!w-40">
                         <option value="">All plans</option>
                         <option value="free">Free</option>
                         <option value="pro">Pro</option>
                         <option value="business">Business</option>
                     </Select>
-                    <Select name="status" defaultValue={params.status ?? ""} className="!w-44">
+                    <Select name="status" defaultValue={params.status ?? ""} className="!w-40">
                         <option value="">All statuses</option>
                         <option value="trialing">Trialing</option>
                         <option value="active">Active</option>
@@ -66,15 +66,15 @@ export default async function OrgsListPage({
             <Card padding="p-0">
                 <table className="w-full">
                     <thead>
-                        <tr className="text-left text-[9px] font-black uppercase tracking-[0.15em] text-[#86868b] border-b border-[#f5f5f7]">
-                            <th className="px-6 py-4">Organization</th>
-                            <th className="px-6 py-4">Plan</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4 text-center">Seats</th>
-                            <th className="px-6 py-4 text-center">Projects</th>
-                            <th className="px-6 py-4">Region</th>
-                            <th className="px-6 py-4">Period ends</th>
-                            <th className="px-6 py-4"></th>
+                        <tr className="text-left text-xs font-medium text-[#86868b] border-b border-[#f0f0f2]">
+                            <th className="px-5 py-3 font-medium">Organization</th>
+                            <th className="px-5 py-3 font-medium">Plan</th>
+                            <th className="px-5 py-3 font-medium">Status</th>
+                            <th className="px-5 py-3 text-center font-medium">Seats</th>
+                            <th className="px-5 py-3 text-center font-medium">Projects</th>
+                            <th className="px-5 py-3 font-medium">Region</th>
+                            <th className="px-5 py-3 font-medium">Period ends</th>
+                            <th className="px-5 py-3"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -84,39 +84,39 @@ export default async function OrgsListPage({
                             return (
                                 <tr
                                     key={o.id}
-                                    className="border-b border-[#f5f5f7] last:border-0 hover:bg-[#f5f5f7]/40 transition group"
+                                    className="border-b border-[#f0f0f2] last:border-0 hover:bg-[#fafafa] transition-colors"
                                 >
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm font-black text-[#1d1d1f]">
+                                    <td className="px-5 py-3">
+                                        <div className="text-sm font-medium text-[#1d1d1f]">
                                             {o.name}
                                         </div>
-                                        <div className="text-[10px] text-[#86868b] font-mono mt-0.5 truncate max-w-[200px]">
+                                        <div className="text-xs text-[#86868b] font-mono mt-0.5 truncate max-w-[200px]">
                                             {o.id.slice(0, 8)}…
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-5 py-3">
                                         <PlanPill plan={o.plan_id} />
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-5 py-3">
                                         <StatusPill status={o.subscription_status} />
                                     </td>
-                                    <td className="px-6 py-4 text-center text-sm font-bold tabular-nums">
-                                        <span className="text-[#1d1d1f]">{usage?.active_seats ?? 0}</span>
+                                    <td className="px-5 py-3 text-center text-sm tabular-nums">
+                                        <span className="text-[#1d1d1f] font-medium">{usage?.active_seats ?? 0}</span>
                                         <span className="text-[#86868b]"> / {o.seats_purchased}</span>
                                     </td>
-                                    <td className="px-6 py-4 text-center text-sm font-bold text-[#1d1d1f] tabular-nums">
+                                    <td className="px-5 py-3 text-center text-sm font-medium text-[#1d1d1f] tabular-nums">
                                         {usage?.project_count ?? 0}
                                     </td>
-                                    <td className="px-6 py-4 text-xs font-bold text-[#86868b]">
+                                    <td className="px-5 py-3 text-sm text-[#52525b]">
                                         {o.billing_country ?? "—"}
                                     </td>
-                                    <td className="px-6 py-4 text-xs text-[#86868b]">
+                                    <td className="px-5 py-3 text-sm text-[#52525b]">
                                         {periodEnd ? new Date(periodEnd).toLocaleDateString() : "—"}
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-5 py-3 text-right">
                                         <Link
                                             href={`/admin/orgs/${o.id}`}
-                                            className="text-[10px] font-black uppercase tracking-widest text-[#0c64ef] hover:underline"
+                                            className="text-sm font-medium text-[#0c64ef] hover:underline"
                                         >
                                             Manage →
                                         </Link>
@@ -126,7 +126,7 @@ export default async function OrgsListPage({
                         })}
                         {(orgs ?? []).length === 0 && (
                             <tr>
-                                <td colSpan={8} className="py-16 text-center text-sm text-[#86868b]">
+                                <td colSpan={8} className="py-12 text-center text-sm text-[#86868b]">
                                     No organizations match your filters.
                                 </td>
                             </tr>

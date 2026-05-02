@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { X, LogOut, Zap, Activity } from 'lucide-react';
+import { X, LayoutDashboard, Target, KanbanSquare, GanttChartSquare, Gauge, BarChart3, Bot, CalendarDays, Users, Settings } from 'lucide-react';
 import { ProjectSwitcher } from '@/components/ProjectSwitcher';
 import { Button } from '@/components/ui/components';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -18,17 +18,17 @@ interface ManagerSidebarProps {
     logout: () => void;
 }
 
-function NavItem({ icon, label, active = false, onClick }: { icon: string, label: string, active?: boolean, onClick?: () => void }) {
+function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick?: () => void }) {
     return (
-        <button 
+        <button
             onClick={onClick}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group ${
-                active 
-                ? 'bg-[#0c64ef] text-white shadow-lg shadow-[#0c64ef]/20 font-bold translate-x-1' 
+                active
+                ? 'bg-[#0c64ef] text-white shadow-lg shadow-[#0c64ef]/20 font-bold translate-x-1'
                 : 'text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] font-bold'
             }`}
         >
-            <span className={`text-lg transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>{icon}</span>
+            <span className={`flex items-center justify-center transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>{icon}</span>
             <span className="text-[10px] uppercase tracking-widest">{label}</span>
             {active && (
                 <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -71,22 +71,22 @@ export function ManagerSidebar({
 
                         <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2 -mr-2 mb-6">
                             <NavSection title="Workspace" />
-                            <NavItem icon="📊" label="DASHBOARD" active={activeTab === 'board'} onClick={() => { setActiveTab('board'); setIsMobileMenuOpen(false); }} />
-                            <NavItem icon="🎯" label="MY TASKS" active={activeTab === 'mine'} onClick={() => { setActiveTab('mine'); setIsMobileMenuOpen(false); }} />
-                            
+                            <NavItem icon={<LayoutDashboard size={16} strokeWidth={2.5} />} label="DASHBOARD" active={activeTab === 'board'} onClick={() => { setActiveTab('board'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<Target size={16} strokeWidth={2.5} />} label="MY TASKS" active={activeTab === 'mine'} onClick={() => { setActiveTab('mine'); setIsMobileMenuOpen(false); }} />
+
                             <NavSection title="Views" />
-                            <NavItem icon="🏃" label="SPRINT BOARD" active={activeTab === 'sprints'} onClick={() => { setActiveTab('sprints'); setIsMobileMenuOpen(false); }} />
-                            <NavItem icon="📉" label="GANTT CHART" active={activeTab === 'gantt'} onClick={() => { setActiveTab('gantt'); setIsMobileMenuOpen(false); }} />
-                            <NavItem icon="🧠" label="WORKLOAD" active={activeTab === 'workload'} onClick={() => { setActiveTab('workload'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<KanbanSquare size={16} strokeWidth={2.5} />} label="SPRINT BOARD" active={activeTab === 'sprints'} onClick={() => { setActiveTab('sprints'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<GanttChartSquare size={16} strokeWidth={2.5} />} label="GANTT CHART" active={activeTab === 'gantt'} onClick={() => { setActiveTab('gantt'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<Gauge size={16} strokeWidth={2.5} />} label="WORKLOAD" active={activeTab === 'workload'} onClick={() => { setActiveTab('workload'); setIsMobileMenuOpen(false); }} />
 
                             <NavSection title="Tools" />
-                            <NavItem icon="📈" label="REPORTS" active={activeTab === 'reports'} onClick={() => { setActiveTab('reports'); setIsMobileMenuOpen(false); }} />
-                            <NavItem icon="🤖" label="AUTOMATIONS" active={activeTab === 'automations'} onClick={() => { setActiveTab('automations'); setIsMobileMenuOpen(false); }} />
-                            <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => { setActiveTab('planning'); setIsMobileMenuOpen(false); }} />
-                            
+                            <NavItem icon={<BarChart3 size={16} strokeWidth={2.5} />} label="REPORTS" active={activeTab === 'reports'} onClick={() => { setActiveTab('reports'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<Bot size={16} strokeWidth={2.5} />} label="AUTOMATIONS" active={activeTab === 'automations'} onClick={() => { setActiveTab('automations'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<CalendarDays size={16} strokeWidth={2.5} />} label="PLANNING" active={activeTab === 'planning'} onClick={() => { setActiveTab('planning'); setIsMobileMenuOpen(false); }} />
+
                             <NavSection title="Admin" />
-                            <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
-                            <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<Users size={16} strokeWidth={2.5} />} label="TEAM MGT" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
+                            <NavItem icon={<Settings size={16} strokeWidth={2.5} />} label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
                             
                             <div className="mt-4 border-t border-[#f5f5f7] pt-2">
                                 <ProjectSwitcher projects={projects} userRole={userRole} />
@@ -124,22 +124,22 @@ export function ManagerSidebar({
 
                 <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2 -mr-2">
                     <NavSection title="Workspace" />
-                    <NavItem icon="📊" label="DASHBOARD" active={activeTab === 'board'} onClick={() => setActiveTab('board')} />
-                    <NavItem icon="🎯" label="MY TASKS" active={activeTab === 'mine'} onClick={() => setActiveTab('mine')} />
-                    
+                    <NavItem icon={<LayoutDashboard size={16} strokeWidth={2.5} />} label="DASHBOARD" active={activeTab === 'board'} onClick={() => setActiveTab('board')} />
+                    <NavItem icon={<Target size={16} strokeWidth={2.5} />} label="MY TASKS" active={activeTab === 'mine'} onClick={() => setActiveTab('mine')} />
+
                     <NavSection title="Views" />
-                    <NavItem icon="🏃" label="SPRINT BOARD" active={activeTab === 'sprints'} onClick={() => setActiveTab('sprints')} />
-                    <NavItem icon="📉" label="GANTT CHART" active={activeTab === 'gantt'} onClick={() => setActiveTab('gantt')} />
-                    <NavItem icon="🧠" label="WORKLOAD" active={activeTab === 'workload'} onClick={() => setActiveTab('workload')} />
-                    
+                    <NavItem icon={<KanbanSquare size={16} strokeWidth={2.5} />} label="SPRINT BOARD" active={activeTab === 'sprints'} onClick={() => setActiveTab('sprints')} />
+                    <NavItem icon={<GanttChartSquare size={16} strokeWidth={2.5} />} label="GANTT CHART" active={activeTab === 'gantt'} onClick={() => setActiveTab('gantt')} />
+                    <NavItem icon={<Gauge size={16} strokeWidth={2.5} />} label="WORKLOAD" active={activeTab === 'workload'} onClick={() => setActiveTab('workload')} />
+
                     <NavSection title="Tools" />
-                    <NavItem icon="📈" label="REPORTS" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />
-                    <NavItem icon="🤖" label="AUTOMATIONS" active={activeTab === 'automations'} onClick={() => setActiveTab('automations')} />
-                    <NavItem icon="🗓️" label="PLANNING" active={activeTab === 'planning'} onClick={() => setActiveTab('planning')} />
-                    
+                    <NavItem icon={<BarChart3 size={16} strokeWidth={2.5} />} label="REPORTS" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />
+                    <NavItem icon={<Bot size={16} strokeWidth={2.5} />} label="AUTOMATIONS" active={activeTab === 'automations'} onClick={() => setActiveTab('automations')} />
+                    <NavItem icon={<CalendarDays size={16} strokeWidth={2.5} />} label="PLANNING" active={activeTab === 'planning'} onClick={() => setActiveTab('planning')} />
+
                     <NavSection title="Admin" />
-                    <NavItem icon="👥" label="TEAM MGT" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
-                    <NavItem icon="⚙️" label="SETTINGS" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+                    <NavItem icon={<Users size={16} strokeWidth={2.5} />} label="TEAM MGT" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
+                    <NavItem icon={<Settings size={16} strokeWidth={2.5} />} label="SETTINGS" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
 
                     
                     <div className="mt-4 border-t border-[#f5f5f7] pt-2">

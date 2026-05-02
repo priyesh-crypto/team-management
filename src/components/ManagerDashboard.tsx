@@ -973,7 +973,22 @@ export default function ManagerDashboard({
                                 <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Team Workload</h1>
                                 <p className="text-sm text-[#86868b] mt-1">Monitor capacity and prevent burnout.</p>
                             </div>
-                            <WorkloadView members={[]} />
+                            <WorkloadView
+                                members={Object.entries(workloadData || {}).map(([userId, data]) => {
+                                    const employee = employees.find(e => e.id === userId);
+                                    const tasks_by_date: Record<string, { count: number; hours: number }> = {};
+                                    for (const [date, day] of Object.entries(data.days || {})) {
+                                        tasks_by_date[date] = { count: day.tasks, hours: day.hours };
+                                    }
+                                    return {
+                                        user_id: userId,
+                                        role: employee?.role ?? 'employee',
+                                        name: data.name ?? employee?.name,
+                                        avatar_url: data.avatar_url ?? employee?.avatar_url ?? null,
+                                        tasks_by_date,
+                                    };
+                                })}
+                            />
                         </div>
                     )}
 

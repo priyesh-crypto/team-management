@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DollarSign, Sparkles, Clock, AlertTriangle, Building2, Users } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import {
     PageHeader,
@@ -34,20 +35,22 @@ export default async function AdminDashboard() {
     const trialingOrgs = (revenue ?? []).reduce((s, r) => s + Number(r.trialing_count ?? 0), 0);
     const pastDue = (revenue ?? []).reduce((s, r) => s + Number(r.past_due_count ?? 0), 0);
 
+    const iconProps = { size: 16, strokeWidth: 2 };
+
     return (
-        <div className="p-10 max-w-7xl">
+        <div className="p-8 max-w-7xl">
             <PageHeader title="Overview" subtitle="Subscription and usage at a glance." />
 
-            <div className="grid grid-cols-4 gap-4 mb-6">
-                <StatCard label="MRR" value={formatMoney(totalMrr)} accent="emerald" icon="💰" />
-                <StatCard label="Active orgs" value={activeOrgs} accent="blue" icon="✨" />
-                <StatCard label="Trialing" value={trialingOrgs} accent="amber" icon="⏳" />
-                <StatCard label="Past due" value={pastDue} accent="red" icon="⚠️" sub="Needs attention" />
+            <div className="grid grid-cols-4 gap-4 mb-4">
+                <StatCard label="MRR" value={formatMoney(totalMrr)} accent="emerald" icon={<DollarSign {...iconProps} />} />
+                <StatCard label="Active orgs" value={activeOrgs} accent="blue" icon={<Sparkles {...iconProps} />} />
+                <StatCard label="Trialing" value={trialingOrgs} accent="amber" icon={<Clock {...iconProps} />} />
+                <StatCard label="Past due" value={pastDue} accent="red" icon={<AlertTriangle {...iconProps} />} sub="Needs attention" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-8">
-                <StatCard label="Total organizations" value={orgCount ?? 0} icon="🏢" />
-                <StatCard label="Total users" value={userCount ?? 0} icon="👥" />
+            <div className="grid grid-cols-2 gap-4 mb-6">
+                <StatCard label="Total organizations" value={orgCount ?? 0} icon={<Building2 {...iconProps} />} />
+                <StatCard label="Total users" value={userCount ?? 0} icon={<Users {...iconProps} />} />
             </div>
 
             <div className="grid grid-cols-3 gap-4">
@@ -55,34 +58,34 @@ export default async function AdminDashboard() {
                     <SectionLabel>Revenue by plan</SectionLabel>
                     <table className="w-full">
                         <thead>
-                            <tr className="text-left text-[9px] font-black uppercase tracking-[0.15em] text-[#86868b] border-b border-[#f5f5f7]">
-                                <th className="pb-3">Plan</th>
-                                <th className="pb-3 text-center">Active</th>
-                                <th className="pb-3 text-center">Trial</th>
-                                <th className="pb-3 text-center">Past Due</th>
-                                <th className="pb-3 text-center">Seats</th>
-                                <th className="pb-3 text-right">MRR</th>
+                            <tr className="text-left text-xs font-medium text-[#86868b] border-b border-[#f0f0f2]">
+                                <th className="pb-2.5 font-medium">Plan</th>
+                                <th className="pb-2.5 text-center font-medium">Active</th>
+                                <th className="pb-2.5 text-center font-medium">Trial</th>
+                                <th className="pb-2.5 text-center font-medium">Past due</th>
+                                <th className="pb-2.5 text-center font-medium">Seats</th>
+                                <th className="pb-2.5 text-right font-medium">MRR</th>
                             </tr>
                         </thead>
                         <tbody>
                             {(revenue ?? []).map((r) => (
-                                <tr key={r.plan_id} className="border-b border-[#f5f5f7] last:border-0">
-                                    <td className="py-3.5">
+                                <tr key={r.plan_id} className="border-b border-[#f0f0f2] last:border-0">
+                                    <td className="py-3">
                                         <PlanPill plan={r.plan_id} />
                                     </td>
-                                    <td className="py-3.5 text-center text-sm font-bold text-[#1d1d1f] tabular-nums">
+                                    <td className="py-3 text-center text-sm text-[#1d1d1f] tabular-nums">
                                         {r.active_count ?? 0}
                                     </td>
-                                    <td className="py-3.5 text-center text-sm font-bold text-[#86868b] tabular-nums">
+                                    <td className="py-3 text-center text-sm text-[#86868b] tabular-nums">
                                         {r.trialing_count ?? 0}
                                     </td>
-                                    <td className="py-3.5 text-center text-sm font-bold text-[#86868b] tabular-nums">
+                                    <td className="py-3 text-center text-sm text-[#86868b] tabular-nums">
                                         {r.past_due_count ?? 0}
                                     </td>
-                                    <td className="py-3.5 text-center text-sm font-bold text-[#86868b] tabular-nums">
+                                    <td className="py-3 text-center text-sm text-[#86868b] tabular-nums">
                                         {r.active_seats ?? 0}
                                     </td>
-                                    <td className="py-3.5 text-right text-sm font-black text-[#0c64ef] tabular-nums">
+                                    <td className="py-3 text-right text-sm font-medium text-[#1d1d1f] tabular-nums">
                                         {formatMoney(Number(r.mrr_cents) || 0)}
                                     </td>
                                 </tr>
@@ -105,13 +108,13 @@ export default async function AdminDashboard() {
                             <Link
                                 key={o.id}
                                 href={`/admin/orgs/${o.id}`}
-                                className="flex items-center justify-between p-3 rounded-xl hover:bg-[#f5f5f7] transition group"
+                                className="flex items-center justify-between p-2.5 rounded-md hover:bg-[#f5f5f7] transition-colors group"
                             >
                                 <div className="min-w-0 flex-1">
-                                    <div className="text-sm font-black text-[#1d1d1f] truncate group-hover:text-[#0c64ef] transition">
+                                    <div className="text-sm font-medium text-[#1d1d1f] truncate group-hover:text-[#0c64ef] transition-colors">
                                         {o.name}
                                     </div>
-                                    <div className="flex items-center gap-2 mt-1">
+                                    <div className="flex items-center gap-1.5 mt-1">
                                         <PlanPill plan={o.plan_id} />
                                         <StatusPill status={o.subscription_status} />
                                     </div>

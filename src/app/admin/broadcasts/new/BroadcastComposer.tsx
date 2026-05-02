@@ -135,7 +135,7 @@ export function BroadcastComposer() {
                 <SectionLabel>Delivery channels</SectionLabel>
                 <div className="flex gap-3">
                     {[
-                        { id: "in_app", label: "🔔 In-app notification" },
+                        { id: "in_app", label: "In-app notification" },
                     ].map(({ id, label }) => (
                         <label key={id} className="flex items-center gap-2 cursor-pointer">
                             <input

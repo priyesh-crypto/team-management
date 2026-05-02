@@ -10,14 +10,13 @@ export function PageHeader({
     actions?: React.ReactNode;
 }) {
     return (
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex items-start justify-between mb-6 pb-5 border-b border-[#e5e5ea]">
             <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0c64ef] mb-1.5">
-                    Mindbird Admin
-                </div>
-                <h1 className="text-3xl font-black tracking-tight text-[#1d1d1f]">{title}</h1>
+                <h1 className="text-xl font-semibold tracking-tight text-[#1d1d1f]">
+                    {title}
+                </h1>
                 {subtitle && (
-                    <p className="text-sm text-[#86868b] font-medium mt-1.5">{subtitle}</p>
+                    <p className="text-sm text-[#86868b] mt-1">{subtitle}</p>
                 )}
             </div>
             {actions && <div className="flex items-center gap-2">{actions}</div>}
@@ -28,7 +27,7 @@ export function PageHeader({
 export function Card({
     children,
     className = "",
-    padding = "p-6",
+    padding = "p-5",
 }: {
     children: React.ReactNode;
     className?: string;
@@ -36,7 +35,7 @@ export function Card({
 }) {
     return (
         <div
-            className={`bg-white rounded-[24px] border border-[#e5e5ea] shadow-sm ${padding} ${className}`}
+            className={`bg-white rounded-lg border border-[#e5e5ea] ${padding} ${className}`}
         >
             {children}
         </div>
@@ -53,7 +52,7 @@ export function StatCard({
     label: string;
     value: string | number;
     accent?: "default" | "blue" | "emerald" | "amber" | "red";
-    icon?: string;
+    icon?: React.ReactNode;
     sub?: string;
 }) {
     const accentColor: Record<string, string> = {
@@ -64,31 +63,31 @@ export function StatCard({
         red: "text-red-600",
     };
     const iconBg: Record<string, string> = {
-        default: "bg-[#f5f5f7]",
-        blue: "bg-[#0c64ef]/10",
-        emerald: "bg-emerald-50",
-        amber: "bg-amber-50",
-        red: "bg-red-50",
+        default: "bg-[#f5f5f7] text-[#52525b]",
+        blue: "bg-[#0c64ef]/10 text-[#0c64ef]",
+        emerald: "bg-emerald-50 text-emerald-600",
+        amber: "bg-amber-50 text-amber-600",
+        red: "bg-red-50 text-red-600",
     };
     return (
-        <Card>
-            <div className="flex items-start justify-between">
-                <div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#86868b]">
+        <Card padding="p-4">
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <div className="text-xs font-medium text-[#86868b]">
                         {label}
                     </div>
-                    <div className={`text-3xl font-black mt-2 tracking-tight ${accentColor[accent]}`}>
+                    <div className={`text-2xl font-semibold mt-1 tracking-tight tabular-nums ${accentColor[accent]}`}>
                         {value}
                     </div>
                     {sub && (
-                        <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mt-1.5">
+                        <div className="text-xs text-[#86868b] mt-1">
                             {sub}
                         </div>
                     )}
                 </div>
                 {icon && (
                     <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${iconBg[accent]}`}
+                        className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${iconBg[accent]}`}
                     >
                         {icon}
                     </div>
@@ -105,12 +104,12 @@ export function StatusPill({ status }: { status: string | null }) {
         trialing: { bg: "bg-[#0c64ef]/10", fg: "text-[#0c64ef]", dot: "bg-[#0c64ef]" },
         past_due: { bg: "bg-amber-50", fg: "text-amber-700", dot: "bg-amber-500" },
         canceled: { bg: "bg-red-50", fg: "text-red-700", dot: "bg-red-500" },
-        free: { bg: "bg-[#f5f5f7]", fg: "text-[#86868b]", dot: "bg-[#86868b]" },
+        free: { bg: "bg-[#f5f5f7]", fg: "text-[#52525b]", dot: "bg-[#86868b]" },
     };
     const cls = map[s] ?? map.free;
     return (
         <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.15em] rounded-full ${cls.bg} ${cls.fg}`}
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded-full ${cls.bg} ${cls.fg}`}
         >
             <span className={`w-1.5 h-1.5 rounded-full ${cls.dot}`} />
             {s.replace("_", " ")}
@@ -120,13 +119,13 @@ export function StatusPill({ status }: { status: string | null }) {
 
 export function PlanPill({ plan }: { plan: string }) {
     const colors: Record<string, string> = {
-        free: "bg-[#f5f5f7] text-[#86868b]",
+        free: "bg-[#f5f5f7] text-[#52525b]",
         pro: "bg-[#0c64ef]/10 text-[#0c64ef]",
         business: "bg-purple-50 text-purple-700",
     };
     return (
         <span
-            className={`inline-block px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.15em] rounded-full ${
+            className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded-full capitalize ${
                 colors[plan] ?? "bg-[#f5f5f7] text-[#1d1d1f]"
             }`}
         >
@@ -137,7 +136,7 @@ export function PlanPill({ plan }: { plan: string }) {
 
 export function SectionLabel({ children }: { children: React.ReactNode }) {
     return (
-        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#86868b] mb-3">
+        <div className="text-sm font-semibold text-[#1d1d1f] mb-3">
             {children}
         </div>
     );
@@ -160,18 +159,18 @@ export function Button({
 }) {
     const styles: Record<string, string> = {
         primary:
-            "bg-[#0c64ef] text-white hover:bg-[#0950c4] shadow-md shadow-[#0c64ef]/20",
+            "bg-[#0c64ef] text-white hover:bg-[#0950c4]",
         secondary:
             "bg-white text-[#1d1d1f] border border-[#e5e5ea] hover:bg-[#f5f5f7]",
         danger: "bg-red-600 text-white hover:bg-red-700",
-        ghost: "bg-transparent text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]",
+        ghost: "bg-transparent text-[#52525b] hover:text-[#1d1d1f] hover:bg-[#f5f5f7]",
     };
     return (
         <button
             type={type}
             onClick={onClick}
             disabled={disabled}
-            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed ${styles[variant]} ${className}`}
+            className={`px-3.5 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${styles[variant]} ${className}`}
         >
             {children}
         </button>
@@ -182,7 +181,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     return (
         <input
             {...props}
-            className={`w-full px-3.5 py-2.5 rounded-xl border border-[#e5e5ea] bg-white text-sm font-medium text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0c64ef] focus:ring-2 focus:ring-[#0c64ef]/10 transition ${
+            className={`w-full px-3 py-2 rounded-md border border-[#e5e5ea] bg-white text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0c64ef] focus:ring-2 focus:ring-[#0c64ef]/10 transition-colors ${
                 props.className ?? ""
             }`}
         />
@@ -193,7 +192,7 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
     return (
         <select
             {...props}
-            className={`w-full px-3.5 py-2.5 rounded-xl border border-[#e5e5ea] bg-white text-sm font-medium text-[#1d1d1f] focus:outline-none focus:border-[#0c64ef] focus:ring-2 focus:ring-[#0c64ef]/10 transition ${
+            className={`w-full px-3 py-2 rounded-md border border-[#e5e5ea] bg-white text-sm text-[#1d1d1f] focus:outline-none focus:border-[#0c64ef] focus:ring-2 focus:ring-[#0c64ef]/10 transition-colors ${
                 props.className ?? ""
             }`}
         />
@@ -203,11 +202,11 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
 export function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
     return (
         <label className="block">
-            <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[#86868b] mb-1.5">
+            <div className="text-xs font-medium text-[#52525b] mb-1.5">
                 {label}
             </div>
             {children}
-            {hint && <div className="text-[10px] text-[#86868b] mt-1.5">{hint}</div>}
+            {hint && <div className="text-xs text-[#86868b] mt-1.5">{hint}</div>}
         </label>
     );
 }

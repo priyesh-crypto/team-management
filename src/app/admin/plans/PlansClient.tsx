@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Check, Globe } from "lucide-react";
 import { updatePlan, createPlan, upsertPlanPrice, deletePlanPrice } from "../actions";
 import {
     Card,
@@ -183,15 +184,16 @@ function PlanRow({ plan, onEdit }: { plan: Plan; onEdit: () => void }) {
                     {FEATURE_KEYS.filter((k) => plan.features?.[k]).map((k) => (
                         <span
                             key={k}
-                            className="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-emerald-50 text-emerald-700"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700"
                         >
-                            ✓ {FEATURE_LABELS[k]}
+                            <Check size={11} strokeWidth={2.5} />
+                            {FEATURE_LABELS[k]}
                         </span>
                     ))}
                     {FEATURE_KEYS.filter((k) => !plan.features?.[k]).map((k) => (
                         <span
                             key={k}
-                            className="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full bg-[#f5f5f7] text-[#86868b]"
+                            className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#f5f5f7] text-[#86868b]"
                         >
                             {FEATURE_LABELS[k]}
                         </span>
@@ -420,16 +422,23 @@ function RegionalPricing({ planId, prices }: { planId: string; prices: PlanPrice
                         <tbody>
                             {prices.map((p) => (
                                 <tr key={p.id} className="border-b border-[#e5e5ea] last:border-0">
-                                    <td className="px-4 py-3 text-sm font-black text-[#1d1d1f]">
-                                        {p.country_code === "DEFAULT" ? "🌍 Default" : p.country_code}
+                                    <td className="px-4 py-3 text-sm font-medium text-[#1d1d1f]">
+                                        {p.country_code === "DEFAULT" ? (
+                                            <span className="inline-flex items-center gap-1.5">
+                                                <Globe size={13} strokeWidth={2} />
+                                                Default
+                                            </span>
+                                        ) : (
+                                            p.country_code
+                                        )}
                                     </td>
-                                    <td className="px-4 py-3 text-xs font-bold text-[#86868b]">
+                                    <td className="px-4 py-3 text-xs text-[#52525b]">
                                         {p.currency}
                                     </td>
-                                    <td className="px-4 py-3 text-sm font-bold text-[#1d1d1f] tabular-nums">
+                                    <td className="px-4 py-3 text-sm font-medium text-[#1d1d1f] tabular-nums">
                                         {formatMoney(p.price_monthly_cents, p.currency)}
                                     </td>
-                                    <td className="px-4 py-3 text-[10px] font-mono text-[#86868b] truncate max-w-[180px]">
+                                    <td className="px-4 py-3 text-xs font-mono text-[#86868b] truncate max-w-[180px]">
                                         {p.stripe_price_id ?? "—"}
                                     </td>
                                     <td className="px-4 py-3 text-right">

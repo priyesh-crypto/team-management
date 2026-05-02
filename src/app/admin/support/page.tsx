@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Building2 } from "lucide-react";
 import { getSupportTickets } from "../actions-tier3";
 import { PageHeader, Card } from "../_components/ui";
 import { NewTicketForm } from "./NewTicketForm";
@@ -26,21 +27,21 @@ export default async function SupportPage({
     const tickets = await getSupportTickets(status);
 
     return (
-        <div className="p-10 max-w-5xl space-y-6">
-            <PageHeader title="Support Tickets" subtitle="Track and respond to customer issues." />
+        <div className="p-8 max-w-5xl space-y-5">
+            <PageHeader title="Support tickets" subtitle="Track and respond to customer issues." />
 
             <NewTicketForm />
 
             {/* Status filter tabs */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
                 {["open", "in_progress", "resolved", "closed", "all"].map(s => (
                     <Link
                         key={s}
                         href={`/admin/support?status=${s}`}
-                        className={`px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-colors capitalize ${
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors capitalize ${
                             status === s
                                 ? "bg-[#0c64ef] text-white"
-                                : "bg-[#f5f5f7] text-[#86868b] hover:bg-[#e5e5ea]"
+                                : "bg-[#f5f5f7] text-[#52525b] hover:bg-[#e5e5ea]"
                         }`}
                     >
                         {s.replace("_", " ")}
@@ -58,27 +59,32 @@ export default async function SupportPage({
                 <div className="space-y-2">
                     {tickets.map(t => (
                         <Link key={t.id} href={`/admin/support/${t.id}`}
-                            className="block bg-white rounded-2xl border border-[#e5e5ea] p-5 hover:border-[#0c64ef]/30 hover:shadow-sm transition-all group">
+                            className="block bg-white rounded-lg border border-[#e5e5ea] p-4 hover:border-[#0c64ef]/30 transition-colors group">
                             <div className="flex items-start gap-4">
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <h3 className="text-sm font-black text-[#1d1d1f] group-hover:text-[#0c64ef] transition-colors">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        <h3 className="text-sm font-medium text-[#1d1d1f] group-hover:text-[#0c64ef] transition-colors">
                                             {t.subject}
                                         </h3>
-                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${STATUS_STYLES[t.status] ?? "bg-[#f5f5f7] text-[#86868b]"}`}>
+                                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_STYLES[t.status] ?? "bg-[#f5f5f7] text-[#86868b]"}`}>
                                             {t.status.replace("_", " ")}
                                         </span>
-                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${PRIORITY_STYLES[t.priority] ?? ""}`}>
+                                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${PRIORITY_STYLES[t.priority] ?? ""}`}>
                                             {t.priority}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-3 mt-1.5 text-[10px] text-[#86868b]">
-                                        {t.organizations && <span>🏢 {t.organizations.name}</span>}
+                                    <div className="flex items-center gap-3 mt-1.5 text-xs text-[#86868b]">
+                                        {t.organizations && (
+                                            <span className="inline-flex items-center gap-1">
+                                                <Building2 size={12} strokeWidth={2} />
+                                                {t.organizations.name}
+                                            </span>
+                                        )}
                                         <span>Created {new Date(t.created_at).toLocaleDateString()}</span>
                                         <span>Updated {new Date(t.updated_at).toLocaleDateString()}</span>
                                     </div>
                                 </div>
-                                <span className="text-[#86868b] text-lg">→</span>
+                                <span className="text-[#86868b]">→</span>
                             </div>
                         </Link>
                     ))}

@@ -7,6 +7,8 @@ import { UpgradeGate } from "@/components/ui/UpgradeGate";
 interface MemberLoad {
     user_id: string;
     role: string;
+    name?: string;
+    avatar_url?: string | null;
     tasks_by_date: Record<string, { count: number; hours: number }>;
 }
 
@@ -100,15 +102,32 @@ export function WorkloadView({ members, startDate }: Props) {
                                     <td colSpan={DAYS + 1} className="py-8 text-center text-sm text-slate-400">No members found.</td>
                                 </tr>
                             )}
-                            {members.map(member => (
+                            {members.map(member => {
+                                const displayName = member.name ?? member.user_id.slice(0, 8);
+                                const initials = (member.name ?? member.user_id)
+                                    .split(/\s+/)
+                                    .map(s => s[0])
+                                    .filter(Boolean)
+                                    .slice(0, 2)
+                                    .join("")
+                                    .toUpperCase();
+                                return (
                                 <tr key={member.user_id} className="hover:bg-slate-50/30 transition-colors">
                                     <td className="px-5 py-2 sticky left-0 bg-white">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-full bg-[#0c64ef]/10 flex items-center justify-center text-[9px] font-black text-[#0c64ef] flex-shrink-0">
-                                                {member.user_id.slice(0, 2).toUpperCase()}
-                                            </div>
+                                            {member.avatar_url ? (
+                                                <img
+                                                    src={member.avatar_url}
+                                                    alt={displayName}
+                                                    className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                                                />
+                                            ) : (
+                                                <div className="w-6 h-6 rounded-full bg-[#0c64ef]/10 flex items-center justify-center text-[9px] font-black text-[#0c64ef] flex-shrink-0">
+                                                    {initials || member.user_id.slice(0, 2).toUpperCase()}
+                                                </div>
+                                            )}
                                             <div>
-                                                <div className="text-[11px] font-black text-[#1d1d1f]">{member.user_id.slice(0, 8)}</div>
+                                                <div className="text-[11px] font-black text-[#1d1d1f]">{displayName}</div>
                                                 <div className="text-[9px] text-slate-400 capitalize">{member.role}</div>
                                             </div>
                                         </div>
@@ -130,7 +149,8 @@ export function WorkloadView({ members, startDate }: Props) {
                                         );
                                     })}
                                 </tr>
-                            ))}
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

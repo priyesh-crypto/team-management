@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Eye } from "lucide-react";
 import { startImpersonation } from "../../actions-tier1";
 import { Button } from "../../_components/ui";
 
@@ -23,7 +24,10 @@ export function ImpersonateButton({ orgId }: { orgId: string }) {
 
     return (
         <Button variant="secondary" disabled={pending} onClick={handleImpersonate}>
-            {pending ? "Starting…" : "👁 View as org"}
+            <span className="inline-flex items-center gap-1.5">
+                <Eye size={14} strokeWidth={2} />
+                {pending ? "Starting…" : "View as org"}
+            </span>
         </Button>
     );
 }
