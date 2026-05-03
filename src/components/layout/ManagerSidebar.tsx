@@ -58,10 +58,10 @@ export function ManagerSidebar({
             {isMobileMenuOpen && (
                 <div className="fixed inset-0 z-[100] lg:hidden">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-                    <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-6 shadow-2xl animate-in slide-in-from-left duration-300">
+                    <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-6 pt-2 shadow-2xl animate-in slide-in-from-left duration-300">
                         <div className="flex items-center justify-between mb-2 px-2 shrink-0">
                             <div className="flex items-center justify-start px-2">
-                                <img src="/knotlessai.svg" alt="Knotless Logo" className="h-[85px] w-auto object-contain object-left" />
+                                <img src="/knotlessai.svg" alt="Knotless Logo" className="h-[65px] w-auto object-contain object-left" />
                             </div>
                             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl">
                                 <X size={20} />
@@ -112,9 +112,9 @@ export function ManagerSidebar({
             )}
 
             {/* --- DESKTOP SIDEBAR --- */}
-            <div className="w-64 bg-[#fafafa] border-r border-[#e5e5ea] flex flex-col p-5 hidden lg:flex">
+            <div className="w-64 bg-[#fafafa] border-r border-[#e5e5ea] flex flex-col p-5 pt-1 hidden lg:flex">
                 <div className="flex items-center justify-start mb-0 px-4">
-                    <img src="/knotlessai.svg" alt="Knotless Logo" className="h-[85px] w-auto object-contain object-left" />
+                    <img src="/knotlessai.svg" alt="Knotless Logo" className="h-[65px] w-auto object-contain object-left" />
                 </div>
 
                 <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2 -mr-2">
