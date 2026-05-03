@@ -856,7 +856,7 @@ export default function ManagerDashboard({
     const handleMarkAsRead = async (n: any) => {
         // Optimistic Update
         const originalNotifications = [...notifications];
-        setNotifications(prev => prev.map(notif => 
+        setNotifications((prev: Notification[]) => prev.map(notif => 
             notif.id === n.id ? { ...notif, is_read: true } : notif
         ));
 

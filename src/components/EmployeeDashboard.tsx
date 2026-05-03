@@ -556,10 +556,10 @@ export default function EmployeeDashboard({
     const handleMarkAsRead = async (n: any) => {
         // Optimistic Update
         const originalNotifications = [...notifications];
-        setNotifications(prev => prev.map(notif => 
+        setNotifications((prev: Notification[]) => prev.map(notif => 
             notif.id === n.id ? { ...notif, is_read: true } : notif
         ));
-        setUnreadCount(prev => Math.max(0, prev - (n.is_read ? 0 : 1)));
+        setUnreadCount((prev: number) => Math.max(0, prev - (n.is_read ? 0 : 1)));
 
         try {
             if (!n.is_read) {
