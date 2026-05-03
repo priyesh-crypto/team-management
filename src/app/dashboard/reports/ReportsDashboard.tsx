@@ -1318,7 +1318,7 @@ export function ReportsDashboard(props: Props) {
         rows.push(["Team Performance", "Member", "Tasks", "Hours"]);
         
         byMember.forEach(m => {
-            rows.push(["Member", m.name, m.count, `${Math.round(m.hours)}h`]);
+            rows.push(["Member", m.name, m.total, `${Math.round(m.hours)}h`]);
         });
 
         // Proper CSV formatting with quoting and escaping
