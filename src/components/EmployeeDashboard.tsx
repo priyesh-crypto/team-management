@@ -553,17 +553,56 @@ export default function EmployeeDashboard({
         await logout();
     };
 
-    const handleMarkAsRead = async (notification: any) => {
-        if (!notification.is_read) {
-            await markNotificationAsRead(notification.id);
-            await refreshData();
-        }
-        if (notification.task_id) {
-            const task = allTasks.find(t => t.id === notification.task_id);
-            if (task) {
-                openTaskSheet(task);
+    const handleMarkAsRead = async (n: any) => {
+        // Optimistic Update
+        const originalNotifications = [...notifications];
+        setNotifications(prev => prev.map(notif => 
+            notif.id === n.id ? { ...notif, is_read: true } : notif
+        ));
+        setUnreadCount(prev => Math.max(0, prev - (n.is_read ? 0 : 1)));
+
+        try {
+            if (!n.is_read) {
+                await markNotificationAsRead(n.id);
+                debouncedRefresh(true);
+            }
+            
+            if (n.task_id) {
+                const task = allTasks.find(t => t.id === n.task_id);
+                if (task) {
+                    openTaskSheet(task);
+                    setShowNotifications(false);
+                } else {
+                    toast.error("Task not found or has been deleted");
+                    setShowNotifications(false);
+                }
+            } else {
                 setShowNotifications(false);
             }
+        } catch (error) {
+            console.error("Error marking notification as read:", error);
+            setNotifications(originalNotifications);
+            setUnreadCount(originalNotifications.filter(notif => !notif.is_read).length);
+            toast.error("Failed to update notification");
+        }
+    };
+
+    const handleClearAll = async () => {
+        const originalNotifications = [...notifications];
+        const originalUnreadCount = unreadCount;
+        
+        setNotifications([]); // Optimistic clear
+        setUnreadCount(0);
+        
+        try {
+            await clearNotifications(userId);
+            toast.success("Notifications cleared");
+            debouncedRefresh(true);
+        } catch (error) {
+            console.error("Error clearing notifications:", error);
+            setNotifications(originalNotifications);
+            setUnreadCount(originalUnreadCount);
+            toast.error("Failed to clear notifications");
         }
     };
 
@@ -639,7 +678,8 @@ export default function EmployeeDashboard({
                     notificationRef={notificationRef}
                     handleMarkAsRead={handleMarkAsRead}
                     markAllNotificationsAsRead={markAllNotificationsAsRead}
-                    refreshData={refreshData}
+                    clearNotifications={handleClearAll}
+                    refreshData={() => refreshData(true)}
                     userId={userId}
                 />
 

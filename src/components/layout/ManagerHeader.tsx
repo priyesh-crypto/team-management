@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Menu, Search, Bell } from 'lucide-react';
+import { Menu, Search, Bell, Check, Trash2, X } from 'lucide-react';
 
 interface ManagerHeaderProps {
     isMobileMenuOpen: boolean;
@@ -18,6 +18,7 @@ interface ManagerHeaderProps {
     markAllNotificationsAsRead: (userId: string) => Promise<void>;
     userId: string;
     refreshData: () => void;
+    clearNotifications: () => Promise<void>;
     setActiveTab: (tab: any) => void;
     setShowAssignModal: (show: boolean) => void;
 }
@@ -37,6 +38,7 @@ export function ManagerHeader({
     markAllNotificationsAsRead,
     userId,
     refreshData,
+    clearNotifications,
     setActiveTab,
     setShowAssignModal
 }: ManagerHeaderProps) {
@@ -107,38 +109,82 @@ export function ManagerHeader({
 
                     {showNotifications && (
                         <div className="absolute right-0 mt-3 w-80 bg-white rounded-3xl shadow-2xl border border-[#e5e5ea] z-50 overflow-hidden fade-in">
-                            <div className="p-5 border-b border-[#f5f5f7] flex justify-between items-center bg-[#f5f5f7]/50">
+                            <div className="p-4 border-b border-[#f5f5f7] flex justify-between items-center bg-[#f5f5f7]/50">
                                 <h3 className="font-black text-[10px] uppercase tracking-widest text-[#1d1d1f]">Notifications</h3>
-                                <button 
-                                    onClick={async () => {
-                                        await markAllNotificationsAsRead(userId);
-                                        refreshData();
-                                    }}
-                                    className="text-[9px] font-black text-[#0051e6] uppercase tracking-widest hover:underline"
-                                >
-                                    Clear All
-                                </button>
+                                <div className="flex gap-4">
+                                    <button 
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            await markAllNotificationsAsRead(userId);
+                                            refreshData();
+                                        }}
+                                        className="text-[9px] font-black text-[#0051e6] uppercase tracking-widest hover:underline"
+                                    >
+                                        Mark All Read
+                                    </button>
+                                    <button 
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            await clearNotifications();
+                                        }}
+                                        className="text-[9px] font-black text-[#ff3b30] uppercase tracking-widest hover:underline"
+                                    >
+                                        Clear All
+                                    </button>
+                                </div>
                             </div>
-                            <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                            <div className="max-h-[400px] overflow-y-auto">
                                 {notifications.length === 0 ? (
-                                    <div className="p-10 text-center">
-                                        <p className="text-[10px] font-black text-[#86868b] uppercase tracking-widest">Everything Read</p>
+                                    <div className="p-12 text-center">
+                                        <div className="w-12 h-12 bg-[#f5f5f7] rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Bell size={20} className="text-[#86868b] opacity-20" />
+                                        </div>
+                                        <p className="text-[11px] font-bold text-[#86868b] italic">No notifications yet</p>
                                     </div>
                                 ) : (
                                     notifications.map(n => (
                                         <div 
                                             key={n.id} 
                                             onClick={() => handleMarkAsRead(n)}
-                                            className={`p-4 border-b border-[#f5f5f7] hover:bg-[#f5f5f7] cursor-pointer transition-colors ${!n.is_read ? 'bg-[#0051e6]/5 font-bold' : ''}`}
+                                            className={`p-4 border-b border-[#f5f5f7] hover:bg-[#f5f5f7] cursor-pointer group transition-colors relative ${!n.is_read ? 'bg-[#0051e6]/5' : ''}`}
                                         >
-                                            <div className="flex gap-3">
-                                                <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${n.type === 'urgent' ? 'bg-[#ff3b30]' : 'bg-[#0051e6]'}`} />
+                                            <div className="flex gap-3 pr-8">
+                                                <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.type === 'urgent' ? 'bg-[#ff3b30]' : 'bg-[#0051e6]'} ${n.is_read ? 'opacity-20' : 'animate-pulse'}`} />
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-[10px] leading-relaxed text-[#1d1d1f] break-words">{n.message}</p>
-                                                    <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest mt-1 block">
-                                                        {new Date(n.created_at).toLocaleDateString()}
-                                                    </span>
+                                                    <p className={`text-[11px] leading-snug ${!n.is_read ? 'font-bold text-[#1d1d1f]' : 'text-[#86868b]'}`}>
+                                                        {n.message || n.title}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-[9px] font-medium text-[#86868b] opacity-60">
+                                                            {new Date(n.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                        {n.task_id && (
+                                                            <span className="text-[8px] font-black text-[#0051e6] uppercase tracking-tighter bg-[#0051e6]/5 px-1.5 py-0.5 rounded-md">
+                                                                Task Link
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
+                                            </div>
+
+                                            {/* Quick Action Button for Individual Notification */}
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                {!n.is_read ? (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleMarkAsRead(n);
+                                                        }}
+                                                        className="p-2 hover:bg-white rounded-full shadow-sm text-[#0051e6] transition-all"
+                                                        title="Mark as read"
+                                                    >
+                                                        <Check size={14} strokeWidth={3} />
+                                                    </button>
+                                                ) : (
+                                                    <div className="p-2 text-[#86868b] opacity-40">
+                                                        <Check size={14} strokeWidth={3} />
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))

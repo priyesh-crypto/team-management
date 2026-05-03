@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Task, Subtask, Profile, Priority, Status, Project, getTasks, saveTask, saveSubtask, inviteMember, addMemberDirectly, updateEmployeeProfile, updateUserPassword, updateTaskPriority, updateTaskStatus, deleteTask, deleteSubtask, getSubtasks, updateTask, markNotificationAsRead, markAllNotificationsAsRead, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, WorkloadMap, ActivityLog, getOrgActivityFeed, logout, syncOverdueTasks, getDashboardData } from '@/app/actions/actions';
+import { Task, Subtask, Profile, Priority, Status, Project, getTasks, saveTask, saveSubtask, inviteMember, addMemberDirectly, updateEmployeeProfile, updateUserPassword, updateTaskPriority, updateTaskStatus, deleteTask, deleteSubtask, getSubtasks, updateTask, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, WorkloadMap, ActivityLog, getOrgActivityFeed, logout, syncOverdueTasks, getDashboardData } from '@/app/actions/actions';
 import { formatAuditEntry } from '@/utils/audit-formatters';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
@@ -854,16 +854,54 @@ export default function ManagerDashboard({
     };
 
     const handleMarkAsRead = async (n: any) => {
-        if (!n.is_read) {
-            await markNotificationAsRead(n.id);
-            refreshData(true);
-        }
-        if (n.task_id) {
-            const task = tasks.find(t => t.id === n.task_id);
-            if (task) {
-                handleTaskClick(task);
+        // Optimistic Update
+        const originalNotifications = [...notifications];
+        setNotifications(prev => prev.map(notif => 
+            notif.id === n.id ? { ...notif, is_read: true } : notif
+        ));
+
+        try {
+            if (!n.is_read) {
+                await markNotificationAsRead(n.id);
+                // No need for a full refreshData(true) if real-time is working, 
+                // but we call it anyway to be safe and ensure other data is synced.
+                debouncedRefresh(true);
+            }
+            
+            if (n.task_id) {
+                const task = tasks.find(t => t.id === n.task_id);
+                if (task) {
+                    handleTaskClick(task);
+                    setShowNotifications(false);
+                } else {
+                    toast.error("Task not found or has been deleted");
+                    setShowNotifications(false);
+                }
+            } else {
+                // If it's just a system notification without a task, maybe close the dropdown?
+                // Actually, let's keep it open so they can see it's marked as read, 
+                // OR close it if they clicked the item.
                 setShowNotifications(false);
             }
+        } catch (error) {
+            console.error("Error marking notification as read:", error);
+            setNotifications(originalNotifications);
+            toast.error("Failed to update notification");
+        }
+    };
+
+    const handleClearAll = async () => {
+        const originalNotifications = [...notifications];
+        setNotifications([]); // Optimistic clear
+        
+        try {
+            await clearNotifications(userId);
+            toast.success("Notifications cleared");
+            debouncedRefresh(true);
+        } catch (error) {
+            console.error("Error clearing notifications:", error);
+            setNotifications(originalNotifications);
+            toast.error("Failed to clear notifications");
         }
     };
 
@@ -904,11 +942,12 @@ export default function ManagerDashboard({
                     notifications={notifications}
                     showNotifications={showNotifications}
                     setShowNotifications={setShowNotifications}
-                    notificationRef={notificationRef}
+                    unreadCount={unreadCount}
                     handleMarkAsRead={handleMarkAsRead}
                     markAllNotificationsAsRead={markAllNotificationsAsRead}
-                    userId={userId}
+                    clearNotifications={handleClearAll}
                     refreshData={() => refreshData(true)}
+                    userId={userId}
                     setActiveTab={setActiveTab}
                     setShowAssignModal={setShowAssignModal}
                 />
