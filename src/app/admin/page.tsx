@@ -111,7 +111,7 @@ export default async function AdminDashboard() {
                                 className="flex items-center justify-between p-2.5 rounded-md hover:bg-[#f5f5f7] transition-colors group"
                             >
                                 <div className="min-w-0 flex-1">
-                                    <div className="text-sm font-medium text-[#1d1d1f] truncate group-hover:text-[#0c64ef] transition-colors">
+                                    <div className="text-sm font-medium text-[#1d1d1f] truncate group-hover:text-[#0051e6] transition-colors">
                                         {o.name}
                                     </div>
                                     <div className="flex items-center gap-1.5 mt-1">

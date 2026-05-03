@@ -16,7 +16,7 @@ export default async function PublicFormPage({ params }: Props) {
             <div className="bg-white rounded-3xl shadow-xl max-w-xl w-full overflow-hidden">
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-slate-100">
-                    <div className="text-[10px] font-black text-[#0c64ef] uppercase tracking-wider mb-2">Request form</div>
+                    <div className="text-[10px] font-black text-[#0051e6] uppercase tracking-wider mb-2">Request form</div>
                     <h1 className="text-2xl font-black text-[#1d1d1f]">{form.name}</h1>
                     {form.description && (
                         <p className="text-sm text-slate-500 mt-2 leading-relaxed">{form.description}</p>

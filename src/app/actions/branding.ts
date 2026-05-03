@@ -35,7 +35,7 @@ export async function saveBranding(orgId: string, branding: Partial<OrgBranding>
         updated_at: new Date().toISOString(),
         logo_url: branding.logo_url ?? null,
         favicon_url: branding.favicon_url ?? null,
-        primary_color: branding.primary_color ?? "#0c64ef",
+        primary_color: branding.primary_color ?? "#0051e6",
         accent_color: branding.accent_color ?? "#34c759",
         org_display_name: branding.org_display_name ?? null,
         custom_domain: branding.custom_domain ?? null,

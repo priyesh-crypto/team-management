@@ -7,15 +7,23 @@
   --color-card-bg: #ffffff;
   --color-card-border: #d2d2d7;
 
-  --color-primary-500: #0c64ef;
-  --color-primary-600: #0a57d1;
+  --color-brand-blue: #0051e6;
+  --color-brand-green: #22be66;
+  --brand-gradient: linear-gradient(135deg, #0051e6 0%, #22be66 100%);
+
+  --color-primary-500: #0051e6;
+  --color-primary-600: #0041b8;
 
   --color-secondary-text: #86868b;
 
   --color-urgent: #e83f3f;
   --color-high: #ff9500;
-  --color-medium: #ffcc00;
-  --color-low: #34c759;
+  --color-medium: #0051e6;
+  --color-low: #22be66;
+}
+
+@utility brand-gradient {
+  background: var(--brand-gradient);
 }
 
 :root {

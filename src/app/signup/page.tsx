@@ -90,14 +90,14 @@ export default async function SignupPage({
             <Input name="email" type="email" required placeholder="Work Email" className="w-full h-12" />
             <Input name="password" type="password" required placeholder="Choose Password" className="w-full h-12" />
 
-            <Button type="submit" className="w-full h-12 text-md font-bold mt-2">
+            <Button type="submit" className="w-full h-12 text-md font-bold mt-2 bg-gradient-to-r from-[#0051e6] to-[#22be66] hover:brightness-110 transition-all shadow-md shadow-[#0051e6]/20">
               Create Account
             </Button>
           </form>
 
           <p className="mt-6 text-center text-xs text-[#86868b] font-medium">
             Already have an account?{' '}
-            <a href="/" className="font-black text-[#0c64ef] hover:underline">Sign in</a>
+            <a href="/" className="font-black text-[#0051e6] hover:underline">Sign in</a>
           </p>
         </Card>
       </div>

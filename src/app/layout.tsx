@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Task Management",
+  title: "Knotless AI",
   description: "Team task and project management platform",
 };
 

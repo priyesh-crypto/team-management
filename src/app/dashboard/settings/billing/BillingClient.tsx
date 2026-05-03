@@ -48,7 +48,7 @@ const PLAN_META: Record<string, {
     pro: {
         icon: <Zap size={18} />,
         tagline: "For growing teams that need more power.",
-        accent: "border-[#0c64ef] ring-2 ring-[#0c64ef]/10",
+        accent: "border-[#0051e6] ring-2 ring-[#0051e6]/10",
         badge: "MOST POPULAR",
         cta: "Upgrade to Pro",
     },
@@ -224,7 +224,7 @@ export function BillingClient({
         <div className="mx-auto max-w-6xl p-8 space-y-8">
             {/* Header */}
             <header>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0c64ef] mb-1.5">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0051e6] mb-1.5">
                     Plans & Billing
                 </div>
                 <h1 className="text-3xl font-black tracking-tight text-[#1d1d1f]">
@@ -314,14 +314,14 @@ export function BillingClient({
                                 className={`relative rounded-2xl border-2 p-6 bg-white transition-shadow hover:shadow-md ${meta.accent}`}
                             >
                                 {meta.badge && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0c64ef] text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0051e6] text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">
                                         {meta.badge}
                                     </div>
                                 )}
 
                                 <div className="flex items-center gap-2 text-[#1d1d1f]">
                                     <span className={`p-1.5 rounded-lg ${
-                                        plan.id === "pro" ? "bg-[#0c64ef]/10 text-[#0c64ef]" :
+                                        plan.id === "pro" ? "bg-[#0051e6]/10 text-[#0051e6]" :
                                         plan.id === "business" ? "bg-[#1d1d1f]/10 text-[#1d1d1f]" :
                                         "bg-slate-100 text-slate-500"
                                     }`}>{meta.icon}</span>
@@ -377,7 +377,7 @@ export function BillingClient({
                                             : isFree
                                             ? "bg-slate-100 text-slate-400 cursor-not-allowed"
                                             : plan.id === "pro"
-                                            ? "bg-[#0c64ef] text-white hover:bg-[#005bb7]"
+                                            ? "bg-[#0051e6] text-white hover:bg-[#005bb7]"
                                             : "bg-[#1d1d1f] text-white hover:bg-[#434343]"
                                     }`}
                                 >
@@ -407,14 +407,14 @@ export function BillingClient({
                                 </th>
                                 {orderedPlans.map(plan => (
                                     <th key={plan.id} className={`text-center px-3 py-3 ${
-                                        plan.id === "pro" ? "bg-[#0c64ef]/5" : ""
+                                        plan.id === "pro" ? "bg-[#0051e6]/5" : ""
                                     }`}>
                                         <div className="flex items-center justify-center gap-1.5">
                                             <span className="text-[10px] font-black uppercase tracking-widest text-[#1d1d1f]">
                                                 {plan.name}
                                             </span>
                                             {plan.id === "pro" && (
-                                                <span className="bg-[#0c64ef] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase">
+                                                <span className="bg-[#0051e6] text-white text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase">
                                                     Popular
                                                 </span>
                                             )}
@@ -442,7 +442,7 @@ export function BillingClient({
                                             </td>
                                             {orderedPlans.map(plan => (
                                                 <td key={plan.id}
-                                                    className={`text-center px-3 py-2.5 ${plan.id === "pro" ? "bg-[#0c64ef]/3" : ""}`}>
+                                                    className={`text-center px-3 py-2.5 ${plan.id === "pro" ? "bg-[#0051e6]/3" : ""}`}>
                                                     {getCellValue(plan, row)}
                                                 </td>
                                             ))}
@@ -460,7 +460,7 @@ export function BillingClient({
                 {[
                     { q: "Can I change plans later?", a: "Yes — upgrade or downgrade anytime. Changes are prorated automatically through Stripe." },
                     { q: "What happens to my data on downgrade?", a: "Your data is preserved. If you exceed the new plan's limits (seats, projects), you'll be asked to remove items before downgrading." },
-                    { q: "Do you offer annual billing?", a: "Annual plans with two months free are available — contact sales@mindbird.ai." },
+                    { q: "Do you offer annual billing?", a: "Annual plans with two months free are available — contact sales@knotless.ai." },
                     { q: "What's included in each seat?", a: "Every seat includes full access to your plan's features. Inactive members don't count toward your seat usage." },
                 ].map(item => (
                     <div key={item.q} className="rounded-2xl border border-slate-200 bg-white p-5">
@@ -497,7 +497,7 @@ function UsageBar({
                 <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                     <div
                         className={`h-full transition-all ${
-                            pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-[#0c64ef]"
+                            pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-[#0051e6]"
                         }`}
                         style={{ width: `${pct}%` }}
                     />

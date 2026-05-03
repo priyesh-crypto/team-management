@@ -120,7 +120,7 @@ export function ManagerMineView({
                                         </div>
                                         <button 
                                             onClick={() => handleUpdateTask(task.id)}
-                                            className="ml-auto px-3 py-1 bg-[#0c64ef] text-white text-[9px] font-black rounded-lg hover:bg-[#005bb7] transition-colors shadow-sm"
+                                            className="ml-auto px-3 py-1 bg-[#0051e6] text-white text-[9px] font-black rounded-lg hover:bg-[#005bb7] transition-colors shadow-sm"
                                         >
                                             SAVE
                                         </button>
@@ -133,16 +133,16 @@ export function ManagerMineView({
                                     </div>
                                 </div>
                             ) : (
-                                <h4 className="text-base font-black text-[#1d1d1f] tracking-tight group-hover/task:text-[#0c64ef] transition-colors flex items-center gap-2">
+                                <h4 className="text-base font-black text-[#1d1d1f] tracking-tight group-hover/task:text-[#0051e6] transition-colors flex items-center gap-2">
                                     {task.name}
-                                    <button onClick={(e) => { e.stopPropagation(); setEditingTaskId(task.id); setEditTaskData(task); }} className="opacity-0 group-hover/task:opacity-100 text-[#d2d2d7] hover:text-[#0c64ef] transition-all">
+                                    <button onClick={(e) => { e.stopPropagation(); setEditingTaskId(task.id); setEditTaskData(task); }} className="opacity-0 group-hover/task:opacity-100 text-[#d2d2d7] hover:text-[#0051e6] transition-all">
                                         <Pencil size={12} />
                                     </button>
                                 </h4>
                             )}
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                            <Badge className={`${task.priority === 'Urgent' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : task.priority === 'High' ? 'bg-[#ff9500]/10 text-[#ff9500]' : 'bg-[#0c64ef]/10 text-[#0c64ef]'} border-none px-2 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-widest`}>
+                            <Badge className={`${task.priority === 'Urgent' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : task.priority === 'High' ? 'bg-[#ff9500]/10 text-[#ff9500]' : 'bg-[#0051e6]/10 text-[#0051e6]'} border-none px-2 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-widest`}>
                                 {task.priority}
                             </Badge>
                             <Badge className="bg-[#f5f5f7] text-[#86868b] border-none px-2 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-widest">
@@ -161,7 +161,7 @@ export function ManagerMineView({
                     <div className="flex items-center gap-2">
                         <button 
                             onClick={() => setSelectedTask({ task, subtasks: subtasksMap[task.id] || [] })}
-                            className="p-2.5 rounded-2xl bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#0c64ef] hover:text-white transition-all shadow-sm"
+                            className="p-2.5 rounded-2xl bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#0051e6] hover:text-white transition-all shadow-sm"
                         >
                             <Menu size={16} strokeWidth={2.5} />
                         </button>
@@ -171,7 +171,7 @@ export function ManagerMineView({
                 {/* Work Log / Subtasks Section */}
                 <div className="space-y-4">
                     <h5 className="text-[9px] font-black text-[#86868b] uppercase tracking-widest flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#0c64ef]"></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#0051e6]"></div>
                         Work History & Daily Logs
                     </h5>
                     
@@ -208,7 +208,7 @@ export function ManagerMineView({
                                                     </div>
                                                     <button 
                                                         onClick={() => handleSaveSubtaskEdit(task.id)} 
-                                                        className="px-4 py-2 bg-[#0c64ef] text-white text-[9px] font-black rounded-lg hover:bg-[#005bb7] transition-colors"
+                                                        className="px-4 py-2 bg-[#0051e6] text-white text-[9px] font-black rounded-lg hover:bg-[#005bb7] transition-colors"
                                                     >
                                                         SAVE
                                                     </button>
@@ -226,7 +226,7 @@ export function ManagerMineView({
                                                     {subtask.name}
                                                 </span>
                                                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/80 rounded-md border border-[#eceef0] shadow-sm">
-                                                    <span className="text-[10px] font-black text-[#0c64ef]">{subtask.hours_spent}h</span>
+                                                    <span className="text-[10px] font-black text-[#0051e6]">{subtask.hours_spent}h</span>
                                                     <div className="w-[1px] h-2 bg-[#eceef0]"></div>
                                                     <span className="text-[9px] font-bold text-[#86868b] uppercase tabular-nums">{mounted && subtask.date_logged ? new Date(subtask.date_logged).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '...'}</span>
                                                 </div>
@@ -252,7 +252,7 @@ export function ManagerMineView({
                                     ) : (
                                         <button 
                                             onClick={() => handleStartTimer(subtask.id, task.id)}
-                                            className="opacity-0 group-hover/sub:opacity-100 text-[#86868b] hover:text-[#0c64ef] transition-all p-1"
+                                            className="opacity-0 group-hover/sub:opacity-100 text-[#86868b] hover:text-[#0051e6] transition-all p-1"
                                             title="Start Timer"
                                         >
                                             <Clock size={14} strokeWidth={2.5} />
@@ -260,7 +260,7 @@ export function ManagerMineView({
                                     )}
                                     <button 
                                         onClick={() => { setEditingSubtaskId(subtask.id); setEditSubtaskData(subtask); }}
-                                        className="opacity-0 group-hover/sub:opacity-100 text-[#86868b] hover:text-[#0c64ef] transition-all p-1"
+                                        className="opacity-0 group-hover/sub:opacity-100 text-[#86868b] hover:text-[#0051e6] transition-all p-1"
                                     >
                                         <Pencil size={12} />
                                     </button>
@@ -367,7 +367,7 @@ export function ManagerMineView({
                                     <div className="flex items-center gap-3 bg-white px-4 rounded-xl border border-[#eceef0] h-12 w-full sm:w-auto">
                                         <div className="flex flex-col items-center">
                                             <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest">LOGGED</span>
-                                            <div className="text-sm font-black text-[#0c64ef] tabular-nums">
+                                            <div className="text-sm font-black text-[#0051e6] tabular-nums">
                                                 {newSubtaskData[task.id]?.hours || 0}
                                                 <span className="ml-1 text-[8px] uppercase">Hrs</span>
                                             </div>
@@ -391,7 +391,7 @@ export function ManagerMineView({
                                         )}
                                         <button 
                                             onClick={() => handleAddSubtask(task.id)}
-                                            className="h-8 px-4 bg-[#0c64ef] text-white text-[9px] font-black rounded-lg hover:bg-[#005bb7] transition-all shadow-sm hover:shadow-lg shadow-[#0c64ef]/20"
+                                            className="h-8 px-4 bg-[#0051e6] text-white text-[9px] font-black rounded-lg hover:bg-[#005bb7] transition-all shadow-sm hover:shadow-lg shadow-[#0051e6]/20"
                                         >
                                             LOG WORK
                                         </button>
@@ -413,7 +413,7 @@ export function ManagerMineView({
                     <h3 className="text-xl font-black text-[#1d1d1f] tracking-tight">Focus & Performance</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Card className="p-6 rounded-[32px] border-[#eceef0] bg-[#f5f5f7] shadow-sm flex flex-col items-center justify-center text-center">
-                            <div className="w-12 h-12 rounded-2xl bg-[#0c64ef]/10 flex items-center justify-center text-[#0c64ef] mb-3">
+                            <div className="w-12 h-12 rounded-2xl bg-[#0051e6]/10 flex items-center justify-center text-[#0051e6] mb-3">
                                 <Zap size={24} strokeWidth={2.5} />
                             </div>
                             <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1">Efficiency</span>
@@ -448,7 +448,7 @@ export function ManagerMineView({
                                 value={logForm.name} 
                                 onChange={e => setLogForm({ ...logForm, name: e.target.value })} 
                                 placeholder="What are you working on?" 
-                                className="w-full h-14 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[13px] font-bold outline-none focus:ring-2 ring-[#0c64ef]/20 transition-all placeholder:text-[#86868b]/50" 
+                                className="w-full h-14 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[13px] font-bold outline-none focus:ring-2 ring-[#0051e6]/20 transition-all placeholder:text-[#86868b]/50" 
                             />
                         </div>
 
@@ -502,7 +502,7 @@ export function ManagerMineView({
                                 value={logForm.notes} 
                                 onChange={e => setLogForm({ ...logForm, notes: e.target.value })} 
                                 placeholder="Add some details..." 
-                                className="w-full h-24 rounded-2xl bg-[#f5f5f7] border-none p-5 text-[11px] font-bold outline-none focus:ring-2 ring-[#0c64ef]/20 transition-all resize-none placeholder:text-[#86868b]/50" 
+                                className="w-full h-24 rounded-2xl bg-[#f5f5f7] border-none p-5 text-[11px] font-bold outline-none focus:ring-2 ring-[#0051e6]/20 transition-all resize-none placeholder:text-[#86868b]/50" 
                             />
                         </div>
 
@@ -526,7 +526,7 @@ export function ManagerMineView({
                     <div className="flex items-center justify-between mb-6 px-4">
                         <div className="flex items-center gap-3">
                             <h3 className="text-sm font-black text-[#1d1d1f] uppercase tracking-widest">Active Workspace</h3>
-                            <Badge className="bg-[#0c64ef]/10 text-[#0c64ef] border-none px-2.5 rounded-full font-bold text-[9px]">
+                            <Badge className="bg-[#0051e6]/10 text-[#0051e6] border-none px-2.5 rounded-full font-bold text-[9px]">
                                 {myActiveTasks.length} ACTIVE
                             </Badge>
                         </div>

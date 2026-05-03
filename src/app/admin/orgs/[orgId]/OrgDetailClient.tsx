@@ -117,7 +117,7 @@ export function OrgDetailClient({
             <div>
                 <Link
                     href="/admin/orgs"
-                    className="inline-flex items-center gap-1 text-xs text-[#86868b] hover:text-[#0c64ef] transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-[#86868b] hover:text-[#0051e6] transition-colors"
                 >
                     <ArrowLeft size={12} strokeWidth={2} />
                     All organizations
@@ -492,7 +492,7 @@ function MiniStat({
                 {value}
             </div>
             {sub && (
-                <div className="text-xs text-[#0c64ef] mt-0.5">
+                <div className="text-xs text-[#0051e6] mt-0.5">
                     {sub}
                 </div>
             )}
@@ -503,7 +503,7 @@ function MiniStat({
 function RolePill({ role }: { role: string }) {
     const colors: Record<string, string> = {
         owner: "bg-purple-50 text-purple-700",
-        admin: "bg-[#0c64ef]/10 text-[#0c64ef]",
+        admin: "bg-[#0051e6]/10 text-[#0051e6]",
         manager: "bg-emerald-50 text-emerald-700",
         employee: "bg-[#f5f5f7] text-[#52525b]",
     };
@@ -521,7 +521,7 @@ function RolePill({ role }: { role: string }) {
 function ActionRow({ action }: { action: AdminAction }) {
     return (
         <div className="flex items-start gap-3 pb-3 border-b border-[#f0f0f2] last:border-0 last:pb-0">
-            <div className="w-7 h-7 rounded-md bg-[#0c64ef]/10 text-[#0c64ef] flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-md bg-[#0051e6]/10 text-[#0051e6] flex items-center justify-center shrink-0">
                 <Zap size={13} strokeWidth={2} />
             </div>
             <div className="flex-1 min-w-0">

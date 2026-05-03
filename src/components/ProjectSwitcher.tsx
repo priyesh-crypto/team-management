@@ -45,14 +45,14 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
         className={cn(
           "flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 w-full text-left group relative outline-none",
           !projectId
-            ? "bg-[#0c64ef]/10 text-[#0c64ef]"
+            ? "bg-[#0051e6]/10 text-[#0051e6]"
             : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
         )}
       >
-        <LayoutGrid size={16} strokeWidth={2.5} className={cn("transition-colors", !projectId ? "text-[#0c64ef]" : "text-slate-400 group-hover:text-slate-800")} />
+        <LayoutGrid size={16} strokeWidth={2.5} className={cn("transition-colors", !projectId ? "text-[#0051e6]" : "text-slate-400 group-hover:text-slate-800")} />
         <span>Main Inbox</span>
         {!projectId && (
-            <div className="absolute left-0 w-1 h-5 bg-[#0c64ef] rounded-r-full" />
+            <div className="absolute left-0 w-1 h-5 bg-[#0051e6] rounded-r-full" />
         )}
       </button>
 
@@ -68,14 +68,14 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
             className={cn(
               "flex items-center gap-3 px-4 py-2.5 rounded-xl text-[10px] font-bold transition-all duration-300 w-full text-left group cursor-pointer relative",
               projectId === project.id
-                ? "bg-[#0c64ef]/10 text-[#0c64ef]"
+                ? "bg-[#0051e6]/10 text-[#0051e6]"
                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
             )}
           >
             {/* Color dot */}
             <div 
               className="w-1.5 h-1.5 rounded-full flex-shrink-0 shadow-sm"
-              style={{ background: project.color || '#0c64ef' }}
+              style={{ background: project.color || '#0051e6' }}
             />
             <span className="truncate flex-1 tracking-tight">{project.name}</span>
             
@@ -84,7 +84,7 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
                 <span className={cn(
                     "text-[9px] font-bold px-2 py-0.5 rounded-lg transition-colors tabular-nums",
                     projectId === project.id 
-                        ? "bg-[#0c64ef] text-white" 
+                        ? "bg-[#0051e6] text-white" 
                         : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
                 )}>
                   {project.task_count ?? 0}
@@ -101,7 +101,7 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
                 )}
             </div>
             {projectId === project.id && (
-                <div className="absolute left-0 w-1 h-5 bg-[#0c64ef] rounded-r-full" />
+                <div className="absolute left-0 w-1 h-5 bg-[#0051e6] rounded-r-full" />
             )}
           </div>
         )) : (
@@ -115,9 +115,9 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
       {userRole === 'manager' && (
         <button
           onClick={() => router.push('/dashboard/projects/new')}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-[9px] font-bold text-slate-400 hover:text-[#0c64ef] transition-all duration-300 mt-4 group uppercase tracking-widest bg-slate-50/50 hover:bg-slate-50"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-[9px] font-bold text-slate-400 hover:text-[#0051e6] transition-all duration-300 mt-4 group uppercase tracking-widest bg-slate-50/50 hover:bg-slate-50"
         >
-          <div className="w-5 h-5 rounded-lg bg-white border border-slate-100 flex items-center justify-center group-hover:bg-[#0c64ef] group-hover:text-white transition-all shadow-sm">
+          <div className="w-5 h-5 rounded-lg bg-white border border-slate-100 flex items-center justify-center group-hover:bg-[#0051e6] group-hover:text-white transition-all shadow-sm">
               <Plus size={12} strokeWidth={3} />
           </div>
           Create Project

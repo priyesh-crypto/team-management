@@ -154,7 +154,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                             </div>
                             <div className="flex items-center justify-between gap-4 pt-2 border-t border-white/10">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-white/50">{getMetricLabel(mode)}</span>
-                                <span className="text-sm font-black text-[#0c64ef]">
+                                <span className="text-sm font-black text-[#0051e6]">
                                     {hoveredCell.value === null ? 'No data' : hoveredCell.value}
                                 </span>
                             </div>
@@ -168,7 +168,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                 <div>
                     <h3 className="text-2xl font-black text-[#1d1d1f] tracking-tight mb-1">Team Capacity</h3>
                     <p className="text-sm font-medium text-[#86868b] flex items-center gap-2">
-                        <Users size={14} className="text-[#0c64ef]" />
+                        <Users size={14} className="text-[#0051e6]" />
                         Weekly workload overview and team utilization
                     </p>
                 </div>
@@ -183,7 +183,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                 className={cn(
                                     'px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] transition-all duration-300 rounded-xl',
                                     mode === m 
-                                        ? 'bg-white text-[#0c64ef] shadow-[0_2px_8px_rgba(0,0,0,0.08)] scale-[1.02]' 
+                                        ? 'bg-white text-[#0051e6] shadow-[0_2px_8px_rgba(0,0,0,0.08)] scale-[1.02]' 
                                         : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/50'
                                 )}
                             >
@@ -284,7 +284,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                 key={uid} 
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="flex items-center gap-4 bg-white/60 hover:bg-white p-3 rounded-[24px] transition-all duration-300 group/row border border-transparent hover:border-[#0c64ef]/10 hover:shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
+                                className="flex items-center gap-4 bg-white/60 hover:bg-white p-3 rounded-[24px] transition-all duration-300 group/row border border-transparent hover:border-[#0051e6]/10 hover:shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
                             >
                                 <UserAvatar
                                     name={member.name}
@@ -342,10 +342,10 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                             {days.map(d => (
                                 <th key={d.toISOString()} className="text-center text-[10px] font-black text-[#86868b] uppercase tracking-wider pb-6 px-1">
                                     <div className="flex flex-col items-center">
-                                        <span className={cn('mb-1 px-2 py-0.5 rounded-md transition-colors', isSameDay(d, new Date()) ? 'bg-[#0c64ef] text-white' : 'text-[#86868b]')}>
+                                        <span className={cn('mb-1 px-2 py-0.5 rounded-md transition-colors', isSameDay(d, new Date()) ? 'bg-[#0051e6] text-white' : 'text-[#86868b]')}>
                                             {format(d, 'EEE').toUpperCase()}
                                         </span>
-                                        <span className={cn('text-xs font-bold transition-colors', isSameDay(d, new Date()) ? 'text-[#0c64ef]' : 'text-[#1d1d1f]')}>
+                                        <span className={cn('text-xs font-bold transition-colors', isSameDay(d, new Date()) ? 'text-[#0051e6]' : 'text-[#1d1d1f]')}>
                                             {format(d, 'd')}
                                         </span>
                                     </div>
@@ -393,8 +393,8 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                                     className={cn(
                                                         'w-full h-12 min-w-[44px] rounded-[14px] flex items-center justify-center transition-all duration-300 cursor-pointer border shadow-sm relative group/cell',
                                                         colors.bg, colors.text, colors.border,
-                                                        isSelected ? 'ring-2 ring-offset-2 ring-[#0c64ef] border-[#0c64ef] z-10' : '',
-                                                        isToday && !isSelected ? 'ring-2 ring-[#0c64ef]/20 border-[#0c64ef]/30' : ''
+                                                        isSelected ? 'ring-2 ring-offset-2 ring-[#0051e6] border-[#0051e6] z-10' : '',
+                                                        isToday && !isSelected ? 'ring-2 ring-[#0051e6]/20 border-[#0051e6]/30' : ''
                                                     )}
                                                     onMouseMove={e => {
                                                         if (!containerRef.current) return;
@@ -415,7 +415,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                                         {value === null ? '·' : value}
                                                     </span>
                                                     {isToday && (
-                                                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#0c64ef] rounded-full border-2 border-white shadow-sm" />
+                                                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#0051e6] rounded-full border-2 border-white shadow-sm" />
                                                     )}
                                                     <div className="absolute inset-0 bg-white opacity-0 group-hover/cell:opacity-20 transition-opacity rounded-[14px]" />
                                                 </motion.div>
@@ -443,7 +443,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                 <UserAvatar
                                     name={selectedCell.userName}
                                     avatarUrl={data[selectedCell.userId]?.avatar_url}
-                                    className="w-12 h-12 rounded-[20px] bg-[#0c64ef] shadow-lg shadow-[#0c64ef]/20"
+                                    className="w-12 h-12 rounded-[20px] bg-[#0051e6] shadow-lg shadow-[#0051e6]/20"
                                     textClassName="text-white text-lg font-black"
                                 />
                                 <div>
@@ -495,16 +495,16 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {details.map((detail, idx) => (
-                                    <div key={idx} className="group/card bg-white p-6 rounded-[28px] border border-[#e5e5ea] hover:border-[#0c64ef] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300">
+                                    <div key={idx} className="group/card bg-white p-6 rounded-[28px] border border-[#e5e5ea] hover:border-[#0051e6] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300">
                                         <div className="flex items-center justify-between mb-4">
-                                            <span className="text-[10px] font-black text-[#0c64ef] uppercase tracking-[0.2em] bg-[#0c64ef]/5 px-3 py-1 rounded-full">
+                                            <span className="text-[10px] font-black text-[#0051e6] uppercase tracking-[0.2em] bg-[#0051e6]/5 px-3 py-1 rounded-full">
                                                 Task Record
                                             </span>
                                             <span className="text-[10px] font-bold text-[#86868b]">
                                                 {format(new Date(detail.created_at), 'h:mm a')}
                                             </span>
                                         </div>
-                                        <h5 className="text-[15px] font-black text-[#1d1d1f] tracking-tight mb-2 line-clamp-1 group-hover/card:text-[#0c64ef] transition-colors">
+                                        <h5 className="text-[15px] font-black text-[#1d1d1f] tracking-tight mb-2 line-clamp-1 group-hover/card:text-[#0051e6] transition-colors">
                                             {detail.task_name}
                                         </h5>
                                         <p className="text-sm font-medium text-[#86868b] mb-6 line-clamp-2 leading-relaxed">
@@ -542,8 +542,8 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                         ))}
                     </div>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-[#0c64ef] bg-[#0c64ef]/5 px-4 py-2 rounded-full border border-[#0c64ef]/10">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#0c64ef] animate-pulse" />
+                <div className="flex items-center gap-2 text-[10px] font-bold text-[#0051e6] bg-[#0051e6]/5 px-4 py-2 rounded-full border border-[#0051e6]/10">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#0051e6] animate-pulse" />
                     Interative View: Click any cell for drill-down
                 </div>
             </div>

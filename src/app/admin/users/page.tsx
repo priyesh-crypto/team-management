@@ -4,14 +4,14 @@ import Link from "next/link";
 
 const ROLE_COLORS: Record<string, string> = {
     owner: "bg-purple-50 text-purple-700",
-    admin: "bg-[#0c64ef]/10 text-[#0c64ef]",
+    admin: "bg-[#0051e6]/10 text-[#0051e6]",
     manager: "bg-emerald-50 text-emerald-700",
     employee: "bg-[#f5f5f7] text-[#86868b]",
 };
 
 const PLAN_COLORS: Record<string, string> = {
     business: "bg-[#1d1d1f] text-white",
-    pro: "bg-[#0c64ef] text-white",
+    pro: "bg-[#0051e6] text-white",
     free: "bg-[#f5f5f7] text-[#86868b]",
 };
 
@@ -37,11 +37,11 @@ export default async function UsersPage({
                         defaultValue={q ?? ""}
                         placeholder="Search by name or email…"
                         autoFocus
-                        className="flex-1 px-4 py-3 rounded-2xl border border-[#e5e5ea] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20 bg-white"
+                        className="flex-1 px-4 py-3 rounded-2xl border border-[#e5e5ea] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0051e6]/20 bg-white"
                     />
                     <button
                         type="submit"
-                        className="px-5 py-3 rounded-2xl bg-[#0c64ef] text-white text-sm font-black hover:bg-[#005bb7] transition-colors"
+                        className="px-5 py-3 rounded-2xl bg-[#0051e6] text-white text-sm font-black hover:bg-[#005bb7] transition-colors"
                     >
                         Search
                     </button>
@@ -84,7 +84,7 @@ export default async function UsersPage({
                                                 <div key={org.orgId} className="flex items-center gap-2 flex-wrap">
                                                     <Link
                                                         href={`/admin/orgs/${org.orgId}`}
-                                                        className="text-xs font-bold text-[#0c64ef] hover:underline"
+                                                        className="text-xs font-bold text-[#0051e6] hover:underline"
                                                     >
                                                         {org.name}
                                                     </Link>

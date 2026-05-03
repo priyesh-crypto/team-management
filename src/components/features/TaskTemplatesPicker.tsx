@@ -33,7 +33,7 @@ export function TaskTemplatesPicker({ templates, onSelect, onSaveCurrent }: Prop
             <div className="relative">
                 <button
                     onClick={() => setOpen(o => !o)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] font-black text-slate-600 hover:border-[#0c64ef]/30 hover:text-[#0c64ef] transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] font-black text-slate-600 hover:border-[#0051e6]/30 hover:text-[#0051e6] transition-colors shadow-sm"
                 >
                     <LayoutTemplate size={12} />
                     Templates
@@ -45,7 +45,7 @@ export function TaskTemplatesPicker({ templates, onSelect, onSaveCurrent }: Prop
                             <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider">Task templates</span>
                             <button
                                 onClick={() => { onSaveCurrent(); setOpen(false); }}
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0c64ef] text-white text-[10px] font-black"
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0051e6] text-white text-[10px] font-black"
                             >
                                 <Plus size={10} /> Save current
                             </button>
@@ -64,7 +64,7 @@ export function TaskTemplatesPicker({ templates, onSelect, onSaveCurrent }: Prop
                                         className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors group flex items-start justify-between gap-2"
                                     >
                                         <div>
-                                            <div className="text-sm font-black text-[#1d1d1f] group-hover:text-[#0c64ef] transition-colors">
+                                            <div className="text-sm font-black text-[#1d1d1f] group-hover:text-[#0051e6] transition-colors">
                                                 {t.name}
                                             </div>
                                             {t.description && (

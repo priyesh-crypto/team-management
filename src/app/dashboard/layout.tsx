@@ -108,8 +108,8 @@ export default async function DashboardLayout({
               : 'Your organization has been suspended. Please contact support.'}
           </p>
           <a
-            href="mailto:support@mindbird.ai"
-            className="inline-block px-6 py-3 rounded-xl bg-[#0c64ef] text-white text-sm font-black hover:bg-[#005bb7] transition-colors"
+            href="mailto:support@knotless.ai"
+            className="inline-block px-6 py-3 rounded-xl bg-[#0051e6] text-white text-sm font-black hover:bg-[#005bb7] transition-colors"
           >
             Contact support
           </a>

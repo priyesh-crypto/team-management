@@ -52,10 +52,10 @@ export function AISummaryWidget({ initialSummaries }: Props) {
 
     return (
         <UpgradeGate feature="ai_weekly_summary">
-            <div className="bg-gradient-to-br from-[#0c64ef]/5 to-[#7c3aed]/5 rounded-2xl border border-[#0c64ef]/10 overflow-hidden">
+            <div className="bg-gradient-to-br from-[#0051e6]/5 to-[#7c3aed]/5 rounded-2xl border border-[#0051e6]/10 overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0c64ef] to-[#7c3aed] flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0051e6] to-[#7c3aed] flex items-center justify-center">
                             <Sparkles size={14} className="text-white" />
                         </div>
                         <div>
@@ -71,7 +71,7 @@ export function AISummaryWidget({ initialSummaries }: Props) {
                         <button
                             onClick={generateSummary}
                             disabled={generating}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#0c64ef] text-white text-[10px] font-black disabled:opacity-50 hover:bg-[#005bb7] transition-colors"
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#0051e6] text-white text-[10px] font-black disabled:opacity-50 hover:bg-[#005bb7] transition-colors"
                         >
                             <RefreshCw size={10} className={generating ? "animate-spin" : ""} />
                             {generating ? "Generating…" : "Generate"}
@@ -87,7 +87,7 @@ export function AISummaryWidget({ initialSummaries }: Props) {
                         {/* Stats */}
                         <div className="grid grid-cols-4 gap-3 mb-4">
                             {[
-                                { label: "New", value: latest.stats_snapshot.new_tasks, color: "text-[#0c64ef]" },
+                                { label: "New", value: latest.stats_snapshot.new_tasks, color: "text-[#0051e6]" },
                                 { label: "Done", value: latest.stats_snapshot.completed_tasks, color: "text-[#34c759]" },
                                 { label: "Overdue", value: latest.stats_snapshot.overdue_tasks, color: "text-[#ff3b30]" },
                                 { label: "Urgent", value: latest.stats_snapshot.high_priority, color: "text-[#ff9500]" },

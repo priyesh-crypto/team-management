@@ -77,7 +77,7 @@ export function BroadcastComposer() {
                             required
                             rows={4}
                             placeholder="Write your announcement..."
-                            className="w-full px-3 py-2.5 rounded-xl border border-[#e5e5ea] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20 resize-none bg-white"
+                            className="w-full px-3 py-2.5 rounded-xl border border-[#e5e5ea] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0051e6]/20 resize-none bg-white"
                         />
                     </Field>
                 </div>
@@ -91,7 +91,7 @@ export function BroadcastComposer() {
                             type="checkbox"
                             checked={targetAll}
                             onChange={e => setTargetAll(e.target.checked)}
-                            className="w-4 h-4 rounded accent-[#0c64ef]"
+                            className="w-4 h-4 rounded accent-[#0051e6]"
                         />
                         <span className="text-sm font-bold text-[#1d1d1f]">All organizations</span>
                     </label>
@@ -108,7 +108,7 @@ export function BroadcastComposer() {
                                             onClick={() => togglePlan(p)}
                                             className={`px-3 py-1.5 rounded-xl text-[11px] font-black capitalize transition-colors ${
                                                 targetPlans.includes(p)
-                                                    ? "bg-[#0c64ef] text-white"
+                                                    ? "bg-[#0051e6] text-white"
                                                     : "bg-[#f5f5f7] text-[#86868b] hover:bg-[#e5e5ea]"
                                             }`}
                                         >
@@ -142,7 +142,7 @@ export function BroadcastComposer() {
                                 type="checkbox"
                                 checked={channels.includes(id)}
                                 onChange={() => toggleChannel(id)}
-                                className="w-4 h-4 rounded accent-[#0c64ef]"
+                                className="w-4 h-4 rounded accent-[#0051e6]"
                             />
                             <span className="text-sm font-bold text-[#1d1d1f]">{label}</span>
                         </label>
@@ -157,11 +157,11 @@ export function BroadcastComposer() {
                 <SectionLabel>Send options</SectionLabel>
                 <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" checked={sendNow} onChange={() => setSendNow(true)} className="accent-[#0c64ef]" />
+                        <input type="radio" checked={sendNow} onChange={() => setSendNow(true)} className="accent-[#0051e6]" />
                         <span className="text-sm font-bold text-[#1d1d1f]">Send now</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" checked={!sendNow} onChange={() => setSendNow(false)} className="accent-[#0c64ef]" />
+                        <input type="radio" checked={!sendNow} onChange={() => setSendNow(false)} className="accent-[#0051e6]" />
                         <span className="text-sm font-bold text-[#1d1d1f]">Save as draft</span>
                     </label>
                 </div>

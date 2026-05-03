@@ -7,7 +7,7 @@ import { Card, Input, Button } from '@/components/ui/components'
 import { toast } from 'sonner'
 
 const PROJECT_COLORS = [
-  '#0c64ef', // Blue
+  '#0051e6', // Blue
   '#34c759', // Green
   '#ff9500', // Orange
   '#ff3b30', // Red
@@ -62,7 +62,7 @@ export default function NewProjectForm({ members }: { members: Profile[] }) {
             value={form.name}
             onChange={e => setForm({...form, name: e.target.value})}
             placeholder="e.g. Q1 Marketing Campaign"
-            className="h-14 text-lg font-bold bg-[#f5f5f7] border-none focus:ring-2 focus:ring-[#0c64ef] transition-all"
+            className="h-14 text-lg font-bold bg-[#f5f5f7] border-none focus:ring-2 focus:ring-[#0051e6] transition-all"
             required
           />
         </div>
@@ -73,7 +73,7 @@ export default function NewProjectForm({ members }: { members: Profile[] }) {
             value={form.description}
             onChange={e => setForm({...form, description: e.target.value})}
             placeholder="What is this project about?"
-            className="w-full min-h-[100px] p-4 rounded-2xl bg-[#f5f5f7] border-none text-sm font-medium focus:ring-2 focus:ring-[#0c64ef] transition-all resize-none"
+            className="w-full min-h-[100px] p-4 rounded-2xl bg-[#f5f5f7] border-none text-sm font-medium focus:ring-2 focus:ring-[#0051e6] transition-all resize-none"
           />
         </div>
 
@@ -85,7 +85,7 @@ export default function NewProjectForm({ members }: { members: Profile[] }) {
                 key={color}
                 type="button"
                 onClick={() => setForm({...form, color})}
-                className={`w-8 h-8 rounded-full transition-all duration-300 ring-offset-4 ${form.color === color ? 'ring-2 ring-[#0c64ef] scale-110' : 'hover:scale-105 opacity-60 hover:opacity-100'}`}
+                className={`w-8 h-8 rounded-full transition-all duration-300 ring-offset-4 ${form.color === color ? 'ring-2 ring-[#0051e6] scale-110' : 'hover:scale-105 opacity-60 hover:opacity-100'}`}
                 style={{ backgroundColor: color }}
               />
             ))}
@@ -96,7 +96,7 @@ export default function NewProjectForm({ members }: { members: Profile[] }) {
       <Card className="p-8 space-y-6 bg-white/80 backdrop-blur-xl border-none shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
         <div className="flex items-center justify-between mb-2">
           <label className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em] ml-1">Assign Team Members</label>
-          <span className="text-[10px] font-bold text-[#0c64ef] bg-[#0c64ef]/10 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] font-bold text-[#0051e6] bg-[#0051e6]/10 px-2 py-0.5 rounded-full">
             {form.memberIds.length} Selected
           </span>
         </div>
@@ -108,13 +108,13 @@ export default function NewProjectForm({ members }: { members: Profile[] }) {
               type="button"
               onClick={() => toggleMember(member.id)}
               className={`flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 ${form.memberIds.includes(member.id) 
-                ? 'border-[#0c64ef] bg-[#0c64ef]/5 shadow-sm' 
+                ? 'border-[#0051e6] bg-[#0051e6]/5 shadow-sm' 
                 : 'border-[#e5e5ea] bg-white hover:border-[#86868b]'}`}
             >
               <UserAvatar
                 name={member.name}
                 avatarUrl={member.avatar_url}
-                className={`w-8 h-8 rounded-full ${form.memberIds.includes(member.id) ? 'bg-[#0c64ef]' : 'bg-[#f5f5f7]'}`}
+                className={`w-8 h-8 rounded-full ${form.memberIds.includes(member.id) ? 'bg-[#0051e6]' : 'bg-[#f5f5f7]'}`}
                 textClassName={`text-xs font-black ${form.memberIds.includes(member.id) ? 'text-white' : 'text-[#1d1d1f]'}`}
               />
               <div className="text-left">
@@ -137,7 +137,7 @@ export default function NewProjectForm({ members }: { members: Profile[] }) {
         </Button>
         <Button 
           type="submit" 
-          className="flex-[2] h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] bg-[#0c64ef] shadow-[0_8px_30px_rgba(0,113,227,0.3)] hover:shadow-[0_12px_40px_rgba(0,113,227,0.4)] transition-all"
+          className="flex-[2] h-14 rounded-2xl font-black uppercase tracking-widest text-[11px] bg-[#0051e6] shadow-[0_8px_30px_rgba(0,113,227,0.3)] hover:shadow-[0_12px_40px_rgba(0,113,227,0.4)] transition-all"
           disabled={loading}
         >
           {loading ? 'Creating...' : 'Create Project'}

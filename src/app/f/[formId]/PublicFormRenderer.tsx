@@ -54,7 +54,7 @@ export function PublicFormRenderer({ form }: Props) {
         );
     }
 
-    const inputClass = "w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20 transition-colors";
+    const inputClass = "w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0051e6]/20 transition-colors";
 
     function renderField(field: FormField) {
         switch (field.type) {
@@ -165,14 +165,14 @@ export function PublicFormRenderer({ form }: Props) {
             <button
                 type="submit"
                 disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0c64ef] text-white font-black text-sm hover:bg-[#005bb7] disabled:opacity-50 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#0051e6] text-white font-black text-sm hover:bg-[#005bb7] disabled:opacity-50 transition-colors"
             >
                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                 {submitting ? "Submitting…" : "Submit request"}
             </button>
 
             <p className="text-center text-[10px] text-slate-400">
-                Powered by <span className="font-black text-[#0c64ef]">TaskFlow</span>
+                Powered by <span className="font-black text-[#0051e6]">TaskFlow</span>
             </p>
         </form>
     );

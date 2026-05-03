@@ -22,7 +22,7 @@ export default async function BroadcastsPage() {
                 actions={
                     <Link
                         href="/admin/broadcasts/new"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-[#0c64ef] text-white text-sm font-medium hover:bg-[#0950c4] transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-[#0051e6] text-white text-sm font-medium hover:bg-[#0950c4] transition-colors"
                     >
                         <Plus size={14} strokeWidth={2.5} />
                         New broadcast
@@ -34,7 +34,7 @@ export default async function BroadcastsPage() {
                 <Card>
                     <p className="text-sm text-[#86868b] text-center py-8">
                         No broadcasts yet.{" "}
-                        <Link href="/admin/broadcasts/new" className="text-[#0c64ef] font-medium hover:underline">
+                        <Link href="/admin/broadcasts/new" className="text-[#0051e6] font-medium hover:underline">
                             Create one
                         </Link>
                     </p>
@@ -63,7 +63,7 @@ export default async function BroadcastsPage() {
                                                 <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-medium">Draft</span>
                                             )}
                                             {(b.channels as string[]).map(ch => (
-                                                <span key={ch} className="px-2 py-0.5 rounded-full bg-[#0c64ef]/10 text-[#0c64ef] text-[11px] font-medium capitalize">
+                                                <span key={ch} className="px-2 py-0.5 rounded-full bg-[#0051e6]/10 text-[#0051e6] text-[11px] font-medium capitalize">
                                                     {ch}
                                                 </span>
                                             ))}
@@ -94,7 +94,7 @@ export default async function BroadcastsPage() {
                                                 </div>
                                                 <div>
                                                     <div className="text-xs text-[#86868b]">Clicked</div>
-                                                    <div className="text-sm font-medium text-[#0c64ef] mt-0.5 tabular-nums">{s.clicked}</div>
+                                                    <div className="text-sm font-medium text-[#0051e6] mt-0.5 tabular-nums">{s.clicked}</div>
                                                 </div>
                                                 {s.total === 0 && (
                                                     <span className="inline-flex items-center gap-1 text-xs text-amber-600 ml-auto">

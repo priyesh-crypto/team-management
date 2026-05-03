@@ -115,7 +115,7 @@ export function SlackIntegrationSettings() {
                                         href="https://api.slack.com/messaging/webhooks"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="ml-1.5 text-[#0c64ef] inline-flex items-center gap-0.5"
+                                        className="ml-1.5 text-[#0051e6] inline-flex items-center gap-0.5"
                                     >
                                         How to get one <ExternalLink size={9} />
                                     </a>
@@ -125,7 +125,7 @@ export function SlackIntegrationSettings() {
                                     value={webhookUrl}
                                     onChange={e => setWebhookUrl(e.target.value)}
                                     placeholder="https://hooks.slack.com/services/..."
-                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20"
+                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0051e6]/20"
                                     required
                                 />
                             </div>
@@ -138,7 +138,7 @@ export function SlackIntegrationSettings() {
                                     value={channelName}
                                     onChange={e => setChannelName(e.target.value)}
                                     placeholder="#general"
-                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20"
+                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0051e6]/20"
                                 />
                             </div>
 
@@ -154,8 +154,8 @@ export function SlackIntegrationSettings() {
                                                 onClick={() => toggleEvent(ev.id)}
                                                 className={`w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center border transition-colors ${
                                                     events.includes(ev.id)
-                                                        ? "bg-[#0c64ef] border-[#0c64ef] text-white"
-                                                        : "border-slate-200 hover:border-[#0c64ef]/50"
+                                                        ? "bg-[#0051e6] border-[#0051e6] text-white"
+                                                        : "border-slate-200 hover:border-[#0051e6]/50"
                                                 }`}
                                             >
                                                 {events.includes(ev.id) && <Check size={11} strokeWidth={3} />}
@@ -170,7 +170,7 @@ export function SlackIntegrationSettings() {
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0c64ef] text-white text-sm font-black hover:bg-[#005bb7] disabled:opacity-50 transition-colors"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0051e6] text-white text-sm font-black hover:bg-[#005bb7] disabled:opacity-50 transition-colors"
                                 >
                                     {saving ? <Loader2 size={14} className="animate-spin" /> : null}
                                     {saving ? "Saving…" : integration ? "Update" : "Connect Slack"}

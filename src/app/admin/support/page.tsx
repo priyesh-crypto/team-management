@@ -6,7 +6,7 @@ import { NewTicketForm } from "./NewTicketForm";
 
 const STATUS_STYLES: Record<string, string> = {
     open:        "bg-emerald-50 text-emerald-700",
-    in_progress: "bg-[#0c64ef]/10 text-[#0c64ef]",
+    in_progress: "bg-[#0051e6]/10 text-[#0051e6]",
     resolved:    "bg-slate-100 text-slate-500",
     closed:      "bg-[#f5f5f7] text-[#86868b]",
 };
@@ -40,7 +40,7 @@ export default async function SupportPage({
                         href={`/admin/support?status=${s}`}
                         className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors capitalize ${
                             status === s
-                                ? "bg-[#0c64ef] text-white"
+                                ? "bg-[#0051e6] text-white"
                                 : "bg-[#f5f5f7] text-[#52525b] hover:bg-[#e5e5ea]"
                         }`}
                     >
@@ -59,11 +59,11 @@ export default async function SupportPage({
                 <div className="space-y-2">
                     {tickets.map(t => (
                         <Link key={t.id} href={`/admin/support/${t.id}`}
-                            className="block bg-white rounded-lg border border-[#e5e5ea] p-4 hover:border-[#0c64ef]/30 transition-colors group">
+                            className="block bg-white rounded-lg border border-[#e5e5ea] p-4 hover:border-[#0051e6]/30 transition-colors group">
                             <div className="flex items-start gap-4">
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                        <h3 className="text-sm font-medium text-[#1d1d1f] group-hover:text-[#0c64ef] transition-colors">
+                                        <h3 className="text-sm font-medium text-[#1d1d1f] group-hover:text-[#0051e6] transition-colors">
                                             {t.subject}
                                         </h3>
                                         <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_STYLES[t.status] ?? "bg-[#f5f5f7] text-[#86868b]"}`}>

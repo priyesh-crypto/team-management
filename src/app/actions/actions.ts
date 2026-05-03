@@ -740,7 +740,7 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
 
         // 2. Send Email
         const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${invite.token}`;
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mindbird Team <onboarding@resend.dev>';
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'Knotless Team <onboarding@resend.dev>';
 
         if (resend) {
             // Fetch org name for the email
@@ -757,7 +757,7 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
                             <h2 style="color: #1d1d1f; margin-bottom: 24px;">You've been invited!</h2>
                             <p style="color: #424245; line-height: 1.5;">You have been invited to join <strong>${orgName}</strong> as a <strong>${role}</strong>.</p>
                             <p style="color: #424245; line-height: 1.5; margin-bottom: 32px;">Click the button below to set up your account and get started:</p>
-                            <a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0c64ef; color: white; text-decoration: none; border-radius: 980px; font-weight: 600; font-size: 14px;">Accept Invitation</a>
+                            <a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0051e6; color: white; text-decoration: none; border-radius: 980px; font-weight: 600; font-size: 14px;">Accept Invitation</a>
                             <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e1e1e1;">
                                 <p style="font-size: 12px; color: #86868b; line-height: 1.4;">If you're having trouble clicking the button, copy and paste this URL into your browser:<br/>${inviteUrl}</p>
                                 <p style="font-size: 12px; color: #86868b; margin-top: 12px;">If you didn't expect this invitation, you can safely ignore this email.</p>
@@ -1356,7 +1356,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
             
             <div style="padding: 32px 24px;">
                 <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600;">System Bot has completed a sub-task you are involved in</p>
-                ${isLastSubtask ? '<p style="margin: 0 0 24px 0; font-size: 14px; color: #0c64ef; font-weight: 600;">You are now able to complete the parent task</p>' : ''}
+                ${isLastSubtask ? '<p style="margin: 0 0 24px 0; font-size: 14px; color: #0051e6; font-weight: 600;">You are now able to complete the parent task</p>' : ''}
                 
                 <div style="margin-bottom: 32px;">
                     <div style="font-size: 12px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Parent Task</div>
@@ -1373,7 +1373,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
                         <tr>
                             <td style="padding: 6px 0; color: #86868b; font-weight: 600;">Progress</td>
                             <td style="padding: 6px 0;">
-                                <span style="color: #0c64ef; font-weight: 800;">${progress}%</span>
+                                <span style="color: #0051e6; font-weight: 800;">${progress}%</span>
                                 <span style="font-size: 11px; color: #86868b; margin-left: 4px;">(${completedCount}/${totalCount} sub-tasks)</span>
                             </td>
                         </tr>
@@ -1383,7 +1383,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
                         </tr>
                         <tr>
                             <td style="padding: 6px 0; color: #86868b; font-weight: 600;">Priority</td>
-                            <td style="padding: 6px 0;"><span style="background-color: ${task.priority === 'Urgent' ? '#ff3b30' : task.priority === 'High' ? '#ff9500' : '#0c64ef'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase;">${task.priority}</span></td>
+                            <td style="padding: 6px 0;"><span style="background-color: ${task.priority === 'Urgent' ? '#ff3b30' : task.priority === 'High' ? '#ff9500' : '#0051e6'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase;">${task.priority}</span></td>
                         </tr>
                         <tr>
                             <td style="padding: 12px 0 6px 0; color: #86868b; font-weight: 600;" colspan="2">Timeline</td>
@@ -1393,13 +1393,13 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
                         </tr>
                     </table>
                     
-                    <a href="${dashboardUrl}" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background-color: #0c64ef; color: white; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 700;">View Task in Dashboard</a>
+                    <a href="${dashboardUrl}" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background-color: #0051e6; color: white; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 700;">View Task in Dashboard</a>
                 </div>
 
                 <div style="border-top: 1px solid #e5e5ea; padding-top: 24px; font-size: 12px; color: #86868b; line-height: 1.5;">
                     <div style="font-weight: 700; color: #1d1d1f; margin-bottom: 4px;">Project Details</div>
                     <div>Project: Task Management</div>
-                    <div>Company: Mindbird.ai</div>
+                    <div>Company: Knotless AI</div>
                 </div>
             </div>
             
@@ -2583,9 +2583,7 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         userId = context.userId;
     }
 
-    // 1. Fetch Core Data in parallel. Auth users are not fetched here —
-    // rely on the profiles table email field instead.
-    console.time(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
+    // 1. Fetch Core Data in parallel.
     const [tasks, profiles, projects, projectMembers, logs, workload, notificationsList] = await Promise.all([
         getTasks(projectId, orgId),
         getProfiles(undefined, [], orgId),
@@ -2595,7 +2593,6 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
         getWorkloadHeatmap(projectId, orgId).catch(e => { console.error("Heatmap failed:", e); return {}; }),
         getNotifications(userId || '').catch(e => { console.error("Notifications failed:", e); return []; }),
     ]);
-    console.timeEnd(`[getDashboardData] CoreFetch_${projectId || 'all'}`);
 
     // 3. Secondary Data (Bulk fetches if tasks exist)
     let subtasks: Subtask[] = [];
@@ -2606,7 +2603,6 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
 
     if (tasksToFetch.length > 0) {
         try {
-            console.time(`[getDashboardData] BulkFetch_${tasksToFetch.length}_tasks`);
             const ids = tasksToFetch.map(t => t.id);
             const [st, c] = await Promise.all([
                 getBulkSubtasks(ids).catch(e => { console.error("[getDashboardData] Bulk subtasks failed:", e); return []; }),
@@ -2614,7 +2610,6 @@ export async function getDashboardData(projectId?: string, providedOrgId?: strin
             ]);
             subtasks = st;
             counts = c as any;
-            console.timeEnd(`[getDashboardData] BulkFetch_${tasksToFetch.length}_tasks`);
         } catch (e) {
             console.error("[getDashboardData] Bulk fetch fatal error:", e);
         }

@@ -29,7 +29,7 @@ export default async function OrgAuditPage() {
             <div className="p-10 max-w-2xl mx-auto text-center">
                 <div className="text-4xl mb-4">📋</div>
                 <h1 className="text-2xl font-black text-[#1d1d1f] mb-2">Audit Log</h1>
-                <p className="text-slate-500">Available on the Business plan. <a href="/dashboard/settings/billing" className="text-[#0c64ef] font-bold hover:underline">Upgrade</a> to unlock.</p>
+                <p className="text-slate-500">Available on the Business plan. <a href="/dashboard/settings/billing" className="text-[#0051e6] font-bold hover:underline">Upgrade</a> to unlock.</p>
             </div>
         );
     }
@@ -51,7 +51,7 @@ export default async function OrgAuditPage() {
             <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-50 overflow-hidden">
                 {(logs ?? []).map(log => (
                     <div key={log.id} className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50/50 transition-colors">
-                        <div className="w-9 h-9 rounded-xl bg-[#0c64ef]/10 flex items-center justify-center text-base flex-shrink-0">
+                        <div className="w-9 h-9 rounded-xl bg-[#0051e6]/10 flex items-center justify-center text-base flex-shrink-0">
                             {ACTION_ICONS[log.action] ?? "⚡"}
                         </div>
                         <div className="flex-1 min-w-0">

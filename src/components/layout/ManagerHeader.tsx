@@ -70,7 +70,7 @@ export function ManagerHeader({
 
             <div className="flex items-center gap-6">
                 <div className="hidden md:flex items-center gap-6 text-[10px] font-black tracking-[0.2em] text-[#86868b]">
-                    <button className={`hover:text-[#1d1d1f] transition-colors ${activeTab === 'board' ? 'text-[#0c64ef]' : ''}`} onClick={() => setActiveTab('board')}>BOARD</button>
+                    <button className={`hover:text-[#1d1d1f] transition-colors ${activeTab === 'board' ? 'text-[#0051e6]' : ''}`} onClick={() => setActiveTab('board')}>BOARD</button>
                     <span className="opacity-20">•</span>
                     <button className="hover:text-[#1d1d1f] transition-colors" onClick={() => setActiveTab('planning')}>DAILY TASKS ▾</button>
                 </div>
@@ -83,7 +83,7 @@ export function ManagerHeader({
                         placeholder="System search..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 pr-4 py-2 bg-[#f5f5f7] border-none rounded-xl text-[10px] font-black text-[#1d1d1f] w-48 lg:w-64 focus:ring-2 focus:ring-[#0c64ef]/20 transition-all outline-none" 
+                        className="pl-9 pr-4 py-2 bg-[#f5f5f7] border-none rounded-xl text-[10px] font-black text-[#1d1d1f] w-48 lg:w-64 focus:ring-2 focus:ring-[#0051e6]/20 transition-all outline-none" 
                     />
                 </div>
 
@@ -114,7 +114,7 @@ export function ManagerHeader({
                                         await markAllNotificationsAsRead(userId);
                                         refreshData();
                                     }}
-                                    className="text-[9px] font-black text-[#0c64ef] uppercase tracking-widest hover:underline"
+                                    className="text-[9px] font-black text-[#0051e6] uppercase tracking-widest hover:underline"
                                 >
                                     Clear All
                                 </button>
@@ -129,10 +129,10 @@ export function ManagerHeader({
                                         <div 
                                             key={n.id} 
                                             onClick={() => handleMarkAsRead(n)}
-                                            className={`p-4 border-b border-[#f5f5f7] hover:bg-[#f5f5f7] cursor-pointer transition-colors ${!n.is_read ? 'bg-[#0c64ef]/5 font-bold' : ''}`}
+                                            className={`p-4 border-b border-[#f5f5f7] hover:bg-[#f5f5f7] cursor-pointer transition-colors ${!n.is_read ? 'bg-[#0051e6]/5 font-bold' : ''}`}
                                         >
                                             <div className="flex gap-3">
-                                                <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${n.type === 'urgent' ? 'bg-[#ff3b30]' : 'bg-[#0c64ef]'}`} />
+                                                <div className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${n.type === 'urgent' ? 'bg-[#ff3b30]' : 'bg-[#0051e6]'}`} />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[10px] leading-relaxed text-[#1d1d1f] break-words">{n.message}</p>
                                                     <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest mt-1 block">

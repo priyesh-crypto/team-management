@@ -115,7 +115,7 @@ export function TaskComments({ taskId, orgId, currentUserId, initialComments, in
                 <div className="space-y-3">
                     {comments.map(comment => (
                         <div key={comment.id} className="group flex gap-3">
-                            <div className="w-7 h-7 rounded-full bg-[#0c64ef]/10 flex items-center justify-center text-[11px] font-black text-[#0c64ef] flex-shrink-0 mt-0.5">
+                            <div className="w-7 h-7 rounded-full bg-[#0051e6]/10 flex items-center justify-center text-[11px] font-black text-[#0051e6] flex-shrink-0 mt-0.5">
                                 {(profiles[comment.user_id] || comment.user_id).slice(0, 2).toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -138,7 +138,7 @@ export function TaskComments({ taskId, orgId, currentUserId, initialComments, in
                                         />
                                         <div className="flex gap-2">
                                             <button onClick={() => handleEditSave(comment.id)} disabled={pending}
-                                                className="px-3 py-1 rounded-lg bg-[#0c64ef] text-white text-xs font-black disabled:opacity-50">
+                                                className="px-3 py-1 rounded-lg bg-[#0051e6] text-white text-xs font-black disabled:opacity-50">
                                                 Save
                                             </button>
                                             <button onClick={() => setEditingId(null)}
@@ -157,7 +157,7 @@ export function TaskComments({ taskId, orgId, currentUserId, initialComments, in
                                 <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                                     {Object.entries(groupedReactions(comment.id)).map(([emoji, { count, mine }]) => (
                                         <button key={emoji} onClick={() => handleReaction(comment.id, emoji)}
-                                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs transition-colors ${mine ? "border-[#0c64ef]/30 bg-[#0c64ef]/5 text-[#0c64ef]" : "border-slate-200 bg-white hover:border-slate-300"}`}>
+                                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs transition-colors ${mine ? "border-[#0051e6]/30 bg-[#0051e6]/5 text-[#0051e6]" : "border-slate-200 bg-white hover:border-slate-300"}`}>
                                             <span>{emoji}</span>
                                             <span className="font-bold text-[10px]">{count}</span>
                                         </button>
@@ -209,7 +209,7 @@ export function TaskComments({ taskId, orgId, currentUserId, initialComments, in
                         className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none resize-none"
                     />
                     <button type="submit" disabled={pending || !draft.trim()}
-                        className="p-2.5 rounded-xl bg-[#0c64ef] text-white hover:bg-[#005bb7] disabled:opacity-40 transition-colors flex-shrink-0">
+                        className="p-2.5 rounded-xl bg-[#0051e6] text-white hover:bg-[#005bb7] disabled:opacity-40 transition-colors flex-shrink-0">
                         <Send size={14} />
                     </button>
                 </form>

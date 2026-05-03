@@ -5,14 +5,14 @@ import { Plus } from 'lucide-react';
 import { Card, Button, Input, Select } from '@/components/ui/components';
 import { Project, Priority, Status } from '@/app/actions/actions';
 
-const CircularProgress = ({ percentage, color = '#0c64ef', size = 160, strokeWidth = 12 }: { percentage: number, color?: string, size?: number, strokeWidth?: number }) => {
+const CircularProgress = ({ percentage, color = '#0051e6', size = 160, strokeWidth = 12 }: { percentage: number, color?: string, size?: number, strokeWidth?: number }) => {
     const radius = Math.max(0, (size - strokeWidth) / 2);
     const circumference = radius * 2 * Math.PI;
     const offset = circumference - (percentage / 100) * circumference;
 
     return (
         <div className="relative flex items-center justify-center group" style={{ width: size, height: size }}>
-            <div className="absolute inset-0 bg-[#0c64ef]/5 rounded-full blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+            <div className="absolute inset-0 bg-[#0051e6]/5 rounded-full blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
             <svg className="transform -rotate-90 relative z-10" width={size} height={size}>
                 <circle
                     className="text-[#f5f5f7]"
@@ -102,7 +102,7 @@ export function EmployeeRightPanel({
 
                 <Card className="p-5 border-slate-100/50 bg-white/80 backdrop-blur-xl rounded-[20px] shadow-sm transition-all duration-500 hover:shadow-md">
                     <div className="flex items-center gap-2 mb-5">
-                        <div className="w-7 h-7 bg-[#0c64ef]/10 rounded-lg flex items-center justify-center text-[#0c64ef]">
+                        <div className="w-7 h-7 bg-[#0051e6]/10 rounded-lg flex items-center justify-center text-[#0051e6]">
                             <Plus size={14} strokeWidth={2.5} />
                         </div>
                         <div>
@@ -182,7 +182,7 @@ export function EmployeeRightPanel({
                             <textarea 
                                 value={formData.notes}
                                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                className="w-full h-24 bg-slate-50/50 border border-slate-100 rounded-xl p-4 text-[13px] font-medium resize-none focus:bg-white focus:border-[#0c64ef]/30 transition-all outline-none"
+                                className="w-full h-24 bg-slate-50/50 border border-slate-100 rounded-xl p-4 text-[13px] font-medium resize-none focus:bg-white focus:border-[#0051e6]/30 transition-all outline-none"
                                 placeholder="Add any specific details here..."
                             />
                         </div>

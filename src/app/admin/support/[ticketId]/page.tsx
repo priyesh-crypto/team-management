@@ -27,7 +27,7 @@ export default async function TicketPage({
             <div>
                 <Link
                     href="/admin/support"
-                    className="inline-flex items-center gap-1 text-xs text-[#86868b] hover:text-[#0c64ef] transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-[#86868b] hover:text-[#0051e6] transition-colors"
                 >
                     <ArrowLeft size={12} strokeWidth={2} />
                     Support tickets
@@ -41,7 +41,7 @@ export default async function TicketPage({
                         <div className="flex items-center gap-2 mt-2">
                             {ticket.organizations && (
                                 <Link href={`/admin/orgs/${ticket.org_id}`}
-                                    className="inline-flex items-center gap-1 text-xs font-medium text-[#0c64ef] hover:underline">
+                                    className="inline-flex items-center gap-1 text-xs font-medium text-[#0051e6] hover:underline">
                                     <Building2 size={12} strokeWidth={2} />
                                     {ticket.organizations.name}
                                 </Link>

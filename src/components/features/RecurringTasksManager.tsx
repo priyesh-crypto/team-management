@@ -67,7 +67,7 @@ function NewTemplateForm({
                     value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="e.g. Weekly status report"
-                    className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20"
+                    className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0051e6]/20"
                     required
                 />
             </div>
@@ -110,7 +110,7 @@ function NewTemplateForm({
                 <button
                     type="submit"
                     disabled={pending}
-                    className="flex-1 px-4 py-2 rounded-xl bg-[#0c64ef] text-white text-sm font-black disabled:opacity-50"
+                    className="flex-1 px-4 py-2 rounded-xl bg-[#0051e6] text-white text-sm font-black disabled:opacity-50"
                 >
                     {pending ? "Saving…" : "Create template"}
                 </button>
@@ -153,13 +153,13 @@ export function RecurringTasksManager({ templates, workspaceId, projectId }: Pro
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <RefreshCw size={16} className="text-[#0c64ef]" />
+                        <RefreshCw size={16} className="text-[#0051e6]" />
                         <h3 className="text-sm font-black text-[#1d1d1f]">Recurring Tasks</h3>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#0c64ef]/10 text-[#0c64ef] font-black">{templates.length}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#0051e6]/10 text-[#0051e6] font-black">{templates.length}</span>
                     </div>
                     <button
                         onClick={() => setShowForm(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0c64ef] text-white text-[11px] font-black hover:bg-[#005bb7] transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0051e6] text-white text-[11px] font-black hover:bg-[#005bb7] transition-colors"
                     >
                         <Plus size={12} />
                         New template

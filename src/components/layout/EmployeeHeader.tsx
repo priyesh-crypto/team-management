@@ -59,7 +59,7 @@ export function EmployeeHeader({
                         placeholder="Search..." 
                         value={searchQuery} 
                         onChange={(e) => setSearchQuery(e.target.value)} 
-                        className="pl-10 pr-4 py-2 bg-[#f5f5f7] border-none rounded-2xl text-[11px] font-bold text-[#1d1d1f] w-40 lg:w-64 focus:ring-2 focus:ring-[#0c64ef]/20 transition-all outline-none" 
+                        className="pl-10 pr-4 py-2 bg-[#f5f5f7] border-none rounded-2xl text-[11px] font-bold text-[#1d1d1f] w-40 lg:w-64 focus:ring-2 focus:ring-[#0051e6]/20 transition-all outline-none" 
                     />
                 </div>
                 <div className="relative" ref={notificationRef}>
@@ -76,7 +76,7 @@ export function EmployeeHeader({
                                         await markAllNotificationsAsRead(userId); 
                                         refreshData(); 
                                     }} 
-                                    className="text-[10px] font-bold text-[#0c64ef] uppercase tracking-tighter"
+                                    className="text-[10px] font-bold text-[#0051e6] uppercase tracking-tighter"
                                 >
                                     Mark all read
                                 </button>
@@ -89,10 +89,10 @@ export function EmployeeHeader({
                                         <div 
                                             key={n.id} 
                                             onClick={() => handleMarkAsRead(n)} 
-                                            className={`p-4 border-b border-[#f5f5f7] hover:bg-[#f5f5f7] cursor-pointer transition-colors ${!n.is_read ? 'bg-[#0c64ef]/5' : ''}`}
+                                            className={`p-4 border-b border-[#f5f5f7] hover:bg-[#f5f5f7] cursor-pointer transition-colors ${!n.is_read ? 'bg-[#0051e6]/5' : ''}`}
                                         >
                                             <div className="flex gap-3">
-                                                <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.type === 'urgent' ? 'bg-[#ff3b30]' : 'bg-[#0c64ef]'}`} />
+                                                <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${n.type === 'urgent' ? 'bg-[#ff3b30]' : 'bg-[#0051e6]'}`} />
                                                 <div className="flex-1">
                                                     <p className="text-[11px] font-bold text-[#1d1d1f]">{n.message ?? n.title ?? "Notification"}</p>
                                                     <span className="text-[9px] text-[#86868b]">{new Date(n.created_at).toLocaleDateString()}</span>

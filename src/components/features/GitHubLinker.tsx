@@ -86,14 +86,14 @@ export function GitHubLinker({ taskId, orgId, connection, initialLinks }: Props)
                     </div>
                     {connection?.is_active && (
                         <button onClick={() => setShowForm(s => !s)}
-                            className="flex items-center gap-1 text-[10px] font-black text-[#0c64ef] hover:underline">
+                            className="flex items-center gap-1 text-[10px] font-black text-[#0051e6] hover:underline">
                             <Plus size={10} /> Link
                         </button>
                     )}
                 </div>
 
                 {!connection?.is_active && (
-                    <div className="text-xs text-slate-400 py-2">GitHub not connected. Configure in <a href="/dashboard/settings/integrations" className="text-[#0c64ef] hover:underline">Integrations</a>.</div>
+                    <div className="text-xs text-slate-400 py-2">GitHub not connected. Configure in <a href="/dashboard/settings/integrations" className="text-[#0051e6] hover:underline">Integrations</a>.</div>
                 )}
 
                 {showForm && (
@@ -101,7 +101,7 @@ export function GitHubLinker({ taskId, orgId, connection, initialLinks }: Props)
                         <div className="flex gap-1">
                             {(["pr", "issue", "commit"] as const).map(t => (
                                 <button key={t} type="button" onClick={() => setLinkType(t)}
-                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-black transition-colors ${linkType === t ? "bg-[#0c64ef] text-white" : "bg-white text-slate-500 hover:bg-slate-100"}`}>
+                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-black transition-colors ${linkType === t ? "bg-[#0051e6] text-white" : "bg-white text-slate-500 hover:bg-slate-100"}`}>
                                     {t.toUpperCase()}
                                 </button>
                             ))}
@@ -118,7 +118,7 @@ export function GitHubLinker({ taskId, orgId, connection, initialLinks }: Props)
                             placeholder={linkType === "commit" ? "Commit SHA" : `${linkType === "pr" ? "PR" : "Issue"} number`}
                             className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-bold focus:outline-none bg-white" />
                         <div className="flex gap-1.5">
-                            <button type="submit" disabled={pending} className="flex-1 py-1.5 rounded-lg bg-[#0c64ef] text-white text-[10px] font-black disabled:opacity-50">
+                            <button type="submit" disabled={pending} className="flex-1 py-1.5 rounded-lg bg-[#0051e6] text-white text-[10px] font-black disabled:opacity-50">
                                 {pending ? "Linking…" : "Link"}
                             </button>
                             <button type="button" onClick={() => setShowForm(false)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-bold text-slate-500">
@@ -143,7 +143,7 @@ export function GitHubLinker({ taskId, orgId, connection, initialLinks }: Props)
                             </div>
                             {link.url && (
                                 <a href={link.url} target="_blank" rel="noopener noreferrer"
-                                    className="p-1 rounded text-slate-300 hover:text-[#0c64ef] transition-colors">
+                                    className="p-1 rounded text-slate-300 hover:text-[#0051e6] transition-colors">
                                     <ExternalLink size={11} />
                                 </a>
                             )}

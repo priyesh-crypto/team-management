@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     </p>
                     <Link
                         href="/dashboard"
-                        className="mt-5 inline-block px-4 py-2 rounded-md bg-[#1d1d1f] text-white text-xs font-medium hover:bg-[#0c64ef] transition-colors"
+                        className="mt-5 inline-block px-4 py-2 rounded-md bg-[#1d1d1f] text-white text-xs font-medium hover:bg-[#0051e6] transition-colors"
                     >
                         Back to dashboard
                     </Link>

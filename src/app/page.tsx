@@ -6,7 +6,12 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { checkActionRateLimit } from '@/utils/rate-limit';
 
-export default async function Home({ searchParams }: { searchParams: { error?: string, success?: string, msg?: string } }) {
+export default async function Home({ 
+  searchParams: searchParamsPromise 
+}: { 
+  searchParams: Promise<{ error?: string, success?: string, msg?: string }> 
+}) {
+  const searchParams = await searchParamsPromise;
   const supabase = await createClient();
 
   // 1. Check Auth 
@@ -139,14 +144,14 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
               <Input name="email" type="email" required placeholder="Email Address" className="w-full h-12" />
               <Input name="password" type="password" required placeholder="Password" className="w-full h-12" />
               <div className="flex justify-end">
-                <a href="/auth/password-reset" className="text-xs font-bold text-[#0c64ef] hover:underline">Forgot password?</a>
+                <a href="/auth/password-reset" className="text-xs font-bold text-[#0051e6] hover:underline">Forgot password?</a>
               </div>
-              <Button type="submit" className="w-full h-12 text-md font-bold mt-2">Sign In</Button>
+              <Button type="submit" className="w-full h-12 text-md font-bold mt-2 bg-gradient-to-r from-[#0051e6] to-[#22be66] hover:brightness-110 transition-all shadow-md shadow-[#0051e6]/20">Sign In</Button>
             </form>
 
             <p className="mt-6 text-center text-xs text-[#86868b] font-medium">
               Don&apos;t have an account?{' '}
-              <a href="/signup" className="font-black text-[#0c64ef] hover:underline">Create one</a>
+              <a href="/signup" className="font-black text-[#0051e6] hover:underline">Create one</a>
             </p>
           </Card>
         </div>
@@ -164,13 +169,13 @@ export default async function Home({ searchParams }: { searchParams: { error?: s
             <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Create Your Workspace</h1>
             <p className="text-[#86868b] text-sm font-medium mt-2">Set up your company to start managing tasks</p>
           </div>
-          <Card className="p-8 border-2 border-[#0c64ef]/20 shadow-xl shadow-[#0c64ef]/10">
+          <Card className="p-8 border-2 border-[#0051e6]/20 shadow-xl shadow-[#0051e6]/10">
             <form action={createOrganization} className="space-y-6">
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-[#86868b] mb-3 ml-2">Company Name</label>
                 <Input name="orgName" required placeholder="Acme Corp" className="w-full h-14 text-lg font-bold px-6 rounded-2xl bg-[#f5f5f7] border-none" />
               </div>
-              <Button type="submit" className="w-full h-14 text-lg font-black tracking-wide rounded-2xl mt-4 bg-[#0c64ef] hover:bg-[#1a6a90] shadow-lg shadow-[#0c64ef]/30">Launch Workspace</Button>
+              <Button type="submit" className="w-full h-14 text-lg font-black tracking-wide rounded-2xl mt-4 bg-gradient-to-r from-[#0051e6] to-[#22be66] hover:brightness-110 transition-all shadow-lg shadow-[#0051e6]/30">Launch Workspace</Button>
             </form>
 
             <form action={logout} className="mt-6 text-center">

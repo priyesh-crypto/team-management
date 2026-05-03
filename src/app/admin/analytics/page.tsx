@@ -41,13 +41,13 @@ export default async function AnalyticsPage() {
                 <Card>
                     <SectionLabel>Trial → Paid conversion</SectionLabel>
                     <div className="flex items-end gap-4 mt-2">
-                        <div className="text-5xl font-black text-[#0c64ef]">{funnel.trialToActiveRate}%</div>
+                        <div className="text-5xl font-black text-[#0051e6]">{funnel.trialToActiveRate}%</div>
                         <div className="text-sm text-[#86868b] pb-1">
                             {funnel.active} paid of {funnel.trialing + funnel.active} ever-trialed
                         </div>
                     </div>
                     <div className="mt-4 h-2 rounded-full bg-[#f5f5f7] overflow-hidden">
-                        <div className="h-full rounded-full bg-[#0c64ef]" style={{ width: `${funnel.trialToActiveRate}%` }} />
+                        <div className="h-full rounded-full bg-[#0051e6]" style={{ width: `${funnel.trialToActiveRate}%` }} />
                     </div>
                 </Card>
                 <Card>
@@ -77,8 +77,8 @@ export default async function AnalyticsPage() {
                             return (
                                 <div key={d} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ minWidth: 24 }}
                                     title={`${d}: ${count} signups`}>
-                                    <span className="text-[9px] font-bold text-[#0c64ef]">{count > 0 ? count : ""}</span>
-                                    <div className="w-4 rounded-t bg-[#0c64ef]/80" style={{ height: `${h}%` }} />
+                                    <span className="text-[9px] font-bold text-[#0051e6]">{count > 0 ? count : ""}</span>
+                                    <div className="w-4 rounded-t bg-[#0051e6]/80" style={{ height: `${h}%` }} />
                                     <span className="text-[8px] text-[#86868b]">{new Date(d + "T00:00:00").getDate()}</span>
                                 </div>
                             );

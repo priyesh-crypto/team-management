@@ -79,8 +79,8 @@ function Modal({
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#0c64ef]/10 flex items-center justify-center">
-                            <Sparkles size={16} className="text-[#0c64ef]" />
+                        <div className="w-9 h-9 rounded-xl bg-[#0051e6]/10 flex items-center justify-center">
+                            <Sparkles size={16} className="text-[#0051e6]" />
                         </div>
                         <div>
                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">AI Assistant</div>
@@ -110,7 +110,7 @@ function Modal({
                             <button
                                 onClick={generate}
                                 disabled={loading}
-                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0c64ef] text-white text-sm font-black hover:bg-[#005bb7] disabled:opacity-50 transition-colors"
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0051e6] text-white text-sm font-black hover:bg-[#005bb7] disabled:opacity-50 transition-colors"
                             >
                                 {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
                                 {loading ? "Generating…" : "Generate subtasks"}
@@ -125,7 +125,7 @@ function Modal({
                                 <button
                                     onClick={generate}
                                     disabled={loading}
-                                    className="text-[11px] font-black text-[#0c64ef] hover:underline disabled:opacity-50"
+                                    className="text-[11px] font-black text-[#0051e6] hover:underline disabled:opacity-50"
                                 >
                                     Regenerate
                                 </button>
@@ -137,12 +137,12 @@ function Modal({
                                         onClick={() => toggleItem(i)}
                                         className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-start gap-3 ${
                                             selected.has(i)
-                                                ? "border-[#0c64ef] bg-[#0c64ef]/5"
+                                                ? "border-[#0051e6] bg-[#0051e6]/5"
                                                 : "border-slate-200 bg-white hover:border-slate-300"
                                         }`}
                                     >
                                         <div className={`w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center mt-0.5 transition-colors ${
-                                            selected.has(i) ? "bg-[#0c64ef] text-white" : "border border-slate-200"
+                                            selected.has(i) ? "bg-[#0051e6] text-white" : "border border-slate-200"
                                         }`}>
                                             {selected.has(i) && <Check size={11} strokeWidth={3} />}
                                         </div>
@@ -168,7 +168,7 @@ function Modal({
                             <button
                                 onClick={handleAccept}
                                 disabled={selected.size === 0 || accepting}
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0c64ef] text-white text-sm font-black disabled:opacity-50 hover:bg-[#005bb7] transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0051e6] text-white text-sm font-black disabled:opacity-50 hover:bg-[#005bb7] transition-colors"
                             >
                                 {accepting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                                 Create {selected.size} subtask{selected.size !== 1 ? "s" : ""}
@@ -192,7 +192,7 @@ export function AIBreakdownButton({
         <UpgradeGate feature="ai_breakdown">
             <button
                 onClick={() => setOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#0c64ef] to-[#7c3aed] text-white text-[11px] font-black hover:opacity-90 transition-opacity shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#0051e6] to-[#7c3aed] text-white text-[11px] font-black hover:opacity-90 transition-opacity shadow-sm"
             >
                 <Sparkles size={12} />
                 AI breakdown

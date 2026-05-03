@@ -18,7 +18,7 @@ const STATUSES = ["open", "in_progress", "resolved", "closed"];
 
 const STATUS_STYLES: Record<string, string> = {
     open:        "bg-emerald-50 text-emerald-700 border-emerald-200",
-    in_progress: "bg-[#0c64ef]/10 text-[#0c64ef] border-[#0c64ef]/20",
+    in_progress: "bg-[#0051e6]/10 text-[#0051e6] border-[#0051e6]/20",
     resolved:    "bg-slate-100 text-slate-500 border-slate-200",
     closed:      "bg-[#f5f5f7] text-[#86868b] border-[#e5e5ea]",
 };
@@ -107,7 +107,7 @@ export function TicketClient({
                         }`}>
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-[#0c64ef]/10 text-[#0c64ef] text-[9px] font-black flex items-center justify-center">
+                                <div className="w-6 h-6 rounded-full bg-[#0051e6]/10 text-[#0051e6] text-[9px] font-black flex items-center justify-center">
                                     A
                                 </div>
                                 <span className="text-[10px] font-black text-[#86868b]">Admin</span>
@@ -135,7 +135,7 @@ export function TicketClient({
                         onChange={e => setBody(e.target.value)}
                         rows={4}
                         placeholder="Write your response…"
-                        className="w-full px-3 py-2.5 rounded-xl border border-[#e5e5ea] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20 resize-none bg-white"
+                        className="w-full px-3 py-2.5 rounded-xl border border-[#e5e5ea] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0051e6]/20 resize-none bg-white"
                     />
                     <div className="flex items-center justify-between">
                         <label className="flex items-center gap-2 cursor-pointer">

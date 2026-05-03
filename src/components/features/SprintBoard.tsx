@@ -9,7 +9,7 @@ import { UpgradeGate } from "@/components/ui/UpgradeGate";
 const STATUS_COLORS: Record<string, string> = {
     "To Do": "#86868b",
     "In Progress": "#ff9500",
-    "In Review": "#0c64ef",
+    "In Review": "#0051e6",
     "Blocked": "#ff3b30",
     "Completed": "#34c759",
 };
@@ -107,7 +107,7 @@ export function SprintBoard({ orgId, workspaceId, sprints: initialSprints, sprin
                         <span className="text-sm font-black text-[#1d1d1f]">Sprints</span>
                     </div>
                     <button onClick={() => setShowNew(s => !s)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0c64ef] text-white text-[11px] font-black hover:bg-[#005bb7] transition-colors">
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0051e6] text-white text-[11px] font-black hover:bg-[#005bb7] transition-colors">
                         <Plus size={11} /> New sprint
                     </button>
                 </div>
@@ -131,7 +131,7 @@ export function SprintBoard({ orgId, workspaceId, sprints: initialSprints, sprin
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <button type="submit" disabled={pending} className="flex-1 px-3 py-2 rounded-xl bg-[#0c64ef] text-white text-sm font-black disabled:opacity-50">
+                            <button type="submit" disabled={pending} className="flex-1 px-3 py-2 rounded-xl bg-[#0051e6] text-white text-sm font-black disabled:opacity-50">
                                 {pending ? "Creating…" : "Create sprint"}
                             </button>
                             <button type="button" onClick={() => setShowNew(false)} className="px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-500">Cancel</button>
@@ -236,7 +236,7 @@ export function SprintBoard({ orgId, workspaceId, sprints: initialSprints, sprin
                                         <span className="flex-1 text-sm font-bold text-[#1d1d1f] truncate">{task.name}</span>
                                         {planningSprint && (
                                             <button onClick={() => handleMoveToSprint(task, planningSprint.id)} disabled={pending}
-                                                className="text-[10px] font-bold text-[#0c64ef] hover:underline opacity-0 group-hover:opacity-100 transition-opacity">
+                                                className="text-[10px] font-bold text-[#0051e6] hover:underline opacity-0 group-hover:opacity-100 transition-opacity">
                                                 + Add to {planningSprint.name}
                                             </button>
                                         )}

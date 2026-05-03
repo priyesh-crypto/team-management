@@ -81,7 +81,7 @@ export function WebhooksManager({ orgId, webhooks: initialWebhooks }: Props) {
                         </div>
                     </div>
                     <button onClick={() => setShowNew(s => !s)}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0c64ef] text-white text-[11px] font-black hover:bg-[#005bb7] transition-colors">
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0051e6] text-white text-[11px] font-black hover:bg-[#005bb7] transition-colors">
                         <Plus size={12} /> Add endpoint
                     </button>
                 </div>
@@ -114,7 +114,7 @@ export function WebhooksManager({ orgId, webhooks: initialWebhooks }: Props) {
                         </div>
                         <div className="flex gap-2">
                             <button type="submit" disabled={pending}
-                                className="flex-1 px-3 py-2 rounded-xl bg-[#0c64ef] text-white text-sm font-black disabled:opacity-50">
+                                className="flex-1 px-3 py-2 rounded-xl bg-[#0051e6] text-white text-sm font-black disabled:opacity-50">
                                 {pending ? "Saving…" : "Register webhook"}
                             </button>
                             <button type="button" onClick={() => setShowNew(false)}

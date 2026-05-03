@@ -97,7 +97,7 @@ function PaywallModal({ feature, onClose }: PaywallModalProps) {
                     ×
                 </button>
 
-                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[#0c64ef]/10 text-[#0c64ef] text-2xl mb-5 mx-auto">
+                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[#0051e6]/10 text-[#0051e6] text-2xl mb-5 mx-auto">
                     🔒
                 </div>
 
@@ -106,13 +106,13 @@ function PaywallModal({ feature, onClose }: PaywallModalProps) {
                 </h2>
                 <p className="text-sm text-slate-500 text-center leading-relaxed mb-6">
                     This feature is available on the{" "}
-                    <span className="font-black text-[#0c64ef]">{tier} plan</span>.
+                    <span className="font-black text-[#0051e6]">{tier} plan</span>.
                     Upgrade to keep your team moving faster.
                 </p>
 
                 <a
                     href="/dashboard/settings/billing"
-                    className="block w-full text-center px-6 py-3 rounded-xl bg-[#0c64ef] text-white text-sm font-black hover:bg-[#005bb7] transition-colors"
+                    className="block w-full text-center px-6 py-3 rounded-xl bg-[#0051e6] text-white text-sm font-black hover:bg-[#005bb7] transition-colors"
                 >
                     Upgrade to {tier}
                 </a>
@@ -173,7 +173,7 @@ export function UpgradeGate({ feature, children, mode = "hide" }: UpgradeGatePro
         <>
             <button
                 onClick={() => setShowModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#0c64ef]/20 bg-[#0c64ef]/5 text-[#0c64ef] text-[10px] font-black uppercase tracking-wider hover:bg-[#0c64ef]/10 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#0051e6]/20 bg-[#0051e6]/5 text-[#0051e6] text-[10px] font-black uppercase tracking-wider hover:bg-[#0051e6]/10 transition-colors"
             >
                 <span>🔒</span>
                 {featureName} · {tier}

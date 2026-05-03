@@ -58,7 +58,7 @@ export default async function SystemPage() {
                         </div>
                         <p className="text-xs text-[#86868b]">{detail}</p>
                         {href && (
-                            <Link href={href} className="text-[10px] font-black text-[#0c64ef] hover:underline mt-2 inline-block">
+                            <Link href={href} className="text-[10px] font-black text-[#0051e6] hover:underline mt-2 inline-block">
                                 View →
                             </Link>
                         )}
@@ -76,7 +76,7 @@ export default async function SystemPage() {
                     </div>
                     <div>
                         <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[#86868b]">Used last 7 days</div>
-                        <div className="text-3xl font-black mt-1 text-[#0c64ef]">{health.apiKeys.usedLast7Days}</div>
+                        <div className="text-3xl font-black mt-1 text-[#0051e6]">{health.apiKeys.usedLast7Days}</div>
                     </div>
                 </div>
                 <p className="text-[10px] text-[#86868b] mt-3">
@@ -113,7 +113,7 @@ export default async function SystemPage() {
                                 </div>
                             ))}
                     </div>
-                    <Link href="/admin/audit" className="text-[10px] font-black text-[#0c64ef] hover:underline mt-3 inline-block">
+                    <Link href="/admin/audit" className="text-[10px] font-black text-[#0051e6] hover:underline mt-3 inline-block">
                         Full audit log →
                     </Link>
                 </Card>

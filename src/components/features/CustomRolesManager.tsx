@@ -39,7 +39,7 @@ export function CustomRolesManager({ orgId, roles: initialRoles }: Props) {
                         </div>
                     </div>
                     <button onClick={() => setShowNew(s => !s)}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0c64ef] text-white text-[11px] font-black hover:bg-[#005bb7] transition-colors">
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0051e6] text-white text-[11px] font-black hover:bg-[#005bb7] transition-colors">
                         <Plus size={12} /> New role
                     </button>
                 </div>
@@ -179,7 +179,7 @@ function RoleForm({ orgId, existing, onSave, onCancel, readOnly = false }: {
                             <div key={group.label}>
                                 <div className="flex items-center gap-2 mb-1.5">
                                     <button type="button" onClick={() => !readOnly && toggleGroup(group.keys, allOn)}
-                                        className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded transition-colors ${allOn ? "bg-[#0c64ef]/10 text-[#0c64ef]" : "text-slate-400 hover:text-slate-600"}`}>
+                                        className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded transition-colors ${allOn ? "bg-[#0051e6]/10 text-[#0051e6]" : "text-slate-400 hover:text-slate-600"}`}>
                                         {group.label}
                                     </button>
                                 </div>
@@ -187,7 +187,7 @@ function RoleForm({ orgId, existing, onSave, onCancel, readOnly = false }: {
                                     {group.keys.map(perm => (
                                         <label key={perm} className={`flex items-center gap-2 ${readOnly ? "cursor-default" : "cursor-pointer"}`}>
                                             <div onClick={() => !readOnly && toggle(perm)}
-                                                className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${selected.includes(perm) ? "bg-[#0c64ef] border-[#0c64ef]" : "border-slate-300"} ${readOnly ? "" : "cursor-pointer"}`}>
+                                                className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${selected.includes(perm) ? "bg-[#0051e6] border-[#0051e6]" : "border-slate-300"} ${readOnly ? "" : "cursor-pointer"}`}>
                                                 {selected.includes(perm) && <Check size={10} className="text-white" />}
                                             </div>
                                             <span className="text-xs font-bold text-slate-600">{perm}</span>
@@ -203,7 +203,7 @@ function RoleForm({ orgId, existing, onSave, onCancel, readOnly = false }: {
             {!readOnly && (
                 <div className="flex gap-2 pt-1">
                     <button type="submit" disabled={pending}
-                        className="flex-1 px-3 py-2 rounded-xl bg-[#0c64ef] text-white text-sm font-black disabled:opacity-50">
+                        className="flex-1 px-3 py-2 rounded-xl bg-[#0051e6] text-white text-sm font-black disabled:opacity-50">
                         {pending ? "Saving…" : existing ? "Update role" : "Create role"}
                     </button>
                     <button type="button" onClick={onCancel}

@@ -16,13 +16,13 @@ type PortalTask = {
 const PRIORITY_COLORS: Record<string, string> = {
     Urgent: "bg-[#ff3b30]/10 text-[#ff3b30]",
     High: "bg-[#ff9500]/10 text-[#ff9500]",
-    Medium: "bg-[#0c64ef]/10 text-[#0c64ef]",
+    Medium: "bg-[#0051e6]/10 text-[#0051e6]",
     Low: "bg-[#34c759]/10 text-[#34c759]",
 };
 
 const STATUS_COLORS: Record<string, string> = {
     "To Do": "text-slate-500",
-    "In Progress": "text-[#0c64ef]",
+    "In Progress": "text-[#0051e6]",
     "In Review": "text-[#ff9500]",
     Blocked: "text-[#ff3b30]",
     Completed: "text-[#34c759]",
@@ -42,7 +42,7 @@ export function PortalClient({ orgName, tasks }: Props) {
             <header className="bg-white border-b border-slate-200 px-6 py-4">
                 <div className="max-w-3xl mx-auto flex items-center justify-between">
                     <div>
-                        <div className="text-[10px] font-black text-[#0c64ef] uppercase tracking-wider">Client Portal</div>
+                        <div className="text-[10px] font-black text-[#0051e6] uppercase tracking-wider">Client Portal</div>
                         <div className="text-lg font-black text-[#1d1d1f]">{orgName}</div>
                     </div>
                     <div className="flex items-center gap-3">

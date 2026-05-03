@@ -103,7 +103,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                     <UserAvatar
                         name={profileName || userName}
                         avatarUrl={avatarUrl}
-                        className="w-16 h-16 rounded-2xl bg-[#0c64ef] shadow-sm"
+                        className="w-16 h-16 rounded-2xl bg-[#0051e6] shadow-sm"
                         textClassName="text-white text-2xl font-black"
                     />
                     <button
@@ -129,7 +129,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploadingAvatar}
-                        className="mt-2 text-[9px] font-black uppercase tracking-widest text-[#0c64ef] hover:underline disabled:opacity-50"
+                        className="mt-2 text-[9px] font-black uppercase tracking-widest text-[#0051e6] hover:underline disabled:opacity-50"
                     >
                         {isUploadingAvatar ? 'Uploading...' : 'Change photo'}
                     </button>
@@ -210,16 +210,16 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className="group flex items-center gap-3 p-3 rounded-xl border border-[#eceef0] bg-white hover:border-[#0c64ef]/30 hover:bg-[#0c64ef]/3 transition-colors"
+                                    className="group flex items-center gap-3 p-3 rounded-xl border border-[#eceef0] bg-white hover:border-[#0051e6]/30 hover:bg-[#0051e6]/3 transition-colors"
                                 >
-                                    <div className="w-8 h-8 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-[#1d1d1f] group-hover:bg-[#0c64ef]/10 group-hover:text-[#0c64ef] transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-[#1d1d1f] group-hover:bg-[#0051e6]/10 group-hover:text-[#0051e6] transition-colors">
                                         {item.icon}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-xs font-black text-[#1d1d1f] truncate">{item.label}</div>
                                         <div className="text-[10px] text-[#86868b] truncate">{item.desc}</div>
                                     </div>
-                                    <ChevronRight size={14} className="text-[#86868b] group-hover:text-[#0c64ef] flex-shrink-0" />
+                                    <ChevronRight size={14} className="text-[#86868b] group-hover:text-[#0051e6] flex-shrink-0" />
                                 </Link>
                             ))}
                         </div>
@@ -237,7 +237,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                             <input 
                                 value={profileName} 
                                 onChange={e => setProfileName(e.target.value)} 
-                                className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0c64ef]" 
+                                className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0051e6]" 
                             />
                         </div>
                         <button 
@@ -263,7 +263,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                                     type="password" 
                                     value={passwords.new} 
                                     onChange={e => setPasswords({ ...passwords, new: e.target.value })} 
-                                    className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0c64ef]" 
+                                    className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0051e6]" 
                                     placeholder="••••••••" 
                                 />
                             </div>
@@ -273,7 +273,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                                     type="password" 
                                     value={passwords.confirm} 
                                     onChange={e => setPasswords({ ...passwords, confirm: e.target.value })} 
-                                    className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0c64ef]" 
+                                    className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-[#0051e6]" 
                                     placeholder="••••••••" 
                                 />
                             </div>

@@ -54,12 +54,13 @@ export function EmployeeSidebar({
                 <div className="fixed inset-0 z-[100] lg:hidden">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
                     <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-6 shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
-                        <div className="flex items-center justify-between mb-10 px-2 shrink-0">
-                            <div className="flex items-center gap-3">
-                                <img src="/logo.avif" alt="Mindbird Logo" className="w-10 h-10 rounded-xl object-cover shadow-sm" />
-                                <span className="text-xl font-black tracking-tight text-[#1d1d1f]">Mindbird.ai</span>
+                        <div className="flex items-center justify-between mb-2 px-2 shrink-0">
+                            <div className="flex items-center justify-start px-2">
+                                <img src="/knotlessai.svg" alt="Knotless Logo" className="h-[85px] w-auto object-contain object-left" />
                             </div>
-                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors"><X size={20} /></button>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors">
+                                <X size={20} />
+                            </button>
                         </div>
                         <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2 pb-6">
                             <NavItem icon={<LayoutDashboard size={16} strokeWidth={2.5} />} label="MY TASKS" active={activeTab === 'mine'} onClick={() => { setActiveTab('mine'); setIsMobileMenuOpen(false); }} />
@@ -86,12 +87,8 @@ export function EmployeeSidebar({
 
             {/* DESKTOP SIDEBAR */}
             <aside className="w-56 bg-white border-r border-[#e5e5ea] flex flex-col p-5 hidden lg:flex shrink-0">
-                <div className="flex items-center gap-3 mb-8 px-1">
-                    <img src="/logo.avif" alt="Mindbird Logo" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
-                    <div>
-                        <span className="text-sm font-black tracking-tight text-[#1d1d1f] leading-none block">Mindbird.ai</span>
-                        <span className="text-[10px] text-[#86868b] uppercase tracking-widest font-bold">Pro Edition</span>
-                    </div>
+                <div className="flex items-center justify-start mb-0 px-4">
+                    <img src="/knotlessai.svg" alt="Knotless Logo" className="h-[85px] w-auto object-contain object-left" />
                 </div>
                 
                 <nav className="flex-1 space-y-1.5">

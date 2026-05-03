@@ -58,7 +58,7 @@ export function GdprClient() {
                                 type="radio"
                                 checked={action === t}
                                 onChange={() => setAction(t)}
-                                className="accent-[#0c64ef]"
+                                className="accent-[#0051e6]"
                             />
                             <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[#1d1d1f]">
                                 {t === "export" ? <Package size={14} strokeWidth={2} /> : <Lock size={14} strokeWidth={2} />}

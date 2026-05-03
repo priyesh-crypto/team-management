@@ -62,7 +62,7 @@ export function SmartDueDateButton({
                 <button
                     onClick={getSuggestion}
                     disabled={loading}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#0c64ef]/20 bg-[#0c64ef]/5 text-[#0c64ef] text-[10px] font-black hover:bg-[#0c64ef]/10 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#0051e6]/20 bg-[#0051e6]/5 text-[#0051e6] text-[10px] font-black hover:bg-[#0051e6]/10 transition-colors disabled:opacity-50"
                     title="AI-suggest due date"
                 >
                     {loading ? <Loader2 size={11} className="animate-spin" /> : <Wand2 size={11} />}

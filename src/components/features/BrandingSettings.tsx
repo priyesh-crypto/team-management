@@ -7,7 +7,7 @@ import { saveBranding, type OrgBranding } from "@/app/actions/branding";
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
 
 const PRESET_COLORS = [
-    "#0c64ef", "#34c759", "#ff9500", "#ff3b30",
+    "#0051e6", "#34c759", "#ff9500", "#ff3b30",
     "#af52de", "#5ac8fa", "#1d1d1f", "#6e6e73",
 ];
 
@@ -20,7 +20,7 @@ export function BrandingSettings({ orgId, branding }: Props) {
     const [form, setForm] = useState<OrgBranding>({
         logo_url: branding?.logo_url ?? "",
         favicon_url: branding?.favicon_url ?? "",
-        primary_color: branding?.primary_color ?? "#0c64ef",
+        primary_color: branding?.primary_color ?? "#0051e6",
         accent_color: branding?.accent_color ?? "#34c759",
         org_display_name: branding?.org_display_name ?? "",
         custom_domain: branding?.custom_domain ?? "",
@@ -93,7 +93,7 @@ export function BrandingSettings({ orgId, branding }: Props) {
                     </div>
 
                     <button type="submit" disabled={pending}
-                        className="w-full px-4 py-2.5 rounded-xl bg-[#0c64ef] text-white text-sm font-black hover:bg-[#005bb7] transition-colors disabled:opacity-50">
+                        className="w-full px-4 py-2.5 rounded-xl bg-[#0051e6] text-white text-sm font-black hover:bg-[#005bb7] transition-colors disabled:opacity-50">
                         {pending ? "Saving…" : "Save branding"}
                     </button>
                 </div>

@@ -26,7 +26,7 @@ export default async function OrgUsagePage({
             <div>
                 <Link
                     href={`/admin/orgs/${orgId}`}
-                    className="text-[10px] font-black uppercase tracking-widest text-[#86868b] hover:text-[#0c64ef] transition"
+                    className="text-[10px] font-black uppercase tracking-widest text-[#86868b] hover:text-[#0051e6] transition"
                 >
                     ← Back to org
                 </Link>
@@ -41,7 +41,7 @@ export default async function OrgUsagePage({
                         href={`/admin/orgs/${orgId}/usage?days=${d}`}
                         className={`px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-colors ${
                             days === d
-                                ? "bg-[#0c64ef] text-white"
+                                ? "bg-[#0051e6] text-white"
                                 : "bg-[#f5f5f7] text-[#86868b] hover:bg-[#e5e5ea]"
                         }`}
                     >
@@ -82,8 +82,8 @@ export default async function OrgUsagePage({
                                     title={`${fmtDay(d)}: ${created} created, ${completed} completed`}>
                                     <div className="w-5 rounded-t-md overflow-hidden flex flex-col-reverse"
                                         style={{ height: `${Math.max(4, heightPct)}%` }}>
-                                        <div className="w-full bg-[#0c64ef]/20 flex-1" />
-                                        <div className="w-full bg-[#0c64ef]" style={{ height: `${completedPct}%` }} />
+                                        <div className="w-full bg-[#0051e6]/20 flex-1" />
+                                        <div className="w-full bg-[#0051e6]" style={{ height: `${completedPct}%` }} />
                                     </div>
                                     <span className="text-[8px] text-[#86868b] rotate-45 origin-left mt-1">
                                         {fmtDay(d).split(" ")[1]}
@@ -95,11 +95,11 @@ export default async function OrgUsagePage({
                 )}
                 <div className="flex gap-4 mt-4">
                     <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-sm bg-[#0c64ef]/20" />
+                        <div className="w-3 h-3 rounded-sm bg-[#0051e6]/20" />
                         <span className="text-[10px] text-[#86868b]">Created</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 rounded-sm bg-[#0c64ef]" />
+                        <div className="w-3 h-3 rounded-sm bg-[#0051e6]" />
                         <span className="text-[10px] text-[#86868b]">Completed</span>
                     </div>
                 </div>

@@ -78,7 +78,7 @@ export function SSOConfigForm({ orgId, config }: Props) {
                                 key={p}
                                 type="button"
                                 onClick={() => setProvider(p)}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-black transition-colors ${provider === p ? "bg-[#0c64ef] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                                className={`px-4 py-1.5 rounded-lg text-xs font-black transition-colors ${provider === p ? "bg-[#0051e6] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
                             >
                                 {p.toUpperCase()}
                             </button>
@@ -119,7 +119,7 @@ export function SSOConfigForm({ orgId, config }: Props) {
                             </code>
                         </div>
                         <button type="submit" disabled={pending}
-                            className="w-full px-4 py-2.5 rounded-xl bg-[#0c64ef] text-white text-sm font-black hover:bg-[#005bb7] transition-colors disabled:opacity-50">
+                            className="w-full px-4 py-2.5 rounded-xl bg-[#0051e6] text-white text-sm font-black hover:bg-[#005bb7] transition-colors disabled:opacity-50">
                             {pending ? "Saving…" : "Save configuration"}
                         </button>
                     </div>

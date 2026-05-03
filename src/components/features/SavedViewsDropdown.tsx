@@ -51,10 +51,10 @@ export function SavedViewsDropdown({ views, currentViewState, onLoadView }: Prop
             <div className="relative">
                 <button
                     onClick={() => setOpen(o => !o)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] font-black text-slate-600 hover:border-[#0c64ef]/30 hover:text-[#0c64ef] transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] font-black text-slate-600 hover:border-[#0051e6]/30 hover:text-[#0051e6] transition-colors shadow-sm"
                 >
                     <Bookmark size={12} />
-                    Views {views.length > 0 && <span className="ml-0.5 text-[#0c64ef]">({views.length})</span>}
+                    Views {views.length > 0 && <span className="ml-0.5 text-[#0051e6]">({views.length})</span>}
                 </button>
 
                 {open && (
@@ -63,7 +63,7 @@ export function SavedViewsDropdown({ views, currentViewState, onLoadView }: Prop
                             <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider">Saved views</span>
                             <button
                                 onClick={() => setShowSave(s => !s)}
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0c64ef] text-white text-[10px] font-black"
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0051e6] text-white text-[10px] font-black"
                             >
                                 <Plus size={10} /> Save current
                             </button>
@@ -76,7 +76,7 @@ export function SavedViewsDropdown({ views, currentViewState, onLoadView }: Prop
                                     onChange={e => setName(e.target.value)}
                                     placeholder="View name (e.g. My urgent tasks)"
                                     autoFocus
-                                    className="w-full px-3 py-2 text-[12px] font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20"
+                                    className="w-full px-3 py-2 text-[12px] font-bold rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0051e6]/20"
                                 />
                                 <label className="flex items-center gap-2 text-[11px] font-bold text-slate-600 cursor-pointer">
                                     <input
@@ -89,7 +89,7 @@ export function SavedViewsDropdown({ views, currentViewState, onLoadView }: Prop
                                     Share with org
                                 </label>
                                 <div className="flex gap-2">
-                                    <button type="submit" disabled={pending} className="flex-1 px-3 py-1.5 rounded-xl bg-[#0c64ef] text-white text-[11px] font-black disabled:opacity-50">
+                                    <button type="submit" disabled={pending} className="flex-1 px-3 py-1.5 rounded-xl bg-[#0051e6] text-white text-[11px] font-black disabled:opacity-50">
                                         {pending ? "Saving…" : "Save"}
                                     </button>
                                     <button type="button" onClick={() => setShowSave(false)} className="px-3 py-1.5 rounded-xl border border-slate-200 text-[11px] font-bold text-slate-500">
@@ -112,7 +112,7 @@ export function SavedViewsDropdown({ views, currentViewState, onLoadView }: Prop
                                         className="w-full text-left px-4 py-3 hover:bg-slate-50 group flex items-center justify-between gap-2"
                                     >
                                         <div>
-                                            <div className="text-sm font-black text-[#1d1d1f] group-hover:text-[#0c64ef]">{v.name}</div>
+                                            <div className="text-sm font-black text-[#1d1d1f] group-hover:text-[#0051e6]">{v.name}</div>
                                             <div className="text-[10px] text-slate-400 mt-0.5">
                                                 {v.is_shared ? "Shared · " : "Private · "}
                                                 {new Date(v.created_at).toLocaleDateString()}

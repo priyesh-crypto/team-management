@@ -85,7 +85,7 @@ export function GitHubSettings({ orgId, connection }: Props) {
                                 </div>
                             ))}
                         </div>
-                        <button onClick={() => setShowForm(true)} className="text-[11px] font-black text-[#0c64ef] hover:underline">
+                        <button onClick={() => setShowForm(true)} className="text-[11px] font-black text-[#0051e6] hover:underline">
                             Edit configuration
                         </button>
                     </div>

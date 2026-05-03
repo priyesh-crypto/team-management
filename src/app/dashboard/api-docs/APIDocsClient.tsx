@@ -133,7 +133,7 @@ const ENDPOINTS: { group: string; endpoints: Endpoint[] }[] = [
 
 const METHOD_COLORS: Record<string, string> = {
     GET: "bg-[#34c759]/10 text-[#34c759]",
-    POST: "bg-[#0c64ef]/10 text-[#0c64ef]",
+    POST: "bg-[#0051e6]/10 text-[#0051e6]",
     DELETE: "bg-[#ff3b30]/10 text-[#ff3b30]",
     PUT: "bg-[#ff9500]/10 text-[#ff9500]",
 };
@@ -158,10 +158,10 @@ export function APIDocsClient({ orgId }: Props) {
         <div className="p-8 max-w-5xl space-y-8">
             <div>
                 <div className="flex items-center gap-3 mb-1">
-                    <Code2 size={20} className="text-[#0c64ef]" />
+                    <Code2 size={20} className="text-[#0051e6]" />
                     <h1 className="text-2xl font-black text-[#1d1d1f]">REST API Reference</h1>
                 </div>
-                <p className="text-sm text-slate-400">Authenticate with a Bearer token from <a href="/dashboard/settings/integrations" className="text-[#0c64ef] hover:underline">Settings → Integrations</a>.</p>
+                <p className="text-sm text-slate-400">Authenticate with a Bearer token from <a href="/dashboard/settings/integrations" className="text-[#0051e6] hover:underline">Settings → Integrations</a>.</p>
             </div>
 
             {/* Auth box */}
@@ -226,7 +226,7 @@ export function APIDocsClient({ orgId }: Props) {
                                                             <div className="rounded-xl border border-slate-200 overflow-hidden bg-white">
                                                                 {ep.params.map((p, i) => (
                                                                     <div key={p.name} className={`flex items-start gap-3 px-4 py-3 text-sm ${i < ep.params!.length - 1 ? "border-b border-slate-50" : ""}`}>
-                                                                        <code className="font-mono font-bold text-[#0c64ef] min-w-[120px]">{p.name}</code>
+                                                                        <code className="font-mono font-bold text-[#0051e6] min-w-[120px]">{p.name}</code>
                                                                         <div className="flex-1 min-w-0">
                                                                             <span className="text-[10px] font-bold text-slate-400">{p.in} · {p.type}</span>
                                                                             {p.required && <span className="ml-2 text-[9px] font-black text-[#ff3b30]">required</span>}

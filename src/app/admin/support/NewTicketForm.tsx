@@ -59,7 +59,7 @@ export function NewTicketForm() {
                         onChange={e => setMessage(e.target.value)}
                         required rows={4}
                         placeholder="Describe the issue…"
-                        className="w-full px-3 py-2.5 rounded-xl border border-[#e5e5ea] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20 resize-none bg-white"
+                        className="w-full px-3 py-2.5 rounded-xl border border-[#e5e5ea] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0051e6]/20 resize-none bg-white"
                     />
                 </Field>
                 <div className="flex gap-2">

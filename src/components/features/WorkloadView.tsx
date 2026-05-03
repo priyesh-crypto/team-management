@@ -85,10 +85,10 @@ export function WorkloadView({ members, startDate }: Props) {
                                     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                                     return (
                                         <th key={ds} className={`px-1 py-2 text-center min-w-[44px] ${isWeekend ? "bg-slate-50" : ""}`}>
-                                            <div className={`text-[9px] font-black ${isToday ? "text-[#0c64ef]" : "text-slate-400"}`}>
+                                            <div className={`text-[9px] font-black ${isToday ? "text-[#0051e6]" : "text-slate-400"}`}>
                                                 {d.toLocaleDateString("en", { weekday: "short" })}
                                             </div>
-                                            <div className={`text-[10px] font-black mt-0.5 ${isToday ? "text-[#0c64ef]" : "text-slate-500"}`}>
+                                            <div className={`text-[10px] font-black mt-0.5 ${isToday ? "text-[#0051e6]" : "text-slate-500"}`}>
                                                 {d.getDate()}
                                             </div>
                                         </th>
@@ -122,7 +122,7 @@ export function WorkloadView({ members, startDate }: Props) {
                                                     className="w-6 h-6 rounded-full object-cover flex-shrink-0"
                                                 />
                                             ) : (
-                                                <div className="w-6 h-6 rounded-full bg-[#0c64ef]/10 flex items-center justify-center text-[9px] font-black text-[#0c64ef] flex-shrink-0">
+                                                <div className="w-6 h-6 rounded-full bg-[#0051e6]/10 flex items-center justify-center text-[9px] font-black text-[#0051e6] flex-shrink-0">
                                                     {initials || member.user_id.slice(0, 2).toUpperCase()}
                                                 </div>
                                             )}
@@ -139,7 +139,7 @@ export function WorkloadView({ members, startDate }: Props) {
                                         const isToday = ds === today;
                                         return (
                                             <td key={ds} className={`px-1 py-1.5 text-center ${isWeekend ? "bg-slate-50/60" : ""}`}>
-                                                <div className={`mx-auto w-8 h-8 rounded-lg border flex flex-col items-center justify-center transition-colors ${isToday ? "ring-1 ring-[#0c64ef]" : ""} ${heatColor(load.count)}`}
+                                                <div className={`mx-auto w-8 h-8 rounded-lg border flex flex-col items-center justify-center transition-colors ${isToday ? "ring-1 ring-[#0051e6]" : ""} ${heatColor(load.count)}`}
                                                     title={`${load.count} tasks, ${load.hours}h`}>
                                                     {load.count > 0 && (
                                                         <span className={`text-[10px] font-black ${heatLabel(load.count)}`}>{load.count}</span>

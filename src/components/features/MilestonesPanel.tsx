@@ -7,12 +7,12 @@ import { createMilestone, updateMilestoneStatus, deleteMilestone, type Milestone
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
 
 const STATUS_CONFIG = {
-    active: { label: "Active", icon: Circle, color: "text-[#0c64ef]", bg: "bg-[#0c64ef]/10" },
+    active: { label: "Active", icon: Circle, color: "text-[#0051e6]", bg: "bg-[#0051e6]/10" },
     completed: { label: "Completed", icon: CheckCircle2, color: "text-[#34c759]", bg: "bg-[#34c759]/10" },
     cancelled: { label: "Cancelled", icon: XCircle, color: "text-slate-400", bg: "bg-slate-100" },
 };
 
-const PRESET_COLORS = ["#0c64ef", "#34c759", "#ff9500", "#ff3b30", "#af52de", "#5ac8fa"];
+const PRESET_COLORS = ["#0051e6", "#34c759", "#ff9500", "#ff3b30", "#af52de", "#5ac8fa"];
 
 interface Props {
     orgId: string;
@@ -23,7 +23,7 @@ interface Props {
 export function MilestonesPanel({ orgId, workspaceId, milestones: initialMilestones }: Props) {
     const [milestones, setMilestones] = useState(initialMilestones);
     const [showNew, setShowNew] = useState(false);
-    const [form, setForm] = useState({ name: "", description: "", due_date: "", color: "#0c64ef" });
+    const [form, setForm] = useState({ name: "", description: "", due_date: "", color: "#0051e6" });
     const [pending, startTransition] = useTransition();
 
     function handleCreate(e: React.FormEvent) {
@@ -33,7 +33,7 @@ export function MilestonesPanel({ orgId, workspaceId, milestones: initialMilesto
             if (result.error) { toast.error(result.error); return; }
             setMilestones(ms => [...ms, result.data as Milestone]);
             setShowNew(false);
-            setForm({ name: "", description: "", due_date: "", color: "#0c64ef" });
+            setForm({ name: "", description: "", due_date: "", color: "#0051e6" });
             toast.success("Milestone created");
         });
     }
@@ -71,7 +71,7 @@ export function MilestonesPanel({ orgId, workspaceId, milestones: initialMilesto
                         </div>
                     </div>
                     <button onClick={() => setShowNew(s => !s)}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0c64ef] text-white text-[11px] font-black hover:bg-[#005bb7] transition-colors">
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0051e6] text-white text-[11px] font-black hover:bg-[#005bb7] transition-colors">
                         <Plus size={12} /> New
                     </button>
                 </div>
@@ -94,7 +94,7 @@ export function MilestonesPanel({ orgId, workspaceId, milestones: initialMilesto
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <button type="submit" disabled={pending} className="flex-1 px-3 py-2 rounded-xl bg-[#0c64ef] text-white text-sm font-black disabled:opacity-50">
+                            <button type="submit" disabled={pending} className="flex-1 px-3 py-2 rounded-xl bg-[#0051e6] text-white text-sm font-black disabled:opacity-50">
                                 {pending ? "Creating…" : "Create milestone"}
                             </button>
                             <button type="button" onClick={() => setShowNew(false)} className="px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-500">Cancel</button>
@@ -138,7 +138,7 @@ export function MilestonesPanel({ orgId, workspaceId, milestones: initialMilesto
                                     )}
                                     {m.status === "completed" && (
                                         <button onClick={() => handleStatus(m.id, "active")} disabled={pending}
-                                            className="p-1.5 rounded-lg text-slate-300 hover:text-[#0c64ef] hover:bg-[#0c64ef]/10 transition-colors" title="Reopen">
+                                            className="p-1.5 rounded-lg text-slate-300 hover:text-[#0051e6] hover:bg-[#0051e6]/10 transition-colors" title="Reopen">
                                             <Circle size={13} />
                                         </button>
                                     )}

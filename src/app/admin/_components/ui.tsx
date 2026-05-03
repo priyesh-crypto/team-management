@@ -57,14 +57,14 @@ export function StatCard({
 }) {
     const accentColor: Record<string, string> = {
         default: "text-[#1d1d1f]",
-        blue: "text-[#0c64ef]",
+        blue: "text-[#0051e6]",
         emerald: "text-emerald-600",
         amber: "text-amber-600",
         red: "text-red-600",
     };
     const iconBg: Record<string, string> = {
         default: "bg-[#f5f5f7] text-[#52525b]",
-        blue: "bg-[#0c64ef]/10 text-[#0c64ef]",
+        blue: "bg-[#0051e6]/10 text-[#0051e6]",
         emerald: "bg-emerald-50 text-emerald-600",
         amber: "bg-amber-50 text-amber-600",
         red: "bg-red-50 text-red-600",
@@ -101,7 +101,7 @@ export function StatusPill({ status }: { status: string | null }) {
     const s = (status ?? "free").toLowerCase();
     const map: Record<string, { bg: string; fg: string; dot: string }> = {
         active: { bg: "bg-emerald-50", fg: "text-emerald-700", dot: "bg-emerald-500" },
-        trialing: { bg: "bg-[#0c64ef]/10", fg: "text-[#0c64ef]", dot: "bg-[#0c64ef]" },
+        trialing: { bg: "bg-[#0051e6]/10", fg: "text-[#0051e6]", dot: "bg-[#0051e6]" },
         past_due: { bg: "bg-amber-50", fg: "text-amber-700", dot: "bg-amber-500" },
         canceled: { bg: "bg-red-50", fg: "text-red-700", dot: "bg-red-500" },
         free: { bg: "bg-[#f5f5f7]", fg: "text-[#52525b]", dot: "bg-[#86868b]" },
@@ -120,7 +120,7 @@ export function StatusPill({ status }: { status: string | null }) {
 export function PlanPill({ plan }: { plan: string }) {
     const colors: Record<string, string> = {
         free: "bg-[#f5f5f7] text-[#52525b]",
-        pro: "bg-[#0c64ef]/10 text-[#0c64ef]",
+        pro: "bg-[#0051e6]/10 text-[#0051e6]",
         business: "bg-purple-50 text-purple-700",
     };
     return (
@@ -159,7 +159,7 @@ export function Button({
 }) {
     const styles: Record<string, string> = {
         primary:
-            "bg-[#0c64ef] text-white hover:bg-[#0950c4]",
+            "bg-[#0051e6] text-white hover:bg-[#0950c4]",
         secondary:
             "bg-white text-[#1d1d1f] border border-[#e5e5ea] hover:bg-[#f5f5f7]",
         danger: "bg-red-600 text-white hover:bg-red-700",
@@ -181,7 +181,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     return (
         <input
             {...props}
-            className={`w-full px-3 py-2 rounded-md border border-[#e5e5ea] bg-white text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0c64ef] focus:ring-2 focus:ring-[#0c64ef]/10 transition-colors ${
+            className={`w-full px-3 py-2 rounded-md border border-[#e5e5ea] bg-white text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0051e6] focus:ring-2 focus:ring-[#0051e6]/10 transition-colors ${
                 props.className ?? ""
             }`}
         />
@@ -192,7 +192,7 @@ export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
     return (
         <select
             {...props}
-            className={`w-full px-3 py-2 rounded-md border border-[#e5e5ea] bg-white text-sm text-[#1d1d1f] focus:outline-none focus:border-[#0c64ef] focus:ring-2 focus:ring-[#0c64ef]/10 transition-colors ${
+            className={`w-full px-3 py-2 rounded-md border border-[#e5e5ea] bg-white text-sm text-[#1d1d1f] focus:outline-none focus:border-[#0051e6] focus:ring-2 focus:ring-[#0051e6]/10 transition-colors ${
                 props.className ?? ""
             }`}
         />

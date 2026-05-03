@@ -5,7 +5,7 @@ import { GdprClient } from "./GdprClient";
 
 const STATUS_STYLES: Record<string, string> = {
     pending:    "bg-amber-50 text-amber-700",
-    processing: "bg-blue-50 text-[#0c64ef]",
+    processing: "bg-blue-50 text-[#0051e6]",
     completed:  "bg-emerald-50 text-emerald-700",
     failed:     "bg-red-50 text-red-600",
 };
@@ -74,7 +74,7 @@ export default async function GdprPage() {
                                                     href={r.file_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-xs font-medium text-[#0c64ef] hover:underline"
+                                                    className="text-xs font-medium text-[#0051e6] hover:underline"
                                                 >
                                                     Download ↗
                                                 </a>

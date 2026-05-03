@@ -18,7 +18,7 @@ export default async function SharePage({ params }: Props) {
             <div className="bg-white rounded-3xl shadow-xl max-w-xl w-full p-8">
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-[#0c64ef]/10 flex items-center justify-center text-[#0c64ef] text-xl">
+                    <div className="w-10 h-10 rounded-xl bg-[#0051e6]/10 flex items-center justify-center text-[#0051e6] text-xl">
                         {tokenRow.resource_type === "project" ? "📁" : "✅"}
                     </div>
                     <div>
@@ -81,7 +81,7 @@ export default async function SharePage({ params }: Props) {
                     </div>
                     <div className="text-[10px] font-black text-slate-400 flex items-center gap-1">
                         Powered by
-                        <span className="text-[#0c64ef] font-black">TaskFlow</span>
+                        <span className="text-[#0051e6] font-black">TaskFlow</span>
                     </div>
                 </div>
             </div>

@@ -59,7 +59,7 @@ export function DataExportButton() {
                         <div className="grid grid-cols-2 gap-2">
                             {EXPORT_TYPES.map(t => (
                                 <button key={t.value} type="button" onClick={() => setType(t.value)}
-                                    className={`px-3 py-2 rounded-xl border text-sm font-black transition-colors ${type === t.value ? "border-[#0c64ef] bg-[#0c64ef]/5 text-[#0c64ef]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
+                                    className={`px-3 py-2 rounded-xl border text-sm font-black transition-colors ${type === t.value ? "border-[#0051e6] bg-[#0051e6]/5 text-[#0051e6]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
                                     {t.label}
                                 </button>
                             ))}
@@ -70,18 +70,18 @@ export function DataExportButton() {
                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Format</div>
                         <div className="flex gap-2">
                             <button type="button" onClick={() => setFormat("csv")}
-                                className={`flex items-center gap-2 flex-1 px-3 py-2.5 rounded-xl border text-sm font-black transition-colors ${format === "csv" ? "border-[#0c64ef] bg-[#0c64ef]/5 text-[#0c64ef]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
+                                className={`flex items-center gap-2 flex-1 px-3 py-2.5 rounded-xl border text-sm font-black transition-colors ${format === "csv" ? "border-[#0051e6] bg-[#0051e6]/5 text-[#0051e6]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
                                 <FileText size={14} /> CSV
                             </button>
                             <button type="button" onClick={() => setFormat("json")}
-                                className={`flex items-center gap-2 flex-1 px-3 py-2.5 rounded-xl border text-sm font-black transition-colors ${format === "json" ? "border-[#0c64ef] bg-[#0c64ef]/5 text-[#0c64ef]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
+                                className={`flex items-center gap-2 flex-1 px-3 py-2.5 rounded-xl border text-sm font-black transition-colors ${format === "json" ? "border-[#0051e6] bg-[#0051e6]/5 text-[#0051e6]" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
                                 <FileJson size={14} /> JSON
                             </button>
                         </div>
                     </div>
 
                     <button onClick={handleExport} disabled={loading}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0c64ef] text-white text-sm font-black hover:bg-[#005bb7] transition-colors disabled:opacity-50">
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0051e6] text-white text-sm font-black hover:bg-[#005bb7] transition-colors disabled:opacity-50">
                         <Download size={14} />
                         {loading ? "Preparing download…" : `Export ${EXPORT_TYPES.find(t => t.value === type)?.label ?? type} as ${format.toUpperCase()}`}
                     </button>

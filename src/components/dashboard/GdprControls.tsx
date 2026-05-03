@@ -61,7 +61,7 @@ export function RequestExportButton() {
                     <button
                         onClick={handleRequest}
                         disabled={loading}
-                        className="text-[10px] font-black uppercase tracking-widest text-[#0c64ef] hover:underline disabled:opacity-50 flex items-center gap-1"
+                        className="text-[10px] font-black uppercase tracking-widest text-[#0051e6] hover:underline disabled:opacity-50 flex items-center gap-1"
                     >
                         {loading ? <><Loader2 size={12} className="animate-spin" /> Preparing…</> : 'Request a new export'}
                     </button>
@@ -114,7 +114,7 @@ function ExportStatusCard({ request }: { request: GdprRequest }) {
                     <a
                         href={request.download_url}
                         download={`my-data-export.json`}
-                        className="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest text-[#0c64ef] hover:underline"
+                        className="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest text-[#0051e6] hover:underline"
                     >
                         <Download size={12} /> Download JSON
                     </a>

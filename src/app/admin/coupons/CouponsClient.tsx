@@ -91,7 +91,7 @@ export function CouponsClient({ initialCoupons }: { initialCoupons: Coupon[] }) 
                             <div className="flex gap-3">
                                 {(["percent", "amount"] as const).map(t => (
                                     <label key={t} className="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" checked={type === t} onChange={() => setType(t)} className="accent-[#0c64ef]" />
+                                        <input type="radio" checked={type === t} onChange={() => setType(t)} className="accent-[#0051e6]" />
                                         <span className="text-sm font-bold capitalize text-[#1d1d1f]">{t === "percent" ? "% off" : "Fixed amount"}</span>
                                     </label>
                                 ))}

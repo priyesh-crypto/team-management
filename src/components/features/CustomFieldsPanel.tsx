@@ -28,7 +28,7 @@ function FieldInput({ def, value, onChange }: {
         json: value?.value_json,
     };
 
-    const inputClass = "w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0c64ef]/20";
+    const inputClass = "w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0051e6]/20";
 
     switch (def.field_type) {
         case "text":
@@ -98,7 +98,7 @@ function FieldInput({ def, value, onChange }: {
                                     onChange(def.id, { value_json: next });
                                 }}
                                 className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors ${
-                                    selected ? "bg-[#0c64ef] text-white border-[#0c64ef]" : "border-slate-200 text-slate-600 hover:border-[#0c64ef]/30"
+                                    selected ? "bg-[#0051e6] text-white border-[#0051e6]" : "border-slate-200 text-slate-600 hover:border-[#0051e6]/30"
                                 }`}
                             >
                                 {opt}
@@ -173,13 +173,13 @@ export function CustomFieldsPanel({ taskId, fieldDefs, fieldValues, isManager }:
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Sliders size={14} className="text-[#0c64ef]" />
+                        <Sliders size={14} className="text-[#0051e6]" />
                         <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider">Custom fields</span>
                     </div>
                     {isManager && (
                         <button
                             onClick={() => setShowAddField(s => !s)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black text-[#0c64ef] hover:bg-[#0c64ef]/10 transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black text-[#0051e6] hover:bg-[#0051e6]/10 transition-colors"
                         >
                             <Plus size={10} /> Add field
                         </button>
@@ -208,7 +208,7 @@ export function CustomFieldsPanel({ taskId, fieldDefs, fieldValues, isManager }:
                             </div>
                         )}
                         <div className="flex gap-2">
-                            <button type="submit" disabled={pending} className="flex-1 px-3 py-2 rounded-lg bg-[#0c64ef] text-white text-[11px] font-black disabled:opacity-50">
+                            <button type="submit" disabled={pending} className="flex-1 px-3 py-2 rounded-lg bg-[#0051e6] text-white text-[11px] font-black disabled:opacity-50">
                                 {pending ? "Saving…" : "Create"}
                             </button>
                             <button type="button" onClick={() => setShowAddField(false)} className="px-3 py-2 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-500">Cancel</button>

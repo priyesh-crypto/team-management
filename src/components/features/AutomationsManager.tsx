@@ -71,7 +71,7 @@ function NewRuleForm({ onDone }: { onDone: () => void }) {
             <p className="text-[10px] text-slate-400">Advanced conditions (filters, user targets, channel) can be configured after creation.</p>
             <div className="flex gap-2">
                 <button type="submit" disabled={pending}
-                    className="flex-1 px-4 py-2 rounded-xl bg-[#0c64ef] text-white text-sm font-black disabled:opacity-50">
+                    className="flex-1 px-4 py-2 rounded-xl bg-[#0051e6] text-white text-sm font-black disabled:opacity-50">
                     {pending ? "Saving…" : "Create rule"}
                 </button>
                 <button type="button" onClick={onDone} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-500">Cancel</button>
@@ -129,7 +129,7 @@ export function AutomationsManager({ rules }: Props) {
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-black text-[#1d1d1f]">{rule.name}</div>
                                 <div className="text-[10px] font-bold text-slate-400 mt-0.5">
-                                    <span className="text-[#0c64ef]">{TRIGGER_LABEL[rule.trigger_type] ?? rule.trigger_type}</span>
+                                    <span className="text-[#0051e6]">{TRIGGER_LABEL[rule.trigger_type] ?? rule.trigger_type}</span>
                                     {" → "}
                                     <span className="text-[#ff9500]">{ACTION_LABEL[rule.action_type] ?? rule.action_type}</span>
                                     {rule.run_count > 0 && ` · ran ${rule.run_count}×`}

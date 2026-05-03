@@ -50,7 +50,7 @@ export default async function AuditPage() {
                         const Icon = ACTION_ICONS[a.action] ?? Zap;
                         return (
                             <div key={a.id} className="flex items-start gap-3 p-4 hover:bg-[#fafafa] transition-colors">
-                                <div className="w-8 h-8 rounded-md bg-[#0c64ef]/10 text-[#0c64ef] flex items-center justify-center shrink-0">
+                                <div className="w-8 h-8 rounded-md bg-[#0051e6]/10 text-[#0051e6] flex items-center justify-center shrink-0">
                                     <Icon size={15} strokeWidth={2} />
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -62,7 +62,7 @@ export default async function AuditPage() {
                                             {a.target_org_id && (
                                                 <Link
                                                     href={`/admin/orgs/${a.target_org_id}`}
-                                                    className="text-xs text-[#0c64ef] hover:underline"
+                                                    className="text-xs text-[#0051e6] hover:underline"
                                                 >
                                                     {orgName ?? a.target_org_id.slice(0, 8) + "…"}
                                                 </Link>
