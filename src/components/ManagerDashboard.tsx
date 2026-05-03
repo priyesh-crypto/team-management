@@ -942,7 +942,7 @@ export default function ManagerDashboard({
                     notifications={notifications}
                     showNotifications={showNotifications}
                     setShowNotifications={setShowNotifications}
-                    unreadCount={unreadCount}
+                    notificationRef={notificationRef}
                     handleMarkAsRead={handleMarkAsRead}
                     markAllNotificationsAsRead={markAllNotificationsAsRead}
                     clearNotifications={handleClearAll}
