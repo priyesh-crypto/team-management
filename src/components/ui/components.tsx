@@ -30,7 +30,7 @@ export function Button({
         primary: "bg-gradient-to-b from-[#0c64ef] to-[#0a57d1] hover:from-[#0a57d1] hover:to-[#0c64ef] text-white shadow-[0_4px_12px_rgba(12,100,239,0.2)]",
         secondary: "bg-white hover:bg-slate-50 text-slate-900 border border-slate-100 shadow-sm",
         danger: "bg-gradient-to-b from-[#ff3b30] to-[#e03126] hover:from-[#ff453a] hover:to-[#ff3b30] text-white shadow-[0_4px_12px_rgba(255,59,48,0.15)]",
-        ghost: "bg-transparent hover:bg-slate-50 text-slate-400 hover:text-slate-900"
+        ghost: "bg-transparent hover:bg-slate-50 text-slate-600 hover:text-slate-900"
     };
 
     return (
@@ -85,7 +85,7 @@ export function Badge({ children, variant = 'default', className }: { children: 
         High: "bg-orange-50 text-orange-500 border-orange-100",
         Medium: "bg-blue-50 text-blue-500 border-blue-100",
         Low: "bg-emerald-50 text-emerald-500 border-emerald-100",
-        default: "bg-slate-50 text-slate-400 border-slate-100"
+        default: "bg-slate-50 text-slate-600 border-slate-100"
     };
 
     return (
@@ -142,7 +142,7 @@ export function CircularProgress({ percentage, color = '#0c64ef', size = 100, st
                 <span className="text-xl font-black text-[#1d1d1f] tracking-tighter">
                     {Math.round(percentage)}%
                 </span>
-                <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest mt-[-2px]">
+                <span className="text-[8px] font-black text-[#52525b] uppercase tracking-widest mt-[-2px]">
                     Efficiency
                 </span>
             </div>

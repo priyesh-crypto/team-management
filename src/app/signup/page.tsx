@@ -74,7 +74,7 @@ export default async function SignupPage({
         <div className="text-center mb-8">
           <Logo className="mb-4 escala-110" />
           <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Create your account</h1>
-          <p className="text-[#86868b] text-sm font-medium mt-1">Start managing your team&apos;s work</p>
+          <p className="text-[#52525b] text-sm font-medium mt-1">Start managing your team&apos;s work</p>
         </div>
 
         <Card className="p-8">
@@ -95,7 +95,7 @@ export default async function SignupPage({
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-[#86868b] font-medium">
+          <p className="mt-6 text-center text-xs text-[#52525b] font-medium">
             Already have an account?{' '}
             <a href="/" className="font-black text-[#0051e6] hover:underline">Sign in</a>
           </p>

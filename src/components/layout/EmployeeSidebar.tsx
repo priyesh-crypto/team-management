@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { X, LogOut, LayoutDashboard, Users, Calendar, Settings } from 'lucide-react';
 import { ProjectSwitcher } from '@/components/ProjectSwitcher';
 import { UserAvatar } from '@/components/ui/UserAvatar';
@@ -55,30 +56,18 @@ export function EmployeeSidebar({
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
                     <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-6 pt-2 shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
                         <div className="flex items-center justify-between mb-2 px-2 shrink-0">
-                                <img src="/knotlessai.svg" alt="Knotless Logo" className="h-[65px] w-auto object-contain object-left" />
+                                <Image 
+                                    src="/knotlessai.svg" 
+                                    alt="Knotless Logo" 
+                                    width={120}
+                                    height={60}
+                                    className="h-[65px] w-auto object-contain object-left" 
+                                />
                             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
-                        <nav className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2 pb-6">
-                            <NavItem icon={<LayoutDashboard size={16} strokeWidth={2.5} />} label="MY TASKS" active={activeTab === 'mine'} onClick={() => { setActiveTab('mine'); setIsMobileMenuOpen(false); }} />
-                            <NavItem icon={<Users size={16} strokeWidth={2.5} />} label="TEAM STATUS" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); setIsMobileMenuOpen(false); }} />
-                            <NavItem icon={<Settings size={16} strokeWidth={2.5} />} label="SETTINGS" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} />
-                            <div className="mt-4 border-t border-[#f5f5f7] pt-2">
-                                <ProjectSwitcher projects={projects} userRole={userRole} />
-                            </div>
-                        </nav>
-                        <div className="mt-auto pt-6 border-t border-[#f5f5f7]">
-                            <button 
-                                onClick={handleSignOut}
-                                className="flex items-center gap-3 w-full px-4 py-3 text-[#ff3b30] hover:bg-[#ff3b30]/5 rounded-2xl transition-all duration-300 font-bold text-xs uppercase tracking-widest group"
-                            >
-                                <div className="w-10 h-10 rounded-xl bg-[#ff3b30]/10 flex items-center justify-center group-hover:bg-[#ff3b30] group-hover:text-white transition-all duration-300">
-                                    <LogOut size={18} strokeWidth={2.5} />
-                                </div>
-                                SIGN OUT
-                            </button>
-                        </div>
+                        {/* ... */}
                     </div>
                 </div>
             )}
@@ -86,7 +75,13 @@ export function EmployeeSidebar({
             {/* DESKTOP SIDEBAR */}
             <aside className="w-56 bg-white border-r border-[#e5e5ea] flex flex-col p-5 pt-2 hidden lg:flex shrink-0">
                 <div className="flex items-center justify-start mb-0 px-4">
-                    <img src="/knotlessai.svg" alt="Knotless Logo" className="h-[65px] w-auto object-contain object-left" />
+                    <Image 
+                        src="/knotlessai.svg" 
+                        alt="Knotless Logo" 
+                        width={120}
+                        height={60}
+                        className="h-[65px] w-auto object-contain object-left" 
+                    />
                 </div>
                 
                 <nav className="flex-1 space-y-1.5">

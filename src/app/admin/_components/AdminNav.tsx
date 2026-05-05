@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -43,7 +44,13 @@ export function AdminNav({ userEmail }: { userEmail: string }) {
     return (
         <aside className="fixed left-0 top-0 h-screen w-56 bg-white border-r border-[#e5e5ea] flex flex-col">
             <div className="flex items-center justify-start mb-0 px-4 py-2">
-                <img src="/knotlessai.svg" alt="Knotless Logo" className="h-20 w-auto object-contain" />
+                <Image 
+                    src="/knotlessai.svg" 
+                    alt="Knotless Logo" 
+                    width={160}
+                    height={80}
+                    className="h-20 w-auto object-contain" 
+                />
             </div>
 
             <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">

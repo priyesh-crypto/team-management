@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { X, LayoutDashboard, Target, KanbanSquare, GanttChartSquare, Gauge, BarChart3, Bot, CalendarDays, Users, Settings } from 'lucide-react';
 import { ProjectSwitcher } from '@/components/ProjectSwitcher';
 import { Button } from '@/components/ui/components';
@@ -61,7 +62,13 @@ export function ManagerSidebar({
                     <div className="absolute left-0 top-0 bottom-0 w-72 bg-white p-6 pt-2 shadow-2xl animate-in slide-in-from-left duration-300">
                         <div className="flex items-center justify-between mb-2 px-2 shrink-0">
                             <div className="flex items-center justify-start px-2">
-                                <img src="/knotlessai.svg" alt="Knotless Logo" className="h-[65px] w-auto object-contain object-left" />
+                                <Image 
+                                    src="/knotlessai.svg" 
+                                    alt="Knotless Logo" 
+                                    width={120}
+                                    height={60}
+                                    className="h-[65px] w-auto object-contain object-left" 
+                                />
                             </div>
                             <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 hover:bg-[#f5f5f7] rounded-xl">
                                 <X size={20} />
