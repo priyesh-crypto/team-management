@@ -384,6 +384,16 @@ export function TaskDetailsView({
                                     <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 ml-1">Notes</label>
                                     <textarea value={editData.notes} onChange={e => setEditData({...editData, notes: e.target.value})} className="w-full min-h-[140px] rounded-[20px] bg-slate-50 border border-slate-200 p-5 text-sm font-medium resize-none focus:bg-white transition-all outline-none" />
                                 </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 ml-1">Start Date</label>
+                                        <Input type="date" value={editData.start_date} onChange={e => setEditData({...editData, start_date: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 px-5 text-sm font-bold focus:bg-white transition-all" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 ml-1">Deadline</label>
+                                        <Input type="date" value={editData.deadline} onChange={e => setEditData({...editData, deadline: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 px-5 text-sm font-bold focus:bg-white transition-all" />
+                                    </div>
+                                </div>
                                 <Button onClick={handleSaveEdit} disabled={isSaving} className="w-full h-12 rounded-xl bg-[#0051e6] hover:bg-[#0077ed] text-white font-bold tracking-widest text-[10px] uppercase">
                                     {isSaving ? 'Saving...' : 'Save Changes'}
                                 </Button>

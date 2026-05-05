@@ -488,11 +488,17 @@ export default function ManagerDashboard({
     };
 
     const handleUpdateTask = async (taskId: string) => {
+        const originalTasks = [...tasks];
+        
+        // Optimistic update
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...editTaskData } : t));
+
         try {
             await updateTask(taskId, editTaskData);
             setEditingTaskId(null);
             refreshData(true);
         } catch (err: any) {
+            setTasks(originalTasks);
             toast.error(err.message || "Failed to update task.");
         }
     };

@@ -654,6 +654,8 @@ export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'i
         notes: rawUpdateData.notes ? sanitizeString(rawUpdateData.notes) : undefined,
         project_id: validateId(rawUpdateData.project_id) ? rawUpdateData.project_id : (rawUpdateData.project_id === "" ? null : undefined),
         employee_id: validateId(rawUpdateData.employee_id) ? rawUpdateData.employee_id : (rawUpdateData.employee_id === "" ? null : undefined),
+        start_date: rawUpdateData.start_date || undefined,
+        deadline: rawUpdateData.deadline || undefined,
     };
 
     // Remove undefined fields to avoid accidental updates

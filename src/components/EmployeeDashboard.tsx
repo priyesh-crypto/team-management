@@ -396,11 +396,21 @@ export default function EmployeeDashboard({
     };
 
     const handleUpdateTask = async (taskId: string) => {
+        const originalMyTasks = [...myTasks];
+        const originalAllTasks = [...allTasks];
+        
+        // Optimistic update
+        const updateFn = (taskList: Task[]) => taskList.map(t => t.id === taskId ? { ...t, ...editTaskData } : t);
+        setMyTasks(prev => updateFn(prev));
+        setAllTasks(prev => updateFn(prev));
+
         try {
             await updateTask(taskId, editTaskData);
             setEditingTaskId(null);
             refreshData(true);
         } catch (err: any) {
+            setMyTasks(originalMyTasks);
+            setAllTasks(originalAllTasks);
             toast.error(err.message || "Failed to update task.");
         }
     };
