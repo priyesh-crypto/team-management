@@ -519,7 +519,7 @@ export function EmployeeBoardView({
                     
                     <div className="flex-1 overflow-x-auto pb-6 custom-scrollbar -mx-6 px-6">
                         <div className="flex gap-4 h-full min-w-max">
-                            {['Overdue', 'To Do', 'In Progress', 'Blocked', 'Completed'].map(status => (
+                            {['Overdue', 'To Do', 'In Progress', 'In Review', 'Blocked', 'Completed'].map(status => (
                                 <BoardColumn 
                                     key={status}
                                     title={status} 
@@ -551,7 +551,7 @@ export function EmployeeBoardView({
                         <p className="text-sm opacity-80">Real-time collaboration across the team.</p>
                     </Card>
                     <div className="flex overflow-x-auto pb-6 custom-scrollbar -mx-6 px-6 h-[calc(100vh-260px)] min-h-[400px]">
-                        {['Overdue', 'To Do', 'In Progress', 'Blocked', 'Completed'].map(status => (
+                        {['Overdue', 'To Do', 'In Progress', 'In Review', 'Blocked', 'Completed'].map(status => (
                             <BoardColumn 
                                 key={status}
                                 title={status} 
