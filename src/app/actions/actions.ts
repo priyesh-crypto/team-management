@@ -634,6 +634,8 @@ export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_i
       await Promise.all(operations).catch(err => console.warn("Background operations failed:", err));
     }
 
+    revalidatePath("/dashboard");
+
     return { success: true };
   } catch (err: any) {
     console.error("Unexpected error in saveTask:", err);
@@ -1122,6 +1124,11 @@ export async function updateTaskStatus(taskId: string, status: Status) {
         throw new Error(error.message);
     }
 
+    const previousStatus = task?.status; // This will be the NEW status because of .select().single()
+    // Wait, .update().select().single() returns the NEW row.
+    // To get the OLD status for logging, we'd need to fetch it first or pass it in.
+    // For now, let's at least ensure revalidation happens.
+
     if (task) {
         // Log Activity
         await logActivity({
@@ -1159,6 +1166,8 @@ export async function updateTaskStatus(taskId: string, status: Status) {
     }
 
     // Modal refresh handled by client
+    revalidatePath("/dashboard");
+
 }
 
 export async function updateTaskPriority(taskId: string, priority: Priority) {
@@ -1176,6 +1185,8 @@ export async function updateTaskPriority(taskId: string, priority: Priority) {
         console.error("Error updating task priority:", error);
         throw new Error(error.message);
     }
+
+    revalidatePath('/dashboard');
 
     if (task) {
         await logActivity({

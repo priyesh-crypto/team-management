@@ -296,6 +296,7 @@ export function ManagerBoardView({
   formatTaskDate
 }: ManagerBoardViewProps) {
   const isOverdue = (t: Task) => !!(t.status === 'Overdue' || (t.deadline && new Date(t.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && t.status !== 'Completed'));
+  const isOverdueForColumn = (t: Task) => isOverdue(t) && t.status === 'To Do';
 
   return (
     <div className="space-y-6">
@@ -424,7 +425,7 @@ export function ManagerBoardView({
         <div className="flex gap-5 min-w-max pb-2">
           <BoardColumn 
             title="OVERDUE" 
-            tasks={tasks.filter(t => isOverdue(t) && (
+            tasks={tasks.filter(t => isOverdueForColumn(t) && (
               t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
               (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
               employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -440,7 +441,7 @@ export function ManagerBoardView({
           />
           <BoardColumn 
             title="TO DO" 
-            tasks={tasks.filter(t => t.status === 'To Do' && !isOverdue(t) && (
+            tasks={tasks.filter(t => t.status === 'To Do' && !isOverdueForColumn(t) && (
               t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
               (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
               employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -456,7 +457,7 @@ export function ManagerBoardView({
           />
           <BoardColumn 
             title="IN PROGRESS" 
-            tasks={tasks.filter(t => t.status === 'In Progress' && !isOverdue(t) && (
+            tasks={tasks.filter(t => t.status === 'In Progress' && !isOverdueForColumn(t) && (
               t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
               (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
               employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -472,7 +473,7 @@ export function ManagerBoardView({
           />
           <BoardColumn 
             title="IN REVIEW" 
-            tasks={tasks.filter(t => t.status === 'In Review' && !isOverdue(t) && (
+            tasks={tasks.filter(t => t.status === 'In Review' && !isOverdueForColumn(t) && (
               t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
               (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
               employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -488,7 +489,7 @@ export function ManagerBoardView({
           />
           <BoardColumn 
             title="BLOCKED" 
-            tasks={tasks.filter(t => t.status === 'Blocked' && !isOverdue(t) && (
+            tasks={tasks.filter(t => t.status === 'Blocked' && !isOverdueForColumn(t) && (
               t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
               (t.notes || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
               employees.find(p => p.id === t.employee_id)?.name?.toLowerCase().includes(searchQuery.toLowerCase())

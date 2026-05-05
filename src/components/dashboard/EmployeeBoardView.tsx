@@ -474,7 +474,8 @@ export function EmployeeBoardView({
         setMounted(true);
     }, []);
 
-    const isOverdue = (t: Task) => t.status === 'Overdue' || (t.deadline && new Date(t.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && t.status !== 'Completed');
+    const isOverdue = (t: Task) => (t.status === 'Overdue' || (t.deadline && new Date(t.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0))) && t.status !== 'Completed';
+    const isOverdueForColumn = (t: Task) => isOverdue(t) && t.status === 'To Do';
 
     if (activeTab === 'settings' || activeTab === 'schedule') return null;
 
@@ -523,8 +524,8 @@ export function EmployeeBoardView({
                                     key={status}
                                     title={status} 
                                     tasks={myTasks.filter(t => {
-                                        if (status === 'Overdue') return isOverdue(t);
-                                        return t.status === status && !isOverdue(t);
+                                        if (status === 'Overdue') return isOverdueForColumn(t);
+                                        return t.status === status && !isOverdueForColumn(t);
                                     })} 
                                     subtasksMap={subtasksMap} 
                                     employees={employees} 
@@ -555,7 +556,7 @@ export function EmployeeBoardView({
                                 key={status}
                                 title={status} 
                                 tasks={allTasks.filter(t => {
-                                    const matchesStatus = (status === 'Overdue') ? isOverdue(t) : (t.status === status && !isOverdue(t));
+                                    const matchesStatus = (status === 'Overdue') ? isOverdueForColumn(t) : (t.status === status && !isOverdueForColumn(t));
                                     return matchesStatus && t.employee_id !== userId;
                                 })} 
                                 subtasksMap={subtasksMap} 

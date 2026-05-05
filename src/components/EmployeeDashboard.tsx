@@ -291,9 +291,24 @@ export default function EmployeeDashboard({
 
     const handleUpdateStatusFromModal = async (taskId: string, status: Status) => {
         setIsUpdatingStatus(true);
+        const originalMyTasks = [...myTasks];
+        const originalAllTasks = [...allTasks];
+        
+        // Optimistic update
+        const updateFn = (taskList: Task[]) => taskList.map(t => t.id === taskId ? { ...t, status } : t);
+        setMyTasks(prev => updateFn(prev));
+        setAllTasks(prev => updateFn(prev));
+        if (taskForSheet && taskForSheet.id === taskId) {
+            setTaskForSheet({ ...taskForSheet, status });
+        }
+
         try {
             await updateTaskStatus(taskId, status);
             await refreshData();
+        } catch (error) {
+            setMyTasks(originalMyTasks);
+            setAllTasks(originalAllTasks);
+            toast.error("Failed to update status");
         } finally {
             setIsUpdatingStatus(false);
         }
@@ -301,9 +316,24 @@ export default function EmployeeDashboard({
 
     const handleUpdatePriorityFromModal = async (taskId: string, priority: Priority) => {
         setIsUpdatingStatus(true);
+        const originalMyTasks = [...myTasks];
+        const originalAllTasks = [...allTasks];
+
+        // Optimistic update
+        const updateFn = (taskList: Task[]) => taskList.map(t => t.id === taskId ? { ...t, priority } : t);
+        setMyTasks(prev => updateFn(prev));
+        setAllTasks(prev => updateFn(prev));
+        if (taskForSheet && taskForSheet.id === taskId) {
+            setTaskForSheet({ ...taskForSheet, priority });
+        }
+
         try {
             await updateTaskPriority(taskId, priority);
             await refreshData();
+        } catch (error) {
+            setMyTasks(originalMyTasks);
+            setAllTasks(originalAllTasks);
+            toast.error("Failed to update priority");
         } finally {
             setIsUpdatingStatus(false);
         }

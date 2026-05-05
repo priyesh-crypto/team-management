@@ -610,18 +610,29 @@ export default function ManagerDashboard({
 
     const handleUpdateStatusFromModal = async (taskId: string, status: Status) => {
         setIsUpdatingStatus(true);
+        const originalTasks = [...tasks];
+        
+        // Optimistic update
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
+        if (selectedTask && selectedTask.task.id === taskId) {
+            setSelectedTask({ ...selectedTask, task: { ...selectedTask.task, status } });
+        }
+
         try {
             await updateTaskStatus(taskId, status);
             const { tasks: refreshedTasks } = await refreshData();
             
-            // Update selected task in modal if it's the same one
+            // Final sync for selected task in modal
             if (selectedTask && selectedTask.task.id === taskId) {
-                const updatedTask = (refreshedTasks as Task[]).find((t: Task) => t.id === taskId); // Use the freshly fetched tasks
+                const updatedTask = (refreshedTasks as Task[]).find((t: Task) => t.id === taskId);
                 if (updatedTask) {
-                    const subtasks = await getSubtasks(taskId); // Re-fetch subtasks for the updated task
+                    const subtasks = await getSubtasks(taskId);
                     setSelectedTask({ task: updatedTask, subtasks: subtasks });
                 }
             }
+        } catch (error) {
+            setTasks(originalTasks);
+            toast.error("Failed to update status");
         } finally {
             setIsUpdatingStatus(false);
         }
@@ -629,6 +640,14 @@ export default function ManagerDashboard({
     
     const handleUpdatePriorityFromModal = async (taskId: string, priority: Priority) => {
         setIsUpdatingStatus(true);
+        const originalTasks = [...tasks];
+
+        // Optimistic update
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, priority } : t));
+        if (selectedTask && selectedTask.task.id === taskId) {
+            setSelectedTask({ ...selectedTask, task: { ...selectedTask.task, priority } });
+        }
+
         try {
             await updateTaskPriority(taskId, priority);
             const { tasks: refreshedTasks } = await refreshData();
@@ -640,6 +659,9 @@ export default function ManagerDashboard({
                     setSelectedTask({ task: updatedTask, subtasks: subtasks });
                 }
             }
+        } catch (error) {
+            setTasks(originalTasks);
+            toast.error("Failed to update priority");
         } finally {
             setIsUpdatingStatus(false);
         }
