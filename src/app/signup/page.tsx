@@ -49,7 +49,7 @@ export default async function SignupPage({
       password,
       options: {
         data: { name, role: 'manager' },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://team-management-pink-three.vercel.app'}/auth/callback`,
       },
     });
 

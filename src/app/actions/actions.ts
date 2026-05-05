@@ -739,7 +739,7 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
         }
 
         // 2. Send Email
-        const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${invite.token}`;
+        const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://team-management-pink-three.vercel.app'}/invite/${invite.token}`;
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'Knotless Team <onboarding@resend.dev>';
 
         if (resend) {
@@ -1066,7 +1066,7 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
         
         const supabase = await createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/update-password`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://team-management-pink-three.vercel.app'}/auth/update-password`,
     });
 
     if (error) {
@@ -1346,7 +1346,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
     const subject = `(Task Management) - System just completed the ${isLastSubtask ? 'last ' : ''}sub-task in "${task.name}" - ${currentSubtask?.name || 'Subtask'}`;
     
     const assigneeNames = allAssignees.map(p => p.name).join(', ');
-    const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}`;
+    const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://team-management-pink-three.vercel.app'}`;
 
     const html = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e5ea; border-radius: 16px; overflow: hidden; background-color: #ffffff; color: #1d1d1f;">
