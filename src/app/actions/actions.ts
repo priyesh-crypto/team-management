@@ -2299,11 +2299,12 @@ export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: str
         if (mErr || !memberProfiles || memberProfiles.length === 0) return {};
 
         const userIds = memberProfiles.map((p: any) => p.id);
-        const members = memberProfiles.map((p: any) => ({
-            user_id: p.id,
-            profileName: p.name,
-            avatarUrl: p.avatar_url
-        }));
+        const members: { user_id: string; profileName: string; avatarUrl: string | null }[] =
+            memberProfiles.map((p: any) => ({
+                user_id: p.id,
+                profileName: p.name,
+                avatarUrl: p.avatar_url ?? null,
+            }));
 
         const todayStr = now.toISOString().split('T')[0];
 

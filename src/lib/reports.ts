@@ -259,6 +259,10 @@ export function computeByMember(tasks: RawTask[], members: MemberRow[]) {
                     t.status !== "Completed"
             ).length;
             const hours = mt.reduce((s, t) => s + (Number(t.hours_spent) || 0), 0);
+            const active = mt.filter(t => t.status !== "Completed").length;
+            const score = (overdue * 3) + active;
+            const burnoutRisk: 'High' | 'Medium' | 'Low' =
+                score > 15 ? 'High' : score > 8 ? 'Medium' : 'Low';
             return {
                 user_id: m.user_id,
                 name: m.profiles?.name || m.user_id.slice(0, 6) + "...",
@@ -268,6 +272,7 @@ export function computeByMember(tasks: RawTask[], members: MemberRow[]) {
                 overdue,
                 hours: Math.round(hours),
                 completionRate: mt.length > 0 ? Math.round((completed / mt.length) * 100) : 0,
+                burnoutRisk,
             };
         })
         .sort((a, b) => b.total - a.total);

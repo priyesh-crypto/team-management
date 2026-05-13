@@ -6,6 +6,7 @@ import { AlertTriangle, Zap, ArrowRight } from 'lucide-react';
 import { predictTaskStatus } from '@/utils/predictive-engine';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/UserAvatar';
+import type { Task, Subtask, Profile } from '@/app/actions/actions';
 
 interface Props {
     tasks: Task[];

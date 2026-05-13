@@ -87,6 +87,6 @@ export async function GET(req: NextRequest) {
         activityByType: computeActivityByType(activityLogs),
         overdueList: computeOverdueList(tasks, members),
         memberEfficiency: computeMemberEfficiency(tasks, members),
-        roi: await calculateProjectAnalytics(tasks)
+        roi: await calculateProjectAnalytics(tasks as any)
     });
 }

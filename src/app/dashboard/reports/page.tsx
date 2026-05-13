@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { getEntitlement, hasFeature } from "@/lib/entitlements";
 import { ReportsDashboard } from "./ReportsDashboard";
+import { calculateProjectAnalytics } from "@/app/actions/analytics";
 import {
     filterByRange,
     computeStats,
@@ -108,7 +109,10 @@ export default async function ReportsPage({
         count: tasks.filter(t => t.priority === p).length,
     }));
 
-    const baseStats = computeStats(tasks, members.length, workspaces.length, projects.length);
+    const [baseStats, roi] = await Promise.all([
+        Promise.resolve(computeStats(tasks, members.length, workspaces.length, projects.length)),
+        calculateProjectAnalytics(tasks as any),
+    ]);
     const sparklines = computeSparklines(allTasks, 4);
 
     return (
@@ -129,6 +133,7 @@ export default async function ReportsPage({
             activityByType={computeActivityByType(activityLogs)}
             overdueList={computeOverdueList(tasks, members)}
             memberEfficiency={computeMemberEfficiency(tasks, members)}
+            roi={roi}
         />
     );
 }
