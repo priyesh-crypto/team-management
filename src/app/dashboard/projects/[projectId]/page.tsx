@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import DashboardContainer from '@/components/DashboardContainer';
 import { redirect } from 'next/navigation';
+import { getActiveBanner } from '@/app/admin/actions-system-config';
 
 export default async function ProjectPage({
   params,
@@ -23,6 +24,7 @@ export default async function ProjectPage({
   if (!mData) redirect('/');
 
   const orgName = (mData.organizations as any)?.name || 'Your Workspace';
+  const initialBanner = await getActiveBanner();
 
   return (
     <DashboardContainer
@@ -33,6 +35,7 @@ export default async function ProjectPage({
       orgName={orgName}
       orgId={mData.org_id}
       projectId={projectId}
+      initialBanner={initialBanner}
     />
   );
 }

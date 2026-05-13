@@ -44,6 +44,20 @@ export async function getSprintTasks(sprintId: string): Promise<SprintTask[]> {
     return (data ?? []) as SprintTask[];
 }
 
+export async function getBacklogTasks(orgId: string, workspaceId?: string): Promise<SprintTask[]> {
+    const supabase = await createClient();
+    let q = supabase
+        .from("tasks")
+        .select("id, name, status, priority, story_points, employee_id")
+        .eq("org_id", orgId)
+        .is("sprint_id", null)
+        .neq("status", "Completed")
+        .order("created_at", { ascending: false });
+    if (workspaceId) q = q.eq("workspace_id", workspaceId);
+    const { data } = await q;
+    return (data ?? []) as SprintTask[];
+}
+
 export async function createSprint(orgId: string, workspaceId: string, name: string, goal: string, startDate: string, endDate: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

@@ -17,6 +17,7 @@ import {
     computeByWorkspace,
     computeMemberEfficiency,
 } from "@/lib/reports";
+import { calculateProjectAnalytics } from "@/app/actions/analytics";
 
 export async function GET(req: NextRequest) {
     const supabase = await createClient();
@@ -86,5 +87,6 @@ export async function GET(req: NextRequest) {
         activityByType: computeActivityByType(activityLogs),
         overdueList: computeOverdueList(tasks, members),
         memberEfficiency: computeMemberEfficiency(tasks, members),
+        roi: await calculateProjectAnalytics(tasks)
     });
 }

@@ -9,6 +9,8 @@ import { Resend } from 'resend'
 import { formatDistanceToNow, format } from 'date-fns'
 import crypto from 'crypto'
 import { sanitizeString, validateEmail, validateId, validatePasswordStrength, checkFileSecurity } from "@/utils/security"
+import { getEntitlement, canAddSeat, canCreateProject } from "@/lib/entitlements"
+import { inngest } from "@/inngest/client"
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -40,6 +42,7 @@ export type Task = {
     status: Status
     notes: string
     created_at: string
+    updated_at?: string
 }
 
 export type Subtask = {
@@ -224,67 +227,32 @@ export const requireOrgContext = cache(async () => {
     };
 });
 
-export async function getProfiles(projectId?: string, providedAuthUsers?: any[], providedOrgId?: string): Promise<Profile[]> {
-    const supabase = await createClient()
-    
+export async function getProfiles(projectId?: string, _providedAuthUsers?: any[], providedOrgId?: string): Promise<Profile[]> {
+    const supabase = await createClient();
+
     let orgId = providedOrgId;
     try {
         if (!orgId) {
             const context = await requireOrgContext();
             orgId = context.orgId;
         }
-    } catch (e) {
-        return []; // If not logged in or no org, return empty
-    }
-
-    // 1. Get members (Either organization-wide or project-specific)
-    let query = supabase
-        .from(projectId ? 'project_members' : 'organization_members')
-        .select('user_id, role')
-        .eq(projectId ? 'project_id' : 'org_id', projectId || orgId);
-
-    const { data: members, error: memError } = await query;
-
-    if (memError || !members) {
-        console.error("[getProfiles] error:", memError);
-        return [];
-    }
-    
-    console.log(`[getProfiles] found ${members.length} members for project ${projectId || 'org'}`);
-    
-    const userIds = members.map(m => m.user_id);
-    if (userIds.length === 0) {
-        console.log("[getProfiles] userIds is empty");
+    } catch {
         return [];
     }
 
-    // 2. Fetch profiles from database
-    const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', userIds);
-    
-    if (error) {
-        console.error("[getProfiles] profiles error:", error);
-    }
-
-    // 3. Fetch emails from Auth for these users (since profiles.email might be missing)
-    // REMOVED listUsers() for performance. Relying on profiles table for email.
-    let authUsers: any[] = providedAuthUsers || [];
-
-    // Use MEMBERS as the source of truth to ensure everyone is listed
-    return members.map(m => {
-        const p = (profiles || []).find(prof => prof.id === m.user_id);
-        const a = authUsers.find(au => au.id === m.user_id);
-        
-        return {
-            id: m.user_id,
-            name: p?.name || 'Team Member',
-            email: p?.email || a?.email || '',
-            role: p?.role || m.role || 'employee',
-            avatar_url: p?.avatar_url || null
-        } as Profile;
+    // Single SQL JOIN via RPC — replaces two round-trips + O(N×M) Node.js mapping.
+    // Function: public.get_member_profiles(p_org_id, p_project_id)
+    const { data, error } = await supabase.rpc('get_member_profiles', {
+        p_org_id:     orgId,
+        p_project_id: projectId ?? null,
     });
+
+    if (error || !data) {
+        console.error("[getProfiles] rpc error:", error);
+        return [];
+    }
+
+    return data as Profile[];
 }
 
 
@@ -452,9 +420,16 @@ export async function createProject(input: {
         .select('role')
         .eq('id', userId)
         .single();
-    
+
     if (profile?.role !== 'manager') {
         throw new Error("Unauthorized: Only managers can create projects.");
+    }
+
+    // Quota enforcement: verify org has not exceeded plan project limit
+    const entitlement = await getEntitlement(orgId);
+    if (entitlement) {
+        const quota = canCreateProject(entitlement);
+        if (!quota.ok) throw new Error(`Project limit reached: ${quota.reason}. Upgrade your plan to create more projects.`);
     }
 
     const { data: project, error } = await supabase
@@ -643,6 +618,19 @@ export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_i
   }
 }
 
+export async function updateTaskAssignee(taskId: string, newEmployeeId: string) {
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('tasks')
+        .update({ employee_id: newEmployeeId })
+        .eq('id', taskId)
+
+    if (error) throw new Error(error.message)
+    
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
 export async function updateTask(taskId: string, taskData: Partial<Omit<Task, 'id' | 'created_at' | 'org_id' | 'workspace_id'>>) {
     const { userId, orgId } = await requireOrgContext();
     const supabase = await createClient()
@@ -707,6 +695,13 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
             return { success: false, error: "Unauthorized to invite members." };
         }
 
+        // Quota enforcement: verify org has not exceeded purchased seat limit
+        const entitlement = await getEntitlement(orgId);
+        if (entitlement) {
+            const quota = canAddSeat(entitlement);
+            if (!quota.ok) return { success: false, error: `Seat limit reached: ${quota.reason}. Upgrade your plan to invite more members.` };
+        }
+
         if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
             console.error("Missing SUPABASE_SERVICE_ROLE_KEY");
             return { success: false, error: "Server configuration error: Missing Service Role Key." };
@@ -742,61 +737,27 @@ export async function inviteMember(email: string, role: string): Promise<{ succe
             return { success: false, error: "Failed to process invitation: " + inviteError.message };
         }
 
-        // 2. Send Email
+        // 2. Dispatch email via Inngest (background) — returns in ~5 ms instead of ~500 ms.
         const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://team-management-pink-three.vercel.app'}/invite/${invite.token}`;
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'Knotless Team <onboarding@resend.dev>';
 
-        if (resend) {
-            // Fetch org name for the email
-            const { data: org } = await supabaseAdmin.from('organizations').select('name').eq('id', orgId).single();
-            const orgName = org?.name || "an organization";
+        const { data: org } = await supabaseAdmin.from('organizations').select('name').eq('id', orgId).single();
+        const orgName = org?.name || "an organization";
 
-            try {
-                const { error } = await resend.emails.send({
-                    from: fromEmail,
-                    to: email,
-                    subject: `You have been invited to join ${orgName}`,
-                    html: `
-                        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #e1e1e1; border-radius: 12px;">
-                            <h2 style="color: #1d1d1f; margin-bottom: 24px;">You've been invited!</h2>
-                            <p style="color: #424245; line-height: 1.5;">You have been invited to join <strong>${orgName}</strong> as a <strong>${role}</strong>.</p>
-                            <p style="color: #424245; line-height: 1.5; margin-bottom: 32px;">Click the button below to set up your account and get started:</p>
-                            <a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0051e6; color: white; text-decoration: none; border-radius: 980px; font-weight: 600; font-size: 14px;">Accept Invitation</a>
-                            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e1e1e1;">
-                                <p style="font-size: 12px; color: #86868b; line-height: 1.4;">If you're having trouble clicking the button, copy and paste this URL into your browser:<br/>${inviteUrl}</p>
-                                <p style="font-size: 12px; color: #86868b; margin-top: 12px;">If you didn't expect this invitation, you can safely ignore this email.</p>
-                            </div>
-                        </div>
-                    `
-                });
+        // Fire-and-forget: Inngest retries up to 3x on failure; no SMTP latency in the request path.
+        await inngest.send({
+            name: "member/invited",
+            data: { email, orgName, invitedBy: userId, orgId, inviteUrl, role },
+        });
 
-                if (error) {
-                    console.error("Resend error detail:", error);
-                    let errorMsg = error.message;
-                    if (fromEmail.includes('onboarding@resend.dev') && !errorMsg.includes('authorized')) {
-                        errorMsg += " (Note: Using onboarding@resend.dev - ensure recipient is authorized in Resend dashboard)";
-                    }
-                    return { success: false, error: `Email failed: ${errorMsg}. MANUALLY: ${inviteUrl}` };
-                }
+        await logActivity({
+            org_id:    orgId,
+            actor_id:  userId,
+            type:      'member_invited',
+            description: `Invited ${email} as ${role}`,
+            metadata:  { email, role },
+        });
 
-                await logActivity({
-                    org_id: orgId,
-                    actor_id: userId,
-                    type: 'member_invited',
-                    description: `Invited ${email} as ${role}`,
-                    metadata: { email, role }
-                });
-
-                return { success: true };
-            } catch (e: any) {
-                console.error("Failed to send invite email:", e);
-                // Return success: false because the PRIMARY goal (inviting via email) failed
-                return { success: false, error: `Invitation record created, but email failed. PLEASE SHARE MANUALLY: ${inviteUrl}` };
-            }
-        } else {
-            console.warn("Resend is not configured. Invite URL:", inviteUrl);
-            return { success: false, error: `Email service not configured. PLEASE SHARE MANUALLY: ${inviteUrl}` };
-        }
+        return { success: true };
     } catch (err: any) {
         console.error("Unexpected error in inviteMember:", err);
         return { success: false, error: err.message || "An unexpected error occurred." };
@@ -812,6 +773,13 @@ export async function addMemberDirectly(data: { name: string, email: string, rol
         const { userId, orgId, role: currentUserRole } = await requireOrgContext();
         if (currentUserRole !== 'owner' && currentUserRole !== 'admin' && currentUserRole !== 'manager') {
             return { success: false, error: "Unauthorized to add members." };
+        }
+
+        // Quota enforcement: same gate as inviteMember
+        const entitlement = await getEntitlement(orgId);
+        if (entitlement) {
+            const quota = canAddSeat(entitlement);
+            if (!quota.ok) return { success: false, error: `Seat limit reached: ${quota.reason}. Upgrade your plan to add more members.` };
         }
 
         if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -2322,65 +2290,39 @@ export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: str
             days.push(d.toISOString().split('T')[0]);
         }
 
-        // 2. Fetch Members — two-step because organization_members.user_id references
-        //    auth.users, not profiles, so PostgREST has no FK path for an embedded join.
-        let membershipQuery = supabase
-            .from('organization_members')
-            .select('user_id')
-            .eq('org_id', orgId);
-
-        if (projectId && projectId !== 'all') {
-            const { data: projMembers } = await supabase
-                .from('project_members')
-                .select('user_id')
-                .eq('project_id', projectId);
-            const pids = (projMembers || []).map((m: any) => m.user_id);
-            if (pids.length === 0) return {};
-            membershipQuery = membershipQuery.in('user_id', pids);
-        }
-
-        const { data: memberships, error: mErr } = await membershipQuery;
-        if (mErr || !memberships || memberships.length === 0) return {};
-
-        const userIds = memberships.map((m: any) => m.user_id);
-
-        // Step 2: fetch names + avatar from profiles
-        const { data: profileRows } = await supabase
-            .from('profiles')
-            .select('id, name, avatar_url')
-            .in('id', userIds);
-
-        const profileMap: Record<string, { name: string; avatar_url: string | null }> = {};
-        (profileRows || []).forEach((p: any) => {
-            profileMap[p.id] = { name: p.name || 'Unknown', avatar_url: p.avatar_url || null };
+        // 1. Fetch Members using the high-performance RPC
+        const { data: memberProfiles, error: mErr } = await supabase.rpc('get_member_profiles', {
+            p_org_id: orgId,
+            p_project_id: (projectId && projectId !== 'all') ? projectId : null
         });
 
-        // Shim: keep same shape the rest of the function expects
-        const members = userIds.map((uid: string) => ({
-            user_id: uid,
-            profileName: profileMap[uid]?.name || 'Unknown',
-            avatarUrl: profileMap[uid]?.avatar_url || null
+        if (mErr || !memberProfiles || memberProfiles.length === 0) return {};
+
+        const userIds = memberProfiles.map((p: any) => p.id);
+        const members = memberProfiles.map((p: any) => ({
+            user_id: p.id,
+            profileName: p.name,
+            avatarUrl: p.avatar_url
         }));
+
         const todayStr = now.toISOString().split('T')[0];
 
-        // 3. Fetch Subtasks (Historical) and Active Tasks (Future) in parallel
-        const [subtasksRes, tasksRes] = await Promise.all([
-            supabase.from('subtasks').select('employee_id, date_logged, hours_spent, task_id').in('employee_id', userIds).gte('date_logged', days[0]).lte('date_logged', days[6]),
+        // 3. Fetch Historical Data (from Materialized View) and Active Tasks (Future) in parallel
+        const [historicalRes, tasksRes] = await Promise.all([
+            supabase.from('workload_summary').select('employee_id, date_logged, task_count, total_hours').in('employee_id', userIds).gte('date_logged', days[0]).lte('date_logged', days[6]),
             supabase.from('tasks').select('id, employee_id, start_date, deadline, priority, status').in('employee_id', userIds).neq('status', 'Completed').filter('deadline', 'gte', days[0]).filter('start_date', 'lte', days[6])
         ]);
 
-        const subtasks = subtasksRes.data || [];
+        const historicalData = historicalRes.data || [];
         const activeTasks = tasksRes.data || [];
 
-        // 4. Pre-process subtasks into a Map for O(1) lookup: Map<userId_dayStr, subtask[]>
-        const subtasksByMemberAndDay = new Map<string, any[]>();
-        subtasks.forEach(s => {
-            const key = `${s.employee_id}_${s.date_logged}`;
-            if (!subtasksByMemberAndDay.has(key)) subtasksByMemberAndDay.set(key, []);
-            subtasksByMemberAndDay.get(key)!.push(s);
+        // 4. Pre-process historical data into a Map for O(1) lookup
+        const historyMap = new Map<string, any>();
+        historicalData.forEach(h => {
+            historyMap.set(`${h.employee_id}_${h.date_logged}`, h);
         });
 
-        // 5. Pre-process active tasks into a Map for O(1) lookup: Map<userId, task[]>
+        // 5. Pre-process active tasks into a Map for O(1) lookup
         const tasksByMember = new Map<string, any[]>();
         activeTasks.forEach(t => {
             if (!tasksByMember.has(t.employee_id)) tasksByMember.set(t.employee_id, []);
@@ -2393,18 +2335,17 @@ export async function getWorkloadHeatmap(projectId?: string, providedOrgId?: str
             const uid = m.user_id;
             const name = m.profileName;
             result[uid] = { name, avatar_url: m.avatarUrl, days: {} };
-            
             const memberTasks = tasksByMember.get(uid) || [];
 
             days.forEach(dayStr => {
-                const sToday = subtasksByMemberAndDay.get(`${uid}_${dayStr}`) || [];
-                const hours = sToday.reduce((sum, s) => sum + (Number(s.hours_spent) || 0), 0);
-                
                 let tasksCount = 0;
+                let hours = 0;
                 let urgency = 0;
 
-                if (dayStr < todayStr) {
-                    tasksCount = new Set(sToday.map(s => s.task_id)).size;
+                if (dayStr <= todayStr) {
+                    const h = historyMap.get(`${uid}_${dayStr}`);
+                    hours = Number(h?.total_hours) || 0;
+                    tasksCount = Number(h?.task_count) || 0;
                     urgency = hours > 0 ? 1 : 0;
                 } else {
                     const dayTasks = memberTasks.filter(t => {

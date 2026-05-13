@@ -66,6 +66,7 @@ interface Props {
         overdue: number;
         hours: number;
         completionRate: number;
+        burnoutRisk: 'Low' | 'Medium' | 'High';
     }[];
     byProject: {
         id: string;
@@ -93,6 +94,12 @@ interface Props {
         status: string;
     }[];
     memberEfficiency: { name: string; tasks: number; hours: number; completionRate: number }[];
+    roi: {
+        projectedLoss: number;
+        velocityScore: number;
+        teamPredictability: number;
+        estimatedCompletionDate: string;
+    };
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -125,6 +132,7 @@ const TABS = [
     { id: "team", label: "Team", icon: Users },
     { id: "projects", label: "Projects", icon: FolderOpen },
     { id: "risk", label: "Risk", icon: Shield },
+    { id: "intelligence", label: "Intelligence", icon: Zap },
     { id: "activity", label: "Activity", icon: Activity },
 ];
 
@@ -908,7 +916,7 @@ function ProjectsTab({ byProject, byWorkspace }: Pick<Props, "byProject" | "byWo
 
 // ─── Tab: Risk ────────────────────────────────────────────────────────────────
 
-function RiskTab({ priorityStatusMatrix, overdueList }: Pick<Props, "priorityStatusMatrix" | "overdueList">) {
+function RiskTab({ priorityStatusMatrix, overdueList, byMember }: Pick<Props, "priorityStatusMatrix" | "overdueList" | "byMember">) {
     const priorities = ["Urgent", "High", "Medium", "Low"];
     const statuses = ["To Do", "In Progress", "In Review", "Blocked", "Completed"];
     const matrixMax = Math.max(...priorityStatusMatrix.map(c => c.count), 1);
@@ -921,8 +929,60 @@ function RiskTab({ priorityStatusMatrix, overdueList }: Pick<Props, "prioritySta
             : 0,
     }));
 
+    const highRiskMembers = byMember?.filter(m => m.burnoutRisk === 'High' || m.burnoutRisk === 'Medium') || [];
+
     return (
         <div className="space-y-6">
+            {/* Burnout Risk Analysis */}
+            <SectionCard 
+                title="Burnout Risk Analysis" 
+                subtitle="Members identified as high risk based on task density and overdue items"
+                className="bg-gradient-to-r from-white to-[#fff5f5]"
+            >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {highRiskMembers.length > 0 ? (
+                        highRiskMembers.map(m => (
+                            <div key={m.user_id} className="p-4 rounded-2xl bg-white border border-[#ff3b30]/10 shadow-sm flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${m.burnoutRisk === 'High' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : 'bg-[#f5a623]/10 text-[#f5a623]'}`}>
+                                        {m.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h4 className="text-[12px] font-bold text-[#1d1d1f]">{m.name}</h4>
+                                        <p className="text-[9px] text-[#86868b] uppercase font-black tracking-widest">{m.burnoutRisk} Risk</p>
+                                    </div>
+                                </div>
+                                <div className="text-right flex flex-col items-end gap-2">
+                                    <div>
+                                        <div className="flex items-center gap-1 text-[#ff3b30] mb-1">
+                                            <AlertTriangle size={12} />
+                                            <span className="text-[11px] font-bold">{m.overdue} Overdue</span>
+                                        </div>
+                                        <p className="text-[10px] text-[#86868b]">{m.total} Active Tasks</p>
+                                    </div>
+                                    <button 
+                                        className="px-3 py-1.5 bg-[#0051e6] text-white rounded-lg text-[10px] font-bold hover:bg-[#0041b3] transition-all flex items-center gap-1.5"
+                                        onClick={() => {
+                                            // Dispatch custom event or callback to parent
+                                            window.dispatchEvent(new CustomEvent('open-rebalancer', { detail: { memberId: m.user_id, name: m.name } }));
+                                        }}
+                                    >
+                                        <Zap size={10} fill="white" />
+                                        Rebalance
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full py-8 text-center bg-[#f5f5f7] rounded-2xl">
+                            <Shield className="mx-auto mb-2 text-[#22be66]" size={24} />
+                            <p className="text-[11px] font-bold text-[#1d1d1f]">All clear! No burnout risks detected.</p>
+                            <p className="text-[9px] text-[#86868b]">Team velocity and workload are within healthy limits.</p>
+                        </div>
+                    )}
+                </div>
+            </SectionCard>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* Priority × Status Matrix */}
                 <SectionCard title="Priority × Status Matrix" subtitle="Task count at each intersection — hover for details">
@@ -978,7 +1038,7 @@ function RiskTab({ priorityStatusMatrix, overdueList }: Pick<Props, "prioritySta
                 </SectionCard>
 
                 {/* Overdue by Priority */}
-                <SectionCard title="Overdue by Priority" subtitle="Count and average days overdue">
+                <SectionCard title="Overdue by Priority" subtitle="Tasks past deadline grouped by impact level">
                     <div className="h-56">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={overdueByPriority}>
@@ -1296,7 +1356,7 @@ export function ReportsDashboard(props: Props) {
 
     const { stats, byStatus, byPriority, byMember, byProject, byWorkspace,
         weeklyTrend, dailyActivity, cycleTimeBuckets, agingBuckets, funnelData,
-        priorityStatusMatrix, activityByType, overdueList, memberEfficiency } = data;
+        priorityStatusMatrix, activityByType, overdueList, memberEfficiency, roi } = data;
 
     const handleExport = () => {
         const rows: (string | number)[][] = [
@@ -1337,6 +1397,104 @@ export function ReportsDashboard(props: Props) {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+    };
+
+    // ─── Tab: Intelligence ────────────────────────────────────────────────────────
+    const IntelligenceTab = ({ roi }: { roi: Props['roi'] }) => {
+        return (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <SectionCard title="Financial Impact" subtitle="Estimated cost of task delays">
+                        <div className="flex flex-col items-center justify-center py-6">
+                            <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center text-red-600 mb-4">
+                                <AlertTriangle size={32} />
+                            </div>
+                            <h4 className="text-3xl font-black text-[#1d1d1f] tracking-tighter">
+                                ${roi.projectedLoss.toLocaleString()}
+                            </h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Projected Loss</p>
+                        </div>
+                        <div className="space-y-2 mt-4">
+                            <div className="flex items-center justify-between text-[10px]">
+                                <span className="font-bold text-slate-500">Based on Hourly Rate</span>
+                                <span className="font-black text-slate-900">$50/hr</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: roi.projectedLoss > 0 ? '75%' : '0%' }}
+                                    className="h-full bg-red-500"
+                                />
+                            </div>
+                        </div>
+                    </SectionCard>
+
+                    <SectionCard title="Velocity Score" subtitle="Team's current momentum">
+                        <div className="flex flex-col items-center justify-center py-6">
+                            <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mb-4">
+                                <Zap size={32} />
+                            </div>
+                            <h4 className="text-3xl font-black text-[#1d1d1f] tracking-tighter">
+                                {Math.round(roi.velocityScore)}/100
+                            </h4>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Efficiency Index</p>
+                        </div>
+                        <div className="space-y-2 mt-4">
+                            <div className="flex items-center justify-between text-[10px]">
+                                <span className="font-bold text-slate-500">Relative to Capacity</span>
+                                <span className="font-black text-slate-900">{Math.round(roi.velocityScore)}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${roi.velocityScore}%` }}
+                                    className="h-full bg-blue-500"
+                                />
+                            </div>
+                        </div>
+                    </SectionCard>
+
+                    <SectionCard title="Predictability" subtitle="Accuracy of delivery estimates">
+                        <div className="flex flex-col items-center justify-center py-6">
+                            <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-4">
+                                <CheckCircle2 size={32} />
+                            </div>
+                            <h4 className="text-3xl font-black text-[#1d1d1f] tracking-tighter">
+                                {Math.round(roi.teamPredictability)}%
+                            </h4>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Confidence Score</p>
+                        </div>
+                        <div className="space-y-2 mt-4">
+                            <div className="flex items-center justify-between text-[10px]">
+                                <span className="font-bold text-slate-500">Deadline Adherence</span>
+                                <span className="font-black text-slate-900">{Math.round(roi.teamPredictability)}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${roi.teamPredictability}%` }}
+                                    className="h-full bg-emerald-500"
+                                />
+                            </div>
+                        </div>
+                    </SectionCard>
+                </div>
+
+                <SectionCard title="Delivery Projection" subtitle="Estimated days until full project completion">
+                    <div className="h-64 flex flex-col items-center justify-center bg-[#f5f5f7]/30 rounded-[32px]">
+                        <div className="text-center space-y-2">
+                            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Predicted Buffer</h5>
+                            <p className="text-7xl font-black text-[#0051e6] tracking-tighter">
+                                {roi.estimatedCompletionDate} Days
+                            </p>
+                            <p className="text-[11px] font-bold text-slate-500 max-w-sm mx-auto">
+                                Analysis suggests current task volume will be cleared within this window at present velocity.
+                            </p>
+                        </div>
+                    </div>
+                </SectionCard>
+            </div>
+        );
     };
 
     return (
@@ -1430,7 +1588,10 @@ export function ReportsDashboard(props: Props) {
                         <ProjectsTab byProject={byProject} byWorkspace={byWorkspace} />
                     )}
                     {activeTab === "risk" && (
-                        <RiskTab priorityStatusMatrix={priorityStatusMatrix} overdueList={overdueList} />
+                        <RiskTab priorityStatusMatrix={priorityStatusMatrix} overdueList={overdueList} byMember={byMember} />
+                    )}
+                    {activeTab === "intelligence" && (
+                        <IntelligenceTab roi={roi} />
                     )}
                     {activeTab === "activity" && (
                         <ActivityTab dailyActivity={dailyActivity} activityByType={activityByType} />

@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server';
 import DashboardContainer from '@/components/DashboardContainer';
 import { redirect } from 'next/navigation';
 import { getDashboardData } from '@/app/actions/actions';
+import { getActiveBanner } from '@/app/admin/actions-system-config';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -23,8 +24,11 @@ export default async function DashboardPage() {
 
   const orgName = (mData.organizations as any)?.name || 'Your Workspace';
   
-  // 2. Prefetch dashboard data with provided context to avoid redundancy
-  const initialData = await getDashboardData(undefined, mData.org_id, user.id);
+  // 2. Prefetch dashboard data + active banner in parallel
+  const [initialData, initialBanner] = await Promise.all([
+    getDashboardData(undefined, mData.org_id, user.id),
+    getActiveBanner(),
+  ]);
 
   // Source avatar from initialData.profiles — same path used by board/team views (avoids cache staleness)
   const myProfile = (initialData?.profiles as any[])?.find((p: any) => p.id === user.id);
@@ -39,6 +43,7 @@ export default async function DashboardPage() {
       orgName={orgName}
       orgId={mData.org_id}
       initialData={initialData}
+      initialBanner={initialBanner}
     />
   );
 }

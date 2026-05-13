@@ -11,6 +11,11 @@ export type AutomationRule = {
     trigger_config: Record<string, unknown>;
     action_type: string;
     action_config: Record<string, unknown>;
+    conditions?: Array<{
+        field: string;
+        operator: 'eq' | 'neq' | 'contains' | 'gt' | 'lt';
+        value: string;
+    }>;
     run_count: number;
     last_run_at: string | null;
     created_at: string;

@@ -135,7 +135,10 @@ function BoardColumn({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 onClick={() => onTaskClick(task)}
-                className="group relative bg-white rounded-3xl p-5 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-[#0c64ef]/5 hover:-translate-y-1 transition-all duration-500 cursor-pointer overflow-hidden"
+                className={cn(
+                  "group relative bg-white rounded-3xl p-5 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-[#0c64ef]/5 hover:-translate-y-1 transition-all duration-500 cursor-pointer overflow-hidden",
+                  task.status === 'Blocked' && "grayscale opacity-70"
+                )}
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-[#0c64ef]/[0.02] rounded-full -mr-10 -mt-10 group-hover:bg-[#0c64ef]/[0.05] transition-colors" />
                 
@@ -296,7 +299,7 @@ export function ManagerBoardView({
   formatTaskDate
 }: ManagerBoardViewProps) {
   const isOverdue = (t: Task) => !!(t.status === 'Overdue' || (t.deadline && new Date(t.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0) && t.status !== 'Completed'));
-  const isOverdueForColumn = (t: Task) => isOverdue(t) && t.status === 'To Do';
+  const isOverdueForColumn = (t: Task) => isOverdue(t) && t.status !== 'Blocked';
 
   return (
     <div className="space-y-6">

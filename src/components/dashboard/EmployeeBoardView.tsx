@@ -284,7 +284,10 @@ function BoardColumn({
                                 animate={{ opacity: 1, y: 0 }}
                                 whileHover={{ y: -3, boxShadow: "0 8px 24px -4px rgba(0,0,0,0.06)" }} 
                                 onClick={() => onTaskClick(task)} 
-                                className="p-4 rounded-[20px] bg-white border border-slate-100/80 cursor-pointer shadow-sm relative group transition-all duration-500"
+                                className={cn(
+                                    "p-4 rounded-[20px] bg-white border border-slate-100/80 cursor-pointer shadow-sm relative group transition-all duration-500",
+                                    task.status === 'Blocked' && "grayscale opacity-70"
+                                )}
                             >
                                 <div className="space-y-3">
                                     <div className="flex items-start justify-between">
@@ -475,7 +478,7 @@ export function EmployeeBoardView({
     }, []);
 
     const isOverdue = (t: Task) => (t.status === 'Overdue' || (t.deadline && new Date(t.deadline).setHours(0,0,0,0) < new Date().setHours(0,0,0,0))) && t.status !== 'Completed';
-    const isOverdueForColumn = (t: Task) => isOverdue(t) && t.status === 'To Do';
+    const isOverdueForColumn = (t: Task) => isOverdue(t) && t.status !== 'Blocked';
 
     if (activeTab === 'settings' || activeTab === 'schedule') return null;
 
@@ -556,9 +559,10 @@ export function EmployeeBoardView({
                                 key={status}
                                 title={status} 
                                 tasks={allTasks.filter(t => {
-                                    const matchesStatus = (status === 'Overdue') ? isOverdueForColumn(t) : (t.status === status && !isOverdueForColumn(t));
+                                    const isOverdueTask = isOverdue(t);
+                                    const matchesStatus = (status === 'Overdue') ? (isOverdueTask && t.status !== 'Blocked') : (t.status === status && !(isOverdueTask && t.status !== 'Blocked'));
                                     return matchesStatus && t.employee_id !== userId;
-                                })} 
+                                })}
                                 subtasksMap={subtasksMap} 
                                 employees={employees} 
                                 onTaskClick={openTaskSheet} 

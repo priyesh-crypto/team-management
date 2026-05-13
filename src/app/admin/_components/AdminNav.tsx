@@ -17,6 +17,8 @@ import {
     Activity,
     ScrollText,
     LogOut,
+    Settings2,
+    FileText,
     type LucideIcon,
 } from "lucide-react";
 
@@ -32,6 +34,8 @@ const NAV: { href: string; label: string; icon: LucideIcon }[] = [
     { href: "/admin/support", label: "Support", icon: LifeBuoy },
     { href: "/admin/gdpr", label: "GDPR", icon: ShieldCheck },
     { href: "/admin/system", label: "System Health", icon: Activity },
+    { href: "/admin/system-config", label: "System Config", icon: Settings2 },
+    { href: "/admin/content", label: "Content / Legal", icon: FileText },
     { href: "/admin/audit", label: "Audit Log", icon: ScrollText },
 ];
 

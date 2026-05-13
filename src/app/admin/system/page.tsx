@@ -1,5 +1,6 @@
 import { getSystemHealth } from "../actions-tier3";
 import { PageHeader, Card, SectionLabel } from "../_components/ui";
+import { MaintenancePanel } from "./MaintenancePanel";
 import Link from "next/link";
 
 function HealthDot({ ok }: { ok: boolean }) {
@@ -98,6 +99,9 @@ export default async function SystemPage() {
                     </div>
                 </Card>
             )}
+
+            {/* DB Control Center */}
+            <MaintenancePanel />
 
             {/* Recent admin activity */}
             {Object.keys(health.recentActions).length > 0 && (

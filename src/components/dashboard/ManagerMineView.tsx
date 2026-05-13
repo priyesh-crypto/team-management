@@ -491,6 +491,7 @@ export function ManagerMineView({
                                     <option value="In Progress">In Progress</option>
                                     <option value="In Review">In Review</option>
                                     <option value="Blocked">Blocked</option>
+                                    <option value="Overdue">Overdue</option>
                                     <option value="Completed">Completed</option>
                                 </Select>
                             </div>

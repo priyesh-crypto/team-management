@@ -138,6 +138,29 @@ export async function stopTimer(entryId: string): Promise<TimeEntry> {
     return data as TimeEntry;
 }
 
+/**
+ * Returns all open (not yet stopped) time entries for the current user as a
+ * map of { taskId → started_at ISO string } so the UI can restore live timer
+ * state from Supabase instead of localStorage on every mount.
+ */
+export async function getMyRunningTimers(): Promise<Record<string, { entryId: string; startedAt: string }>> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return {};
+
+    const { data } = await supabase
+        .from("time_entries")
+        .select("id, task_id, started_at")
+        .eq("user_id", user.id)
+        .is("stopped_at", null);
+
+    const result: Record<string, { entryId: string; startedAt: string }> = {};
+    for (const row of data ?? []) {
+        result[row.task_id] = { entryId: row.id, startedAt: row.started_at };
+    }
+    return result;
+}
+
 export async function getTotalTrackedHours(taskId: string): Promise<number> {
     const supabase = await createClient();
     const { data } = await supabase

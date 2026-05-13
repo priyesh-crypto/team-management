@@ -1,7 +1,8 @@
 "use client";
 
-import React from 'react';
 import dynamic from 'next/dynamic';
+import { DashboardStoreProvider } from '@/lib/dashboard-store';
+import { GlobalBanner } from '@/components/GlobalBanner';
 
 const EmployeeDashboard = dynamic(() => import('@/components/EmployeeDashboard'), {
   loading: () => <div className="fixed inset-0 bg-white flex items-center justify-center font-bold text-slate-400">Loading Dashboard...</div>,
@@ -20,6 +21,7 @@ interface DashboardContainerProps {
   orgId: string;
   projectId?: string;
   initialData?: any;
+  initialBanner?: { id: string; title: string; body: string } | null;
 }
 
 export default function DashboardContainer({
@@ -29,31 +31,37 @@ export default function DashboardContainer({
   userAvatarUrl,
   orgId,
   projectId,
-  initialData
+  initialData,
+  initialBanner = null,
 }: DashboardContainerProps) {
   return (
-    <div className="min-h-screen bg-[#f8f9fb]">
-      {userRole === 'employee' ? (
-        <EmployeeDashboard
-          userId={userId}
-          userName={userName}
-          userRole={userRole}
-          userAvatarUrl={userAvatarUrl}
-          projectId={projectId}
-          orgId={orgId}
-          initialData={initialData}
-        />
-      ) : (
-        <ManagerDashboard
-          userId={userId}
-          userName={userName}
-          userRole={userRole}
-          userAvatarUrl={userAvatarUrl}
-          projectId={projectId}
-          orgId={orgId}
-          initialData={initialData}
-        />
-      )}
-    </div>
+    <DashboardStoreProvider initialData={initialData} projectId={projectId}>
+      <div className="min-h-screen bg-[#f8f9fb] flex flex-col">
+        <GlobalBanner banner={initialBanner} />
+        <div className="flex-1">
+          {userRole === 'employee' ? (
+            <EmployeeDashboard
+              userId={userId}
+              userName={userName}
+              userRole={userRole}
+              userAvatarUrl={userAvatarUrl}
+              projectId={projectId}
+              orgId={orgId}
+              initialData={initialData}
+            />
+          ) : (
+            <ManagerDashboard
+              userId={userId}
+              userName={userName}
+              userRole={userRole}
+              userAvatarUrl={userAvatarUrl}
+              projectId={projectId}
+              orgId={orgId}
+              initialData={initialData}
+            />
+          )}
+        </div>
+      </div>
+    </DashboardStoreProvider>
   );
 }

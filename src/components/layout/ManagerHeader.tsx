@@ -21,7 +21,10 @@ interface ManagerHeaderProps {
     clearNotifications: () => Promise<void>;
     setActiveTab: (tab: any) => void;
     setShowAssignModal: (show: boolean) => void;
+    onOpenVoiceCommand: () => void;
 }
+
+import { Mic } from 'lucide-react';
 
 export function ManagerHeader({
     isMobileMenuOpen,
@@ -40,7 +43,8 @@ export function ManagerHeader({
     refreshData,
     clearNotifications,
     setActiveTab,
-    setShowAssignModal
+    setShowAssignModal,
+    onOpenVoiceCommand
 }: ManagerHeaderProps) {
     return (
         <header className="h-14 bg-white/80 backdrop-blur-md border-b border-[#e5e5ea] flex items-center justify-between px-6 lg:px-6 sticky top-0 z-[40]">
@@ -89,12 +93,20 @@ export function ManagerHeader({
                     />
                 </div>
 
-                <button 
-                    className="rounded-xl h-9 px-5 bg-black text-white font-black text-[9px] tracking-[0.2em] shadow-lg shadow-black/10 hover:bg-[#1d1d1f] transition-all hover:-translate-y-0.5 active:scale-95 uppercase" 
-                    onClick={() => setShowAssignModal(true)}
-                >
-                    + Create task
-                </button>
+                <div className="flex items-center gap-2">
+                    <button 
+                        onClick={onOpenVoiceCommand}
+                        className="w-10 h-10 rounded-xl bg-[#0051e6] text-white flex items-center justify-center shadow-lg hover:bg-[#005bb7] transition-all active:scale-95"
+                    >
+                        <Mic size={18} />
+                    </button>
+                    <button 
+                        className="rounded-xl h-10 px-5 bg-black text-white font-black text-[9px] tracking-[0.2em] shadow-lg shadow-black/10 hover:bg-[#1d1d1f] transition-all hover:-translate-y-0.5 active:scale-95 uppercase" 
+                        onClick={() => setShowAssignModal(true)}
+                    >
+                        + Create task
+                    </button>
+                </div>
 
                 <div className="relative" ref={notificationRef}>
                     <button 

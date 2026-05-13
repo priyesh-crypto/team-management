@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from 'next/dynamic';
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Task, Subtask, Profile, Priority, Status, Project, getTasks, saveTask, saveSubtask, inviteMember, addMemberDirectly, updateEmployeeProfile, updateUserPassword, updateTaskPriority, updateTaskStatus, deleteTask, deleteSubtask, getSubtasks, updateTask, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, Notification, deleteEmployee, sendAlert, updateSubtask, updateSubtaskStatus, WorkloadMap, ActivityLog, getOrgActivityFeed, logout, syncOverdueTasks, getDashboardData } from '@/app/actions/actions';
 import { formatAuditEntry } from '@/utils/audit-formatters';
+import { format } from 'date-fns';
 import { Card, Select, Badge, Button, Input } from '@/components/ui/components';
 import { TaskDetailsModal } from '@/components/ui/TaskDetailsModal';
 import { ManagerSidebar } from './layout/ManagerSidebar';
@@ -28,6 +29,16 @@ const WorkloadHeatmap = dynamic(() => import('@/components/WorkloadHeatmap').the
     loading: () => <div className="h-64 w-full animate-pulse bg-slate-100 rounded-2xl flex items-center justify-center font-bold text-slate-400">Loading Workload...</div>
 });
 import { Pencil, Trash2, Clock } from 'lucide-react';
+import TaskRebalancer from "./dashboard/TaskRebalancer";
+import { OverloadAlerts } from './dashboard/OverloadAlerts';
+import { SmartCalendar } from './features/SmartCalendar';
+import { VoiceCommandModal } from './dashboard/VoiceCommand';
+import { MorningBriefingWidget } from './dashboard/MorningBriefing';
+import { generateMorningBriefingAction, MorningBriefing } from '@/app/actions/briefing';
+import { calculateProjectAnalytics, ROIMetrics } from '@/app/actions/analytics';
+import { processVoiceCommandAction } from '@/app/actions/voice';
+import { startTimer, stopTimer, getMyRunningTimers } from '@/app/actions/time-tracker';
+import { useDashboardStore } from '@/lib/dashboard-store';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { toast } from 'sonner';
 import { createClient } from '@/utils/supabase/client';
@@ -73,25 +84,19 @@ export default function ManagerDashboard({
         mainRef.current?.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     }, [activeTab]);
 
-    // Data State
-    const [tasks, setTasks] = useState<Task[]>(initialData?.tasks || []); // This will hold all tasks
-    const [employees, setEmployees] = useState<Profile[]>(initialData?.profiles || []); // organization wide
-    const [projectMembers, setProjectMembers] = useState<Profile[]>(initialData?.projectMembers || []); // project specific
-    const [projects, setProjects] = useState<Project[]>(initialData?.projects || []);
+    // ── Supabase-backed store (single source of truth for shared data) ──────────
+    const { state: storeState, dispatch: storeDispatch, refresh: storeRefresh } = useDashboardStore();
+    const tasks = storeState.tasks;
+    const employees = storeState.profiles;
+    const projectMembers = storeState.projectMembers;
+    const projects = storeState.projects;
+    const subtasksMap = storeState.subtasksMap;
+    const commentCounts = storeState.commentCounts;
+    const attachmentCounts = storeState.attachmentCounts;
+    const auditLogs = storeState.logs;
+
+    // Local loading state for initial skeleton (store.isLoading covers refresh cycles)
     const [loading, setLoading] = useState(!initialData);
-    const [subtasksMap, setSubtasksMap] = useState<Record<string, Subtask[]>>(() => {
-        const map: Record<string, Subtask[]> = {};
-        if (initialData?.subtasks) {
-            initialData.subtasks.forEach((st: Subtask) => {
-                if (!map[st.task_id]) map[st.task_id] = [];
-                map[st.task_id].push(st);
-            });
-        }
-        return map;
-    });
-    const [commentCounts, setCommentCounts] = useState<Record<string, number>>(initialData?.counts?.comments || {});
-    const [attachmentCounts, setAttachmentCounts] = useState<Record<string, number>>(initialData?.counts?.attachments || {});
-    const [auditLogs, setAuditLogs] = useState<ActivityLog[]>(initialData?.logs || []);
 
     // Profile State (profile editing is handled by SettingsView)
     const [profileName] = useState(userName);
@@ -103,10 +108,10 @@ export default function ManagerDashboard({
     const [inviteResult, setInviteResult] = useState<{type: 'error' | 'success', text: string} | null>(null);
     const [editingEmpId, setEditingEmpId] = useState<string | null>(null);
     const [editEmpForm, setEditEmpForm] = useState({ name: '', role: 'employee', password: '', email: '' });
-    const [notifications, setNotifications] = useState<Notification[]>(initialData?.notifications || []);
+    const notifications = storeState.notifications;
     const [showNotifications, setShowNotifications] = useState(false);
     const unreadCount = notifications.filter(n => !n.is_read).length;
-    const [workloadData, setWorkloadData] = useState<WorkloadMap>(initialData?.workload || {});
+    const workloadData = storeState.workload;
     const [showBroadcastModal, setShowBroadcastModal] = useState(false);
     const [broadcastForm, setBroadcastForm] = useState({ message: '', type: 'system' as 'urgent' | 'system' });
     const [isBroadcasting, setIsBroadcasting] = useState(false);
@@ -142,6 +147,15 @@ export default function ManagerDashboard({
 
     // Assign Task State (used in a modal or side panel later maybe, but for now in board)
     const [showAssignModal, setShowAssignModal] = useState(false);
+    const [showVoiceCommand, setShowVoiceCommand] = useState(false);
+    const [morningBriefing, setMorningBriefing] = useState<MorningBriefing | null>(null);
+    const [briefingLoading, setBriefingLoading] = useState(false);
+    const [roiMetrics, setRoiMetrics] = useState<ROIMetrics>({
+        projectedLoss: 0,
+        velocityScore: 0,
+        teamPredictability: 0,
+        estimatedCompletionDate: "0"
+    });
     const [assignForm, setAssignForm] = useState<Partial<Task>>({
         name: '',
         employee_id: '',
@@ -166,7 +180,10 @@ export default function ManagerDashboard({
         hours_spent: 0,
         assignee_ids: [] as string[]
     });
+    // { taskId → startedAt ISO } — seeded from Supabase on mount, not localStorage
     const [activeTimers, setActiveTimers] = useState<Record<string, string>>({});
+    // { taskId → time_entry id } — needed to stop the correct Supabase entry
+    const [activeTimerEntryIds, setActiveTimerEntryIds] = useState<Record<string, string>>({});
     const [now, setNow] = useState(new Date());
     const [isSavingLog, setIsSavingLog] = useState(false);
     const [logError, setLogError] = useState<string | null>(null);
@@ -183,24 +200,27 @@ export default function ManagerDashboard({
     const debouncedRefresh = (silent = true) => {
         if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
         refreshTimeoutRef.current = setTimeout(() => {
-            refreshData(silent);
+            fetchDashboardData(silent);
         }, 500);
     };
 
+    // Seed running timers from Supabase on mount (cross-device consistent)
     useEffect(() => {
-        const saved = localStorage.getItem('activeTimers');
-        if (saved) {
-            try {
-                setActiveTimers(JSON.parse(saved));
-            } catch (e) {
-                console.error("Error loading timers:", e);
+        getMyRunningTimers().then(running => {
+            const timers: Record<string, string> = {};
+            const entryIds: Record<string, string> = {};
+            for (const [taskId, { entryId, startedAt }] of Object.entries(running)) {
+                timers[taskId] = startedAt;
+                entryIds[taskId] = entryId;
             }
-        }
+            if (Object.keys(timers).length > 0) {
+                setActiveTimers(timers);
+                setActiveTimerEntryIds(entryIds);
+            }
+        }).catch(() => {
+            // If the fetch fails, timers simply start empty — no crash
+        });
     }, []);
-
-    useEffect(() => {
-        localStorage.setItem('activeTimers', JSON.stringify(activeTimers));
-    }, [activeTimers]);
 
     const [mounted, setMounted] = useState(false);
 
@@ -212,6 +232,20 @@ export default function ManagerDashboard({
         const interval = setInterval(() => setNow(new Date()), 60000);
         return () => clearInterval(interval);
     }, [initialData]);
+
+    const handleVoiceCommand = async (text: string) => {
+        try {
+            const res = await processVoiceCommandAction(text, projectId || '');
+            if (res.success) {
+                toast.success(`AI Executed: ${res.intent.replace('_', ' ')} ${res.taskName ? `"${res.taskName}"` : ""}`);
+                fetchDashboardData(true);
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to process voice command");
+            throw err;
+        }
+    };
 
     const formatTaskDate = (dateStr: string) => {
         if (!dateStr) return null;
@@ -234,7 +268,7 @@ export default function ManagerDashboard({
     };
 
     useEffect(() => {
-        if (!initialData) refreshData();
+        if (!initialData) fetchDashboardData();
 
         // Initialize Supabase client for real-time
         const supabase = createClient();
@@ -270,67 +304,65 @@ export default function ManagerDashboard({
         };
     }, []);
 
+    const [isRebalancerOpen, setIsRebalancerOpen] = useState(false);
+    const [rebalanceMemberId, setRebalanceMemberId] = useState<string | null>(null);
+    const [rebalanceMemberName, setRebalanceMemberName] = useState<string | null>(null);
+
+    useEffect(() => {
+        const handleOpenRebalancer = (e: any) => {
+            const { memberId, name } = e.detail;
+            setRebalanceMemberId(memberId);
+            setRebalanceMemberName(name);
+            setIsRebalancerOpen(true);
+        };
+        window.addEventListener('open-rebalancer', handleOpenRebalancer);
+        return () => window.removeEventListener('open-rebalancer', handleOpenRebalancer);
+    }, []);
+
     const refreshAuditLogs = async () => {
         try {
-            // Use existing tasks to get orgId if possible
-            const targetOrgId = tasks[0]?.org_id;
+            const targetOrgId = tasks[0]?.org_id || orgId;
             if (targetOrgId) {
                 const logs = await getOrgActivityFeed(targetOrgId);
-                setAuditLogs(logs);
-                return;
-            }
-            
-            // Fallback to fetching tasks if state is empty
-            const fetchedTasks = await getTasks();
-            if (fetchedTasks.length > 0) {
-                const logs = await getOrgActivityFeed(orgId);
-                setAuditLogs(logs);
+                storeDispatch({ type: 'SET_LOGS', payload: logs });
             }
         } catch (error) {
             console.error("Error fetching audit logs:", error);
         }
     };
 
-    const refreshData = async (silent = true) => {
+    const fetchDashboardData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
         try {
-            // Automatically sync overdue tasks in the database - do this in background
             syncOverdueTasks().catch(err => console.error("Sync error:", err));
 
-            // Use consolidated fetch for better performance
-            const data = await getDashboardData(projectId);
+            // Hydrate the shared store from Supabase; get raw data back for local concerns
+            const data = await storeRefresh(projectId);
             if (!data) return { tasks: [], profiles: [] };
 
-            setTasks(data.tasks);
-            setEmployees(data.profiles);
-            setProjects(data.projects);
-            setProjectMembers(data.projectMembers);
-            setAuditLogs(data.logs);
-            setWorkloadData(data.workload);
-            setNotifications(data.notifications || []);
-
-            // Level 2: Secondary Data (Subtasks, Counts, etc.)
-            const allSubtasks = data.subtasks;
-            const counts = data.counts;
-            
-            // Sync selected task if it's open
+            // Sync the open task modal with the freshly-fetched data
             if (selectedTask) {
                 const refreshedTask = data.tasks.find((t: Task) => t.id === selectedTask.task.id);
                 if (refreshedTask) {
-                    const subtasks = allSubtasks.filter((st: Subtask) => st.task_id === refreshedTask.id);
+                    const subtasks = data.subtasks.filter((st: Subtask) => st.task_id === refreshedTask.id);
                     setSelectedTask({ task: refreshedTask, subtasks });
                 }
             }
 
-            const newMap: Record<string, Subtask[]> = {};
-            allSubtasks.forEach((st: Subtask) => {
-                if (!newMap[st.task_id]) newMap[st.task_id] = [];
-                newMap[st.task_id].push(st);
-            });
-            
-            setSubtasksMap(newMap);
-            setCommentCounts(counts.comments);
-            setAttachmentCounts(counts.attachments);
+            // Morning Briefing (component-local — not shared state)
+            try {
+                if (!silent) setBriefingLoading(true);
+                const briefingData = await generateMorningBriefingAction(userId);
+                setMorningBriefing(briefingData);
+            } catch (err) {
+                console.error("Failed to fetch briefing:", err);
+            } finally {
+                if (!silent) setBriefingLoading(false);
+            }
+
+            // ROI Metrics (component-local)
+            const roi = await calculateProjectAnalytics(data.tasks);
+            setRoiMetrics(roi);
 
             return { tasks: data.tasks, profiles: data.profiles };
         } catch (error) {
@@ -339,7 +371,7 @@ export default function ManagerDashboard({
         } finally {
             setLoading(false);
         }
-    };
+    }, [projectId, selectedTask, storeRefresh]);
 
     // --- Timeline Logic ---
 
@@ -379,8 +411,7 @@ export default function ManagerDashboard({
             employee_id: (newTaskData.employee_id && newTaskData.employee_id !== "") ? newTaskData.employee_id : userId || '',
         };
 
-        const originalTasks = [...tasks];
-        setTasks(prev => [optimisticTask, ...prev]);
+        storeDispatch({ type: 'UPSERT_TASK', payload: optimisticTask });
 
         // Reset form immediately for snappiness
         setLogForm({
@@ -398,15 +429,13 @@ export default function ManagerDashboard({
         try {
             const result = await saveTask(newTaskData);
             if (result.success) {
-                // Successful save, silent refresh will replace temp task with real one
-                await refreshData(true);
+                await fetchDashboardData(true);
             } else {
-                // Rollback
-                setTasks(originalTasks);
+                storeRefresh(projectId); // rollback: re-hydrate from Supabase
                 setLogError(result.error || 'Failed to save task.');
             }
         } catch (err: any) {
-            setTasks(originalTasks);
+            storeRefresh(projectId);
             setLogError(err.message || 'An unexpected error occurred.');
         } finally {
             setIsSavingLog(false);
@@ -423,8 +452,15 @@ export default function ManagerDashboard({
         return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
     };
 
-    const handleStartTimer = (subtaskId: string, _taskId: string) => {
-        setActiveTimers(prev => ({ ...prev, [subtaskId]: new Date().toISOString() }));
+    const handleStartTimer = (subtaskId: string, taskId: string) => {
+        const startedAt = new Date().toISOString();
+        setActiveTimers(prev => ({ ...prev, [subtaskId]: startedAt }));
+        // Persist to Supabase so other devices/refreshes can resume the timer
+        startTimer(taskId).then(entry => {
+            setActiveTimerEntryIds(prev => ({ ...prev, [subtaskId]: entry.id }));
+        }).catch(() => {
+            // Server-side persist failed — UI timer still works, will just miss cross-device sync
+        });
     };
 
     const handleStopTimer = async (subtaskId: string, taskId: string) => {
@@ -473,7 +509,7 @@ export default function ManagerDashboard({
                         start_time: subtask.start_time || formatTime(start),
                         end_time: formatTime(end)
                     });
-                    refreshData(true);
+                    fetchDashboardData(true);
                 } catch (err) {
                     console.error("Failed to update subtask via timer:", err);
                 }
@@ -485,37 +521,42 @@ export default function ManagerDashboard({
             delete next[subtaskId];
             return next;
         });
+
+        // Close the Supabase time entry so other devices see the timer as stopped
+        const entryId = activeTimerEntryIds[subtaskId];
+        if (entryId) {
+            stopTimer(entryId).catch(() => {
+                // Non-fatal — hours were already written to the subtask above
+            });
+            setActiveTimerEntryIds(prev => {
+                const next = { ...prev };
+                delete next[subtaskId];
+                return next;
+            });
+        }
     };
 
     const handleUpdateTask = async (taskId: string) => {
-        const originalTasks = [...tasks];
-        
-        // Optimistic update
-        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...editTaskData } : t));
-
+        storeDispatch({ type: 'PATCH_TASK', payload: { id: taskId, ...editTaskData } });
         try {
             await updateTask(taskId, editTaskData);
             setEditingTaskId(null);
-            refreshData(true);
+            fetchDashboardData(true);
         } catch (err: any) {
-            setTasks(originalTasks);
+            storeRefresh(projectId);
             toast.error(err.message || "Failed to update task.");
         }
     };
 
     const handleToggleSubtask = async (taskId: string, subtaskId: string, is_completed: boolean) => {
+        const existing = subtasksMap[taskId]?.find(s => s.id === subtaskId);
+        if (existing) storeDispatch({ type: 'UPSERT_SUBTASK', payload: { ...existing, is_completed } });
         try {
-            // Optimistic update
-            setSubtasksMap(prev => ({
-                ...prev,
-                [taskId]: (prev[taskId] || []).map(s => s.id === subtaskId ? { ...s, is_completed } : s)
-            }));
-            
             await updateSubtaskStatus(subtaskId, taskId, is_completed);
-            refreshData(true);
+            fetchDashboardData(true);
         } catch (err: any) {
             console.error("Failed to toggle subtask:", err);
-            refreshData(true);
+            storeRefresh(projectId);
         }
     };
 
@@ -531,7 +572,7 @@ export default function ManagerDashboard({
                 employee_id: userId,
                 is_completed: true
             });
-            refreshData(true);
+            fetchDashboardData(true);
         } catch (err: any) {
             toast.error(err.message || "Failed to add work log.");
             throw err;
@@ -541,7 +582,7 @@ export default function ManagerDashboard({
     const handleDeleteSubtaskDirect = async (taskId: string, subtaskId: string, _subtaskName: string) => {
         try {
             await deleteSubtask(subtaskId, taskId);
-            refreshData(true);
+            fetchDashboardData(true);
         } catch (err: any) {
             toast.error(err.message || "Failed to delete work log.");
             throw err;
@@ -565,7 +606,7 @@ export default function ManagerDashboard({
             });
 
             setNewSubtaskData(prev => ({ ...prev, [taskId]: { name: '', hours: 8, date_logged: new Date().toISOString().split('T')[0], start_time: '09:00', end_time: '17:00' } }));
-            refreshData(true);
+            fetchDashboardData(true);
         } catch (err: any) {
             toast.error(err.message || "Failed to add work log.");
         }
@@ -581,7 +622,7 @@ export default function ManagerDashboard({
         try {
             await deleteSubtask(subtaskToDelete.subtaskId, subtaskToDelete.taskId);
             setSubtaskToDelete(null);
-            refreshData(true);
+            fetchDashboardData(true);
         } catch (err: any) {
             console.error("Delete subtask error:", err);
             toast.error(err.message || "Failed to delete subtask.");
@@ -608,7 +649,7 @@ export default function ManagerDashboard({
             });
             setEditingSubtaskId(null);
             setEditSubtaskData({});
-            refreshData(true);
+            fetchDashboardData(true);
         } catch (err: any) {
             toast.error(err.message || "Failed to update work log.");
         }
@@ -616,57 +657,46 @@ export default function ManagerDashboard({
 
     const handleUpdateStatusFromModal = async (taskId: string, status: Status) => {
         setIsUpdatingStatus(true);
-        const originalTasks = [...tasks];
-        
-        // Optimistic update
-        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
-        if (selectedTask && selectedTask.task.id === taskId) {
+        storeDispatch({ type: 'PATCH_TASK', payload: { id: taskId, status } });
+        if (selectedTask?.task.id === taskId) {
             setSelectedTask({ ...selectedTask, task: { ...selectedTask.task, status } });
         }
-
         try {
             await updateTaskStatus(taskId, status);
-            const { tasks: refreshedTasks } = await refreshData();
-            
-            // Final sync for selected task in modal
-            if (selectedTask && selectedTask.task.id === taskId) {
-                const updatedTask = (refreshedTasks as Task[]).find((t: Task) => t.id === taskId);
+            const data = await storeRefresh(projectId);
+            if (selectedTask?.task.id === taskId && data) {
+                const updatedTask = data.tasks.find((t: Task) => t.id === taskId);
                 if (updatedTask) {
-                    const subtasks = await getSubtasks(taskId);
-                    setSelectedTask({ task: updatedTask, subtasks: subtasks });
+                    const subtasks = data.subtasks.filter((s: Subtask) => s.task_id === taskId);
+                    setSelectedTask({ task: updatedTask, subtasks });
                 }
             }
         } catch (error) {
-            setTasks(originalTasks);
+            storeRefresh(projectId);
             toast.error("Failed to update status");
         } finally {
             setIsUpdatingStatus(false);
         }
     };
-    
+
     const handleUpdatePriorityFromModal = async (taskId: string, priority: Priority) => {
         setIsUpdatingStatus(true);
-        const originalTasks = [...tasks];
-
-        // Optimistic update
-        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, priority } : t));
-        if (selectedTask && selectedTask.task.id === taskId) {
+        storeDispatch({ type: 'PATCH_TASK', payload: { id: taskId, priority } });
+        if (selectedTask?.task.id === taskId) {
             setSelectedTask({ ...selectedTask, task: { ...selectedTask.task, priority } });
         }
-
         try {
             await updateTaskPriority(taskId, priority);
-            const { tasks: refreshedTasks } = await refreshData();
-            
-            if (selectedTask && selectedTask.task.id === taskId) {
-                const updatedTask = (refreshedTasks as Task[]).find((t: Task) => t.id === taskId);
+            const data = await storeRefresh(projectId);
+            if (selectedTask?.task.id === taskId && data) {
+                const updatedTask = data.tasks.find((t: Task) => t.id === taskId);
                 if (updatedTask) {
-                    const subtasks = await getSubtasks(taskId);
-                    setSelectedTask({ task: updatedTask, subtasks: subtasks });
+                    const subtasks = data.subtasks.filter((s: Subtask) => s.task_id === taskId);
+                    setSelectedTask({ task: updatedTask, subtasks });
                 }
             }
         } catch (error) {
-            setTasks(originalTasks);
+            storeRefresh(projectId);
             toast.error("Failed to update priority");
         } finally {
             setIsUpdatingStatus(false);
@@ -718,7 +748,7 @@ export default function ManagerDashboard({
             if (result.success) {
                 setInviteResult({ type: 'success', text: `Successfully added ${directAddForm.name}!` });
                 setDirectAddForm({ name: '', email: '', role: 'employee', password: '' });
-                refreshData();
+                fetchDashboardData();
             } else {
                 setInviteResult({ type: 'error', text: result.error || 'Failed to add member.' });
             }
@@ -738,7 +768,7 @@ export default function ManagerDashboard({
                     text: result.error ? `Success: ${result.error}` : `Invitation sent to ${inviteForm.email}` 
                 });
                 setInviteForm({ email: '', role: 'employee' });
-                refreshData(); 
+                fetchDashboardData(); 
             } else {
                 setInviteResult({ type: 'error', text: result.error || 'Failed to send invite.' });
             }
@@ -765,7 +795,7 @@ export default function ManagerDashboard({
             
             setEditingEmpId(null);
             setEditEmpForm({ name: '', role: 'employee', password: '', email: '' });
-            refreshData();
+            fetchDashboardData();
         } catch (err: any) {
             toast.error(err.message || 'An unexpected error occurred.');
         }
@@ -783,7 +813,7 @@ export default function ManagerDashboard({
         setDeletingEmpId(employeeToDelete.id);
         try {
             await deleteEmployee(employeeToDelete.id);
-            setEmployees(prev => prev.filter(emp => emp.id !== employeeToDelete.id));
+            storeDispatch({ type: 'DELETE_PROFILE', payload: employeeToDelete.id });
             setShowEmployeeDeleteConfirm(false);
             setEmployeeToDelete(null);
         } catch (err: any) {
@@ -810,24 +840,18 @@ export default function ManagerDashboard({
         if (!taskToDelete) return;
 
         const taskId = taskToDelete.id;
-        const originalTasks = [...tasks];
         const originalSelectedTask = selectedTask;
 
         setIsDeletingTask(true);
-        // Optimistic Update: Remove from local state immediately
-        setTasks(prev => prev.filter(t => t.id !== taskId));
+        storeDispatch({ type: 'DELETE_TASK', payload: taskId });
         setShowTaskDeleteConfirm(false);
         setTaskToDelete(null);
-        if (selectedTask?.task.id === taskId) {
-            setSelectedTask(null);
-        }
+        if (selectedTask?.task.id === taskId) setSelectedTask(null);
 
         try {
             await deleteTask(taskId);
-            // Real-time subscription will handle the final sync.
         } catch (err: any) {
-            // Rollback on error
-            setTasks(originalTasks);
+            storeRefresh(projectId);
             setSelectedTask(originalSelectedTask);
             toast.error(err.message || "Failed to delete task. Reverting state.");
         } finally {
@@ -858,7 +882,7 @@ export default function ManagerDashboard({
                 status: 'To Do', 
                 notes: '' 
             });
-            refreshData();
+            fetchDashboardData();
         } catch (err: any) {
             setAssignError(err.message || "Error assigning task");
         }
@@ -873,7 +897,7 @@ export default function ManagerDashboard({
             setShowBroadcastModal(false);
             setBroadcastForm({ message: '', type: 'system' });
             toast.success("Broadcast alert sent successfully!");
-            refreshData(true);
+            fetchDashboardData(true);
         } catch (err: any) {
             toast.error("Failed to send broadcast: " + err.message);
         } finally {
@@ -882,20 +906,12 @@ export default function ManagerDashboard({
     };
 
     const handleMarkAsRead = async (n: any) => {
-        // Optimistic Update
-        const originalNotifications = [...notifications];
-        setNotifications((prev: Notification[]) => prev.map(notif => 
-            notif.id === n.id ? { ...notif, is_read: true } : notif
-        ));
-
+        storeDispatch({ type: 'MARK_NOTIFICATION_READ', payload: n.id });
         try {
             if (!n.is_read) {
                 await markNotificationAsRead(n.id);
-                // No need for a full refreshData(true) if real-time is working, 
-                // but we call it anyway to be safe and ensure other data is synced.
                 debouncedRefresh(true);
             }
-            
             if (n.task_id) {
                 const task = tasks.find(t => t.id === n.task_id);
                 if (task) {
@@ -906,29 +922,24 @@ export default function ManagerDashboard({
                     setShowNotifications(false);
                 }
             } else {
-                // If it's just a system notification without a task, maybe close the dropdown?
-                // Actually, let's keep it open so they can see it's marked as read, 
-                // OR close it if they clicked the item.
                 setShowNotifications(false);
             }
         } catch (error) {
             console.error("Error marking notification as read:", error);
-            setNotifications(originalNotifications);
+            storeRefresh(projectId);
             toast.error("Failed to update notification");
         }
     };
 
     const handleClearAll = async () => {
-        const originalNotifications = [...notifications];
-        setNotifications([]); // Optimistic clear
-        
+        storeDispatch({ type: 'CLEAR_NOTIFICATIONS' });
         try {
             await clearNotifications(userId);
             toast.success("Notifications cleared");
             debouncedRefresh(true);
         } catch (error) {
             console.error("Error clearing notifications:", error);
-            setNotifications(originalNotifications);
+            storeRefresh(projectId);
             toast.error("Failed to clear notifications");
         }
     };
@@ -974,28 +985,54 @@ export default function ManagerDashboard({
                     handleMarkAsRead={handleMarkAsRead}
                     markAllNotificationsAsRead={markAllNotificationsAsRead}
                     clearNotifications={handleClearAll}
-                    refreshData={() => refreshData(true)}
+                    refreshData={() => fetchDashboardData(true)}
                     userId={userId}
                     setActiveTab={setActiveTab}
                     setShowAssignModal={setShowAssignModal}
+                    onOpenVoiceCommand={() => setShowVoiceCommand(true)}
                 />
 
                 <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-6 custom-scrollbar">
                     {activeTab === 'board' && (
-                        <ManagerBoardView 
-                            userName={userName}
-                            tasks={tasks}
-                            employees={employees}
-                            subtasksMap={subtasksMap}
-                            commentCounts={commentCounts}
-                            attachmentCounts={attachmentCounts}
-                            boardStats={boardStats}
-                            heatmapData={heatmapData}
-                            searchQuery={searchQuery}
-                            handleTaskClick={handleTaskClick}
-                            handleDeleteTask={handleDeleteTask}
-                            formatTaskDate={formatTaskDate}
-                        />
+                        <div className="space-y-6">
+                            <MorningBriefingWidget 
+                                briefing={morningBriefing}
+                                loading={briefingLoading}
+                                onAction={(type, metadata) => {
+                                    if (type === 'bottleneck' && metadata?.employeeId) {
+                                        setRebalanceMemberId(metadata.employeeId);
+                                        setRebalanceMemberName(employees.find(e => e.id === metadata.employeeId)?.name || 'Member');
+                                        setIsRebalancerOpen(true);
+                                    } else if (type === 'alert') {
+                                        setActiveTab('gantt');
+                                    }
+                                }}
+                            />
+                            <OverloadAlerts 
+                                tasks={tasks} 
+                                subtasksMap={subtasksMap}
+                                employees={employees} 
+                                onRebalance={(id, name) => {
+                                    setRebalanceMemberId(id);
+                                    setRebalanceMemberName(name);
+                                    setIsRebalancerOpen(true);
+                                }} 
+                            />
+                            <ManagerBoardView 
+                                userName={userName}
+                                tasks={tasks}
+                                employees={employees}
+                                subtasksMap={subtasksMap}
+                                commentCounts={commentCounts}
+                                attachmentCounts={attachmentCounts}
+                                boardStats={boardStats}
+                                heatmapData={heatmapData}
+                                searchQuery={searchQuery}
+                                handleTaskClick={handleTaskClick}
+                                handleDeleteTask={handleDeleteTask}
+                                formatTaskDate={formatTaskDate}
+                            />
+                        </div>
                     )}
 
                     {activeTab === 'reports' && (
@@ -1022,17 +1059,26 @@ export default function ManagerDashboard({
                                 byStatus={['To Do', 'In Progress', 'In Review', 'Blocked', 'Completed'].map(s => ({ status: s, count: tasks.filter(t => t.status === s).length }))}
                                 byPriority={['Urgent', 'High', 'Medium', 'Low'].map(p => ({ priority: p, count: tasks.filter(t => t.priority === p).length }))}
                                 byMember={employees.map(e => {
-                                    const mt = tasks.filter(t => t.employee_id === e.id);
+                                    const mt = tasks.filter(t => t.employee_id === e.id && t.status !== 'Blocked');
+                                    const active = mt.filter(t => t.status !== 'Completed');
+                                    const overdue = mt.filter(t => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'Completed').length;
                                     const completed = mt.filter(t => t.status === 'Completed').length;
+                                    
+                                    // Burnout Risk Logic - Ignoring Blocked tasks
+                                    const urgent = active.filter(t => t.priority === 'Urgent' || t.priority === 'High').length;
+                                    const score = (overdue * 3) + active.length + (urgent * 2);
+                                    const burnoutRisk = score > 15 ? 'High' : score > 8 ? 'Medium' : 'Low';
+
                                     return {
                                         user_id: e.id,
                                         name: e.name,
                                         role: e.role || 'employee',
                                         total: mt.length,
                                         completed,
-                                        overdue: mt.filter(t => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'Completed').length,
+                                        overdue,
                                         hours: Math.round(mt.reduce((a, t) => a + (t.hours_spent || 0), 0)),
                                         completionRate: mt.length > 0 ? Math.round((completed / mt.length) * 100) : 0,
+                                        burnoutRisk
                                     };
                                 })}
                                 byProject={[]}
@@ -1060,20 +1106,31 @@ export default function ManagerDashboard({
                                     { label: '14–30d', count: tasks.filter(t => t.status !== 'Completed' && (Date.now() - new Date(t.created_at).getTime()) >= 14 * 86400000 && (Date.now() - new Date(t.created_at).getTime()) < 30 * 86400000).length, color: '#f5a623' },
                                     { label: '30+d', count: tasks.filter(t => t.status !== 'Completed' && (Date.now() - new Date(t.created_at).getTime()) >= 30 * 86400000).length, color: '#ff3b30' },
                                 ]}
-                                funnelData={['To Do', 'In Progress', 'In Review', 'Completed'].map(s => ({
+                                funnelData={['To Do', 'In Progress', 'In Review', 'Blocked', 'Completed'].map(s => ({
                                     name: s,
                                     value: tasks.filter(t => t.status === s).length,
-                                    fill: { 'To Do': '#86868b', 'In Progress': '#0051e6', 'In Review': '#5e5ce6', 'Completed': '#22be66' }[s] ?? '#0051e6',
+                                    fill: { 'To Do': '#86868b', 'In Progress': '#0051e6', 'In Review': '#5e5ce6', 'Blocked': '#ff3b30', 'Completed': '#22be66' }[s] ?? '#0051e6',
                                 }))}
-                                priorityStatusMatrix={[]}
-                                activityByType={[]}
+                                priorityStatusMatrix={['Urgent', 'High', 'Medium', 'Low'].flatMap(p => 
+                                    ['To Do', 'In Progress', 'In Review', 'Blocked', 'Completed'].map(s => ({
+                                        priority: p,
+                                        status: s,
+                                        count: tasks.filter(t => t.priority === p && t.status === s).length
+                                    }))
+                                )}
+                                activityByType={[
+                                    { type: 'INSERT', label: 'Created', count: auditLogs.filter(l => l.type.includes('created')).length },
+                                    { type: 'UPDATE', label: 'Updated', count: auditLogs.filter(l => l.type.includes('updated') || l.type.includes('changed')).length },
+                                    { type: 'DELETE', label: 'Deleted', count: auditLogs.filter(l => l.type.includes('deleted')).length },
+                                ]}
+                                roi={roiMetrics}
                                 overdueList={tasks
-                                    .filter(t => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'Completed')
+                                    .filter(t => (t.deadline && new Date(t.deadline) < new Date() && t.status !== 'Completed') || t.status === 'Overdue')
                                     .map(t => ({
                                         id: t.id,
                                         name: t.name,
                                         priority: t.priority || 'Low',
-                                        daysOverdue: Math.round((Date.now() - new Date(t.deadline).getTime()) / 86400000),
+                                        daysOverdue: t.deadline ? Math.round((Date.now() - new Date(t.deadline).getTime()) / 86400000) : 0,
                                         assignee: employees.find(e => e.id === t.employee_id)?.name || 'Unassigned',
                                         status: t.status,
                                     }))
@@ -1089,6 +1146,27 @@ export default function ManagerDashboard({
                                         completionRate: mt.length > 0 ? Math.round((completed / mt.length) * 100) : 0,
                                     };
                                 }).filter(m => m.tasks > 0 || m.hours > 0)}
+                            />
+                        </div>
+                    )}                    {activeTab === 'planning' && (
+                        <div className="fade-in p-2">
+                            <SmartCalendar 
+                                tasks={tasks}
+                                employees={employees}
+                                onTaskClick={handleTaskClick}
+                                onDateClick={(date) => {
+                                    setAssignForm({ ...assignForm, deadline: format(date, 'yyyy-MM-dd') });
+                                    setShowAssignModal(true);
+                                }}
+                                onUpdateTask={async (id, updates) => {
+                                    try {
+                                        await updateTask(id, updates);
+                                        await fetchDashboardData(true);
+                                        toast.success("AI: Task rescheduled successfully");
+                                    } catch (err) {
+                                        toast.error("Failed to reschedule task");
+                                    }
+                                }}
                             />
                         </div>
                     )}
@@ -1158,7 +1236,7 @@ export default function ManagerDashboard({
                                     employees={projectId ? projectMembers : employees} 
                                     onTaskClick={handleTaskClick}
                                     onEmployeeClick={handleEmployeeActivityClick}
-                                    refreshData={refreshData}
+                                    refreshData={fetchDashboardData}
                                 />
                             </div>
 
@@ -1567,7 +1645,7 @@ export default function ManagerDashboard({
                     isEditable={true}
                     currentUserId={userId}
                     isManager={true}
-                    refreshData={refreshData}
+                    refreshData={fetchDashboardData}
                     onAddSubtask={handleAddSubtaskDirect}
                     onDeleteSubtask={handleDeleteSubtaskDirect}
                     activeTimers={activeTimers}
@@ -1745,6 +1823,17 @@ export default function ManagerDashboard({
                 }
             `}</style>
 
+            {isRebalancerOpen && (
+                <TaskRebalancer 
+                    tasks={tasks}
+                    employees={employees}
+                    memberId={rebalanceMemberId}
+                    memberName={rebalanceMemberName}
+                    onClose={() => setIsRebalancerOpen(false)}
+                    onRebalanceComplete={() => fetchDashboardData(true)}
+                />
+            )}
+
             {/* Global Floating Timer Bar */}
             {Object.keys(activeTimers).length > 0 && (
                 <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-bottom-8 duration-500">
@@ -1777,7 +1866,12 @@ export default function ManagerDashboard({
                     </div>
                 </div>
             )}
+
+            <VoiceCommandModal 
+                isOpen={showVoiceCommand} 
+                onClose={() => setShowVoiceCommand(false)} 
+                onCommand={handleVoiceCommand}
+            />
         </div>
     );
 }
-

@@ -2,7 +2,10 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, CheckCircle2, Circle, Clock, User, Calendar, Flag } from "lucide-react";
-import { Task, Subtask, Profile, getSubtasks } from "@/app/actions/actions";
+import { Task, Subtask, Profile, getSubtasks, updateTask } from "@/app/actions/actions";
+import { autoSprint } from "@/utils/gantt-engine";
+import { Zap, ZapOff, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface GanttTask extends Task {
     depends_on?: string[];
@@ -93,7 +96,33 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
     const [activeTask, setActiveTask] = useState<GanttTask | null>(null);
     const [activeSubtasks, setActiveSubtasks] = useState<Subtask[]>([]);
     const [isLoadingSubtasks, setIsLoadingSubtasks] = useState(false);
+    const [isAutoSprintEnabled, setIsAutoSprintEnabled] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
+
+    const handleDateChange = async (taskId: string, field: 'start_date' | 'deadline', value: string) => {
+        setIsSaving(true);
+        try {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const newStart = field === 'start_date' ? new Date(value) : new Date(task.start_date);
+            const newDeadline = field === 'deadline' ? new Date(value) : new Date(task.deadline);
+
+            if (isAutoSprintEnabled) {
+                const shiftedTasks = autoSprint(tasks, taskId, newStart, newDeadline);
+                // In a real app, we'd batch update these. For now, we'll update the main one and show a preview/toast.
+                await updateTask(taskId, { [field]: value });
+                toast.success("AI: Recalculated project timeline based on dependencies");
+            } else {
+                await updateTask(taskId, { [field]: value });
+            }
+        } catch (err) {
+            toast.error("Failed to update schedule");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -188,6 +217,14 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                                 <ChevronRight size={16} />
                             </button>
                         </div>
+
+                        <button 
+                            onClick={() => setIsAutoSprintEnabled(!isAutoSprintEnabled)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${isAutoSprintEnabled ? 'bg-[#0051e6] text-white shadow-lg shadow-[#0051e6]/20' : 'bg-slate-100 text-slate-400'}`}
+                        >
+                            {isAutoSprintEnabled ? <Zap size={14} fill="currentColor" /> : <ZapOff size={14} />}
+                            Auto-Sprint: {isAutoSprintEnabled ? 'Active' : 'Off'}
+                        </button>
                     </div>
                 </div>
 
@@ -359,25 +396,40 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                             <div>
                                 <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Schedule:</div>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-50/50 border border-emerald-100">
-                                        <Calendar size={12} className="text-emerald-500" />
-                                        <div>
-                                            <div className="text-[8px] font-black text-emerald-500 uppercase">Start</div>
-                                            <div className="text-[10px] font-bold text-emerald-700">
-                                                {new Date(activeTask.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                    <div className="relative group/date">
+                                        <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-50/50 border border-emerald-100 h-full">
+                                            <Calendar size={12} className="text-emerald-500" />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[8px] font-black text-emerald-500 uppercase">Start</div>
+                                                <input 
+                                                    type="date" 
+                                                    value={activeTask.start_date.split('T')[0]}
+                                                    onChange={(e) => handleDateChange(activeTask.id, 'start_date', e.target.value)}
+                                                    className="bg-transparent border-none p-0 text-[10px] font-bold text-emerald-700 w-full focus:ring-0 cursor-pointer"
+                                                />
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 p-2 rounded-xl bg-rose-50/50 border border-rose-100">
-                                        <Flag size={12} className="text-rose-500" />
-                                        <div>
-                                            <div className="text-[8px] font-black text-rose-500 uppercase">Deadline</div>
-                                            <div className="text-[10px] font-bold text-rose-700">
-                                                {new Date(activeTask.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                    <div className="relative group/date">
+                                        <div className="flex items-center gap-2 p-2 rounded-xl bg-rose-50/50 border border-rose-100 h-full">
+                                            <Flag size={12} className="text-rose-500" />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[8px] font-black text-rose-500 uppercase">Deadline</div>
+                                                <input 
+                                                    type="date" 
+                                                    value={activeTask.deadline.split('T')[0]}
+                                                    onChange={(e) => handleDateChange(activeTask.id, 'deadline', e.target.value)}
+                                                    className="bg-transparent border-none p-0 text-[10px] font-bold text-rose-700 w-full focus:ring-0 cursor-pointer"
+                                                />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                                {isSaving && (
+                                    <div className="flex items-center gap-1.5 mt-2 text-[9px] font-black text-[#0051e6] uppercase tracking-widest animate-pulse">
+                                        <Loader2 size={10} className="animate-spin" /> Updating schedule...
+                                    </div>
+                                )}
                             </div>
 
                             {/* Subtasks */}

@@ -92,7 +92,10 @@ export async function getShareLinksForResource(resourceId: string): Promise<Shar
 /** Used by the public /share/[token] route — no auth required */
 export async function resolveShareToken(token: string): Promise<{
     token: ShareToken;
-    resource: Record<string, unknown>;
+    resource: any;
+    tasks?: any[];
+    subtasksMap?: Record<string, any[]>;
+    employees?: any[];
 } | null> {
     const admin = createAdminClient();
 
@@ -106,27 +109,88 @@ export async function resolveShareToken(token: string): Promise<{
     if (!tokenRow) return null;
     if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) return null;
 
-    // Increment view counter (best-effort)
-    admin.from("share_tokens").update({ view_count: (tokenRow.view_count ?? 0) + 1 }).eq("id", tokenRow.id).then(() => {});
+    // Increment view counter
+    await admin.from("share_tokens").update({ view_count: (tokenRow.view_count ?? 0) + 1 }).eq("id", tokenRow.id);
 
-    let resource: Record<string, unknown> | null = null;
+    let resource: any = null;
+    let tasks: any[] = [];
+    let subtasksMap: Record<string, any[]> = {};
+    let employees: any[] = [];
 
     if (tokenRow.resource_type === "project") {
-        const { data } = await admin
-            .from("workspaces")
-            .select("id, name, description, created_at")
+        const { data: project } = await admin
+            .from("projects")
+            .select("*")
             .eq("id", tokenRow.resource_id)
             .single();
-        resource = data as Record<string, unknown> | null;
-    } else if (tokenRow.resource_type === "task") {
-        const { data } = await admin
+        
+        if (!project) return null;
+        resource = project;
+
+        // Fetch tasks
+        const { data: projectTasks } = await admin
             .from("tasks")
-            .select("id, name, notes, status, priority, deadline, start_date")
+            .select("*")
+            .eq("project_id", project.id)
+            .order("deadline", { ascending: true });
+        
+        tasks = projectTasks || [];
+
+        if (tasks.length > 0) {
+            const taskIds = tasks.map(t => t.id);
+            const { data: subtasks } = await admin
+                .from("subtasks")
+                .select("*")
+                .in("task_id", taskIds);
+            
+            subtasks?.forEach(s => {
+                if (!subtasksMap[s.task_id]) subtasksMap[s.task_id] = [];
+                subtasksMap[s.task_id].push(s);
+            });
+
+            // Fetch assignee profiles
+            const allAssigneeIds = Array.from(new Set(tasks.flatMap(t => [t.employee_id, ...(t.assignee_ids || [])])));
+            const { data: profiles } = await admin
+                .from("profiles")
+                .select("id, name, avatar_url")
+                .in("id", allAssigneeIds);
+            
+            employees = profiles || [];
+        }
+    } else if (tokenRow.resource_type === "task") {
+        const { data: task } = await admin
+            .from("tasks")
+            .select("*")
             .eq("id", tokenRow.resource_id)
             .single();
-        resource = data as Record<string, unknown> | null;
+        
+        if (!task) return null;
+        resource = task;
+
+        const { data: subtasks } = await admin
+            .from("subtasks")
+            .select("*")
+            .eq("task_id", task.id);
+        
+        subtasksMap[task.id] = subtasks || [];
+        tasks = [task];
+
+        const allAssigneeIds = Array.from(new Set([task.employee_id, ...(task.assignee_ids || [])]));
+        const { data: profiles } = await admin
+            .from("profiles")
+            .select("id, name, avatar_url")
+            .in("id", allAssigneeIds);
+        
+        employees = profiles || [];
     }
 
     if (!resource) return null;
-    return { token: tokenRow as ShareToken, resource };
+    
+    return { 
+        token: tokenRow as ShareToken, 
+        resource, 
+        tasks, 
+        subtasksMap,
+        employees
+    };
 }
