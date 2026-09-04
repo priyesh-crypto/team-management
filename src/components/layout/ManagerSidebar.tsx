@@ -23,7 +23,7 @@ function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNo
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors duration-300 group ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl group transition-[color,background-color,transform] duration-300 active:scale-[0.97] active:duration-[160ms] ${
                 active
                 ? 'bg-[#0c64ef] text-white shadow-lg shadow-[#0c64ef]/20 font-bold translate-x-1'
                 : 'text-[#6b6b73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] font-bold'

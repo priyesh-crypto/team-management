@@ -102,6 +102,57 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Enter animations.
+
+   12 components already ask for `animate-in fade-in zoom-in-95` and friends —
+   modals, drawers, panels, the calendar. Those are tailwindcss-animate class
+   names, that package is NOT a dependency, and Tailwind v4 does not ship them,
+   so every one of them compiled to nothing and the elements teleported in.
+
+   Rather than add a dependency or edit 12 files, this defines the exact subset
+   in use as a compatible reimplementation: one place to change, and every
+   existing usage starts working with the repo's own easing tokens.
+
+   Only `transform` and `opacity` are animated. Duration comes from Tailwind's
+   own `duration-*` (which sets --tw-duration in v4), so `duration-300` on the
+   markup keeps meaning what it says.
+   --------------------------------------------------------------------------- */
+@keyframes enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform:
+      translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0)
+      scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), 1);
+  }
+}
+
+@utility animate-in {
+  animation-name: enter;
+  animation-duration: var(--tw-duration, 200ms);
+  /* Entering -> ease-out: fast start reads as responsive. */
+  animation-timing-function: var(--tw-enter-ease, var(--ease-out));
+  animation-fill-mode: both;
+}
+
+/* Never scale from 0 — nothing in the real world appears out of nothing. */
+@utility fade-in { --tw-enter-opacity: 0; }
+@utility zoom-in-95 { --tw-enter-scale: 0.95; }
+
+/* Small offsets use the spacing scale, matching tailwindcss-animate. */
+@utility slide-in-from-top-2 { --tw-enter-translate-y: -0.5rem; }
+@utility slide-in-from-bottom-2 { --tw-enter-translate-y: 0.5rem; }
+@utility slide-in-from-bottom-4 { --tw-enter-translate-y: 1rem; }
+@utility slide-in-from-bottom-8 { --tw-enter-translate-y: 2rem; }
+@utility slide-in-from-right-1 { --tw-enter-translate-x: 0.25rem; }
+
+/* Edge-anchored surfaces travel their own full width, so a percentage rather
+   than a pixel offset — and the iOS-style drawer curve instead of ease-out. */
+@utility slide-in-from-left {
+  --tw-enter-translate-x: -100%;
+  --tw-enter-ease: var(--ease-drawer);
+}
+
+/* ---------------------------------------------------------------------------
    Keyboard focus.
 
    83 places in this app set `outline-none`, and a dozen of them never added a
@@ -140,10 +191,18 @@
   }
 
   /* Keep progress indicators moving — they signal liveness. */
-  .animate-spin,
-  [data-keep-motion] {
+  .animate-spin {
     animation-duration: 1s !important;
     animation-iteration-count: infinite !important;
+  }
+
+  /* Progress that tracks a real timer must keep its own duration. The
+     hold-to-confirm fill is the clearest case: the 1.2s hold is enforced by a
+     JS timer either way, so snapping the bar to full would show "done" while
+     the action has not yet fired. */
+  [data-keep-motion] {
+    transition-duration: revert !important;
+    animation-duration: revert !important;
   }
 }
 

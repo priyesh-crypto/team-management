@@ -35,7 +35,11 @@ export function Button({
 
     return (
         <motion.button
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.97 }}
+            // Framer defaults to a spring here, which overshoots on a control
+            // pressed this often. A short ease-out matches the press-feedback
+            // budget (100-160ms) and settles without bounce.
+            transition={{ duration: 0.16, ease: [0.23, 1, 0.32, 1] }}
             className={cn(
                 "px-6 py-3 rounded-2xl font-bold text-[11px] uppercase tracking-[0.18em] transition-colors duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed",
                 variants[variant],

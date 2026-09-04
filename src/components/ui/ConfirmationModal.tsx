@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, Button } from './components';
 import { Trash2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { HoldToConfirmButton } from './HoldToConfirmButton';
 
 interface ConfirmationModalProps {
     isOpen: boolean;
@@ -65,17 +66,26 @@ export function ConfirmationModal({
                         >
                             {cancelText}
                         </Button>
-                        <Button 
-                            variant={variant === 'danger' ? 'danger' : 'primary'}
-                            className={cn(
-                                "h-12 rounded-2xl font-black text-[11px] uppercase tracking-widest border-none shadow-lg",
-                                variant === 'danger' ? "bg-[#ff3b30] hover:bg-[#e03126] shadow-[#ff3b30]/20" : ""
-                            )}
-                            onClick={onConfirm}
-                            disabled={isLoading}
-                        >
-                            {isLoading ? 'Processing...' : confirmText}
-                        </Button>
+                        {/* Destructive actions must be held, not clicked — a
+                            modal alone gets dismissed on autopilot. Warnings
+                            are recoverable, so they keep a plain click. */}
+                        {variant === 'danger' ? (
+                            <HoldToConfirmButton
+                                onConfirm={onConfirm}
+                                isLoading={isLoading}
+                            >
+                                Hold to {confirmText.toLowerCase()}
+                            </HoldToConfirmButton>
+                        ) : (
+                            <Button
+                                variant="primary"
+                                className="h-12 rounded-2xl font-black text-[11px] uppercase tracking-widest border-none shadow-lg"
+                                onClick={onConfirm}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Processing...' : confirmText}
+                            </Button>
+                        )}
                     </div>
                 </div>
             </Card>

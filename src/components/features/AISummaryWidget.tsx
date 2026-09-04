@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
@@ -82,7 +83,16 @@ export function AISummaryWidget({ initialSummaries }: Props) {
                     </div>
                 </div>
 
+                <AnimatePresence initial={false}>
                 {expanded && latest && (
+                    <motion.div
+                        key="summary"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                        style={{ overflow: "hidden" }}
+                    >
                     <div className="px-5 pb-5">
                         {/* Stats */}
                         <div className="grid grid-cols-4 gap-3 mb-4">
@@ -101,13 +111,26 @@ export function AISummaryWidget({ initialSummaries }: Props) {
                         {/* Summary text */}
                         <p className="text-sm text-slate-700 leading-relaxed">{latest.summary_text}</p>
                     </div>
+                    </motion.div>
                 )}
+                </AnimatePresence>
 
+                <AnimatePresence initial={false}>
                 {expanded && !latest && (
+                    <motion.div
+                        key="empty"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+                        style={{ overflow: "hidden" }}
+                    >
                     <div className="px-5 pb-5 text-center">
                         <p className="text-sm text-slate-400">No summary yet. Click "Generate" to create this week's AI summary.</p>
                     </div>
+                    </motion.div>
                 )}
+                </AnimatePresence>
             </div>
         </UpgradeGate>
     );
