@@ -72,7 +72,7 @@ function MorningBriefing({
                         <button 
                             onClick={() => setViewMode('today')}
                             className={cn(
-                                "px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all",
+                                "px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-colors",
                                 viewMode === 'today' ? "bg-white text-[#1d1d1f] shadow-sm" : "text-slate-500 hover:text-[#1d1d1f]"
                             )}
                         >
@@ -81,7 +81,7 @@ function MorningBriefing({
                         <button 
                             onClick={() => setViewMode('overview')}
                             className={cn(
-                                "px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all",
+                                "px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-colors",
                                 viewMode === 'overview' ? "bg-white text-[#1d1d1f] shadow-sm" : "text-slate-500 hover:text-[#1d1d1f]"
                             )}
                         >
@@ -122,7 +122,7 @@ function OverviewStats({ tasks, projects, efficiencyPercentage }: { tasks: Task[
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 rounded-xl bg-[#34c759]/10 flex items-center justify-center text-[#34c759] shadow-sm"><CheckCircle2 size={18} /></div>
                             <div>
-                                <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Completion Rate</div>
+                                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Completion Rate</div>
                                 <div className="text-xl font-bold text-[#1d1d1f] tracking-tight">{completionRate}%</div>
                             </div>
                         </div>
@@ -138,7 +138,7 @@ function OverviewStats({ tasks, projects, efficiencyPercentage }: { tasks: Task[
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center text-brand-blue shadow-sm"><Activity size={18} /></div>
                             <div>
-                                <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Active Velocity</div>
+                                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Active Velocity</div>
                                 <div className="text-xl font-bold text-[#1d1d1f] tracking-tight">{Math.round(efficiencyPercentage)}%</div>
                             </div>
                         </div>
@@ -153,7 +153,7 @@ function OverviewStats({ tasks, projects, efficiencyPercentage }: { tasks: Task[
                 </div>
 
                 <Card className="p-8 bg-white border-[#f0f0f2] rounded-[24px] shadow-sm">
-                    <h4 className="text-[10px] font-bold text-[#1d1d1f] uppercase tracking-widest mb-8 flex items-center gap-2">
+                    <h4 className="text-[11px] font-bold text-[#1d1d1f] uppercase tracking-widest mb-8 flex items-center gap-2">
                         <Zap size={14} className="text-brand-blue" />
                         <span>Project Overview</span>
                     </h4>
@@ -162,7 +162,7 @@ function OverviewStats({ tasks, projects, efficiencyPercentage }: { tasks: Task[
                             <div key={p.name} className="space-y-2.5">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-bold text-slate-700">{p.name}</span>
-                                    <span className="text-[10px] font-bold text-slate-400 tracking-widest">{p.progress}%</span>
+                                    <span className="text-[11px] font-bold text-slate-400 tracking-widest">{p.progress}%</span>
                                 </div>
                                 <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                     <motion.div 
@@ -184,15 +184,15 @@ function OverviewStats({ tasks, projects, efficiencyPercentage }: { tasks: Task[
             <div className="space-y-6">
                 <Card className="p-8 bg-[#1d1d1f] text-white border-none rounded-[24px] shadow-xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-brand-blue rounded-full blur-[60px] opacity-20 group-hover:opacity-30 transition-opacity duration-700" />
-                    <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-10 relative z-10">Total Impact</h4>
+                    <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-10 relative z-10">Total Impact</h4>
                     <div className="space-y-8 relative z-10">
                         <div>
                             <div className="text-4xl font-bold tabular-nums tracking-tighter">{completedTasks}</div>
-                            <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Tasks Finished</div>
+                            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-1">Tasks Finished</div>
                         </div>
                         <div>
                             <div className="text-4xl font-bold tabular-nums tracking-tighter">{totalTasks}</div>
-                            <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Total Assigned</div>
+                            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-1">Total Assigned</div>
                         </div>
                     </div>
                 </Card>
@@ -243,13 +243,13 @@ function BoardColumn({
                         title.includes('Progress') ? 'bg-orange-400' : 
                         title.includes('Blocked') ? 'bg-red-400' : 'bg-emerald-400'
                     )} />
-                    <h3 className="text-[10px] font-bold text-slate-700 tracking-widest uppercase">{title}</h3>
+                    <h3 className="text-[11px] font-bold text-slate-700 tracking-widest uppercase">{title}</h3>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 tabular-nums">{tasks.length}</span>
+                <span className="text-[11px] font-bold text-slate-400 tabular-nums">{tasks.length}</span>
             </div>
             <div className="space-y-3 flex-1 pb-4 custom-scrollbar overflow-y-auto pr-1">
                 {tasks.length === 0 ? (
-                    <div className="h-32 border border-dashed border-slate-200 rounded-[24px] flex items-center justify-center bg-slate-50/50 text-[10px] font-bold text-slate-300 uppercase tracking-widest">No Tasks</div>
+                    <div className="h-32 border border-dashed border-slate-200 rounded-[24px] flex items-center justify-center bg-slate-50/50 text-[11px] font-bold text-slate-300 uppercase tracking-widest">No Tasks</div>
                 ) : (
                     tasks.map(task => {
                         const startDateLabel = mounted && task.start_date ? new Date(task.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : (mounted ? '' : '...');
@@ -285,7 +285,7 @@ function BoardColumn({
                                 whileHover={{ y: -3, boxShadow: "0 8px 24px -4px rgba(0,0,0,0.06)" }} 
                                 onClick={() => onTaskClick(task)} 
                                 className={cn(
-                                    "p-4 rounded-[20px] bg-white border border-slate-100/80 cursor-pointer shadow-sm relative group transition-all duration-500",
+                                    "p-4 rounded-[20px] bg-white border border-slate-100/80 cursor-pointer shadow-sm relative group transition-colors duration-500",
                                     task.status === 'Blocked' && "grayscale opacity-70"
                                 )}
                             >
@@ -325,7 +325,7 @@ function BoardColumn({
                                                         type="date"
                                                         value={editTaskData.start_date ? new Date(editTaskData.start_date).toISOString().split('T')[0] : ''} 
                                                         onChange={e => setEditTaskData({ ...editTaskData, start_date: e.target.value })}
-                                                        className="text-[9px] font-bold text-slate-700 bg-transparent outline-none cursor-pointer"
+                                                        className="text-[11px] font-bold text-slate-700 bg-transparent outline-none cursor-pointer"
                                                     />
                                                 </div>
                                                 <div className="flex items-center gap-1 bg-slate-50 rounded-lg px-1.5 py-1 border border-slate-100">
@@ -334,7 +334,7 @@ function BoardColumn({
                                                         type="date"
                                                         value={editTaskData.deadline ? new Date(editTaskData.deadline).toISOString().split('T')[0] : ''} 
                                                         onChange={e => setEditTaskData({ ...editTaskData, deadline: e.target.value })}
-                                                        className="text-[9px] font-bold text-slate-700 bg-transparent outline-none cursor-pointer"
+                                                        className="text-[11px] font-bold text-slate-700 bg-transparent outline-none cursor-pointer"
                                                     />
                                                 </div>
                                                 <div className="flex gap-1 ml-auto">
@@ -362,7 +362,7 @@ function BoardColumn({
                                                     setEditingTaskId(task.id); 
                                                     setEditTaskData(task); 
                                                 }} 
-                                                className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-brand-blue transition-all p-1 hover:bg-brand-blue/5 rounded-md"
+                                                className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-brand-blue transition-colors p-1 hover:bg-brand-blue/5 rounded-md"
                                             >
                                                 <Pencil size={11} strokeWidth={2.5} />
                                             </button>
@@ -370,7 +370,7 @@ function BoardColumn({
                                     )}
 
                                     <div className="space-y-2.5">
-                                        <div className="flex items-center justify-between text-[9px] font-bold tracking-widest uppercase mb-1">
+                                        <div className="flex items-center justify-between text-[11px] font-bold tracking-widest uppercase mb-1">
                                             <span className="text-slate-400">Progress</span>
                                             <span className="text-slate-900">{progress}%</span>
                                         </div>
@@ -378,7 +378,7 @@ function BoardColumn({
                                             <motion.div 
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${progress}%` }}
-                                                className="h-full bg-gradient-to-r from-brand-blue to-[#00c6ff] rounded-full transition-all duration-1000"
+                                                className="h-full bg-gradient-to-r from-brand-blue to-[#00c6ff] rounded-full transition-colors duration-1000"
                                             />
                                         </div>
                                     </div>
@@ -393,12 +393,12 @@ function BoardColumn({
                                                         name={emp?.name || '?'}
                                                         avatarUrl={emp?.avatar_url}
                                                         className="w-7 h-7 rounded-full border-2 border-white bg-slate-100 shadow-sm"
-                                                        textClassName="text-[9px] font-bold text-slate-500"
+                                                        textClassName="text-[11px] font-bold text-slate-500"
                                                     />
                                                 );
                                             })}
                                         </div>
-                                        <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400">
+                                        <div className="flex items-center gap-4 text-[11px] font-bold text-slate-400">
                                             {totalHours > 0 && (
                                                 <div className="flex items-center gap-1.5 group-hover:text-slate-600 transition-colors">
                                                     <span className="text-[12px]">⏱️</span>
@@ -516,7 +516,7 @@ export function EmployeeBoardView({
                         </div>
                         <div className="px-3 py-1.5 bg-white rounded-xl border border-[#f0f0f2] shadow-sm flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-[#34c759] animate-pulse" />
-                            <span className="text-[9px] font-black uppercase tracking-widest text-[#86868b]">{myTasks.length} Active</span>
+                            <span className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73]">{myTasks.length} Active</span>
                         </div>
                     </div>
                     

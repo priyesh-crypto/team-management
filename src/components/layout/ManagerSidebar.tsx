@@ -23,14 +23,14 @@ function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNo
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors duration-300 group ${
                 active
                 ? 'bg-[#0c64ef] text-white shadow-lg shadow-[#0c64ef]/20 font-bold translate-x-1'
-                : 'text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] font-bold'
+                : 'text-[#6b6b73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] font-bold'
             }`}
         >
             <span className={`flex items-center justify-center transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>{icon}</span>
-            <span className="text-[10px] uppercase tracking-widest">{label}</span>
+            <span className="text-[11px] uppercase tracking-widest">{label}</span>
             {active && (
                 <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
             )}
@@ -39,7 +39,7 @@ function NavItem({ icon, label, active = false, onClick }: { icon: React.ReactNo
 }
 
 function NavSection({ title }: { title: string }) {
-    return <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[#86868b] px-4 mt-6 mb-2">{title}</div>;
+    return <div className="text-[11px] font-black uppercase tracking-[0.2em] text-[#6b6b73] px-4 mt-6 mb-2">{title}</div>;
 }
 
 export function ManagerSidebar({
@@ -101,10 +101,10 @@ export function ManagerSidebar({
                                 />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-black truncate">{userName}</p>
-                                    <p className="text-[10px] text-[#86868b] font-bold">Admin Privileges</p>
+                                    <p className="text-[11px] text-[#6b6b73] font-bold">Admin Privileges</p>
                                 </div>
                             </div>
-                            <Button variant="secondary" className="w-full text-[10px] font-black tracking-widest py-2 rounded-xl h-auto" onClick={() => logout()}>LOGOUT</Button>
+                            <Button variant="secondary" className="w-full text-[11px] font-black tracking-widest py-2 rounded-xl h-auto" onClick={() => logout()}>LOGOUT</Button>
                         </div>
                     </div>
                 </div>
@@ -149,12 +149,12 @@ export function ManagerSidebar({
                         />
                         <div className="flex-1 min-w-0">
                             <p className="text-[11px] font-black text-[#1d1d1f] truncate leading-tight uppercase tracking-wider">{userName}</p>
-                            <p className="text-[9px] text-[#86868b] font-black uppercase tracking-widest mt-0.5">Administrator</p>
+                            <p className="text-[11px] text-[#6b6b73] font-black uppercase tracking-widest mt-0.5">Administrator</p>
                         </div>
                     </div>
                     <button 
                         onClick={() => logout()} 
-                        className="w-full py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-[#86868b] hover:text-[#ff3b30] transition-all border border-[#e5e5ea] rounded-xl bg-white hover:bg-[#fee2e2]/50 hover:border-[#fecaca] shadow-sm active:scale-95"
+                        className="w-full py-2.5 text-[11px] font-black uppercase tracking-[0.2em] text-[#6b6b73] hover:text-[#ff3b30] transition-[transform,opacity,color,background-color,border-color,box-shadow] border border-[#e5e5ea] rounded-xl bg-white hover:bg-[#fee2e2]/50 hover:border-[#fecaca] shadow-sm active:scale-95"
                     >
                         Sign Out
                     </button>

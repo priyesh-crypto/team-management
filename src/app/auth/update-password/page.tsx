@@ -1,5 +1,6 @@
-import { Card, Button, Input } from '@/components/ui/components';
+import { Card, Input } from '@/components/ui/components';
 import Logo from '@/components/ui/Logo';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { updateOwnPassword } from '@/app/actions/actions';
 import { redirect } from 'next/navigation';
 import { validatePasswordStrength } from '@/utils/security';
@@ -24,12 +25,12 @@ export default function UpdatePasswordPage() {
             <div className="w-full max-w-md text-center">
                 <Logo className="mb-4 mx-auto" />
                 <h1 className="text-2xl font-black text-[#1d1d1f] mb-2">New Password</h1>
-                <p className="text-[#86868b] text-sm font-medium mb-8">Please choose a new secure password.</p>
+                <p className="text-[#6b6b73] text-sm font-medium mb-8">Please choose a new secure password.</p>
                 
                 <Card className="p-8 text-left">
                     <form action={handleUpdate} className="space-y-4">
                         <Input name="password" type="password" required placeholder="New Password" className="w-full h-12" />
-                        <Button type="submit" className="w-full h-12 text-md font-bold mt-2">Update Password</Button>
+                        <SubmitButton pendingText="Updating…" className="w-full h-12 text-md font-bold mt-2">Update Password</SubmitButton>
                     </form>
                 </Card>
             </div>

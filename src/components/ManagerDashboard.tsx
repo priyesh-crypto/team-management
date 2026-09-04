@@ -1109,7 +1109,7 @@ export default function ManagerDashboard({
                                 funnelData={['To Do', 'In Progress', 'In Review', 'Blocked', 'Completed'].map(s => ({
                                     name: s,
                                     value: tasks.filter(t => t.status === s).length,
-                                    fill: { 'To Do': '#86868b', 'In Progress': '#0051e6', 'In Review': '#5e5ce6', 'Blocked': '#ff3b30', 'Completed': '#22be66' }[s] ?? '#0051e6',
+                                    fill: { 'To Do': '#6b6b73', 'In Progress': '#0051e6', 'In Review': '#5e5ce6', 'Blocked': '#ff3b30', 'Completed': '#22be66' }[s] ?? '#0051e6',
                                 }))}
                                 priorityStatusMatrix={['Urgent', 'High', 'Medium', 'Low'].flatMap(p => 
                                     ['To Do', 'In Progress', 'In Review', 'Blocked', 'Completed'].map(s => ({
@@ -1175,7 +1175,7 @@ export default function ManagerDashboard({
                         <div className="fade-in p-8 max-w-5xl mx-auto space-y-6">
                             <div>
                                 <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Agile Sprint Board</h1>
-                                <p className="text-sm text-[#86868b] mt-1">Organize work into time-boxed iterations.</p>
+                                <p className="text-sm text-[#6b6b73] mt-1">Organize work into time-boxed iterations.</p>
                             </div>
                             <SprintBoard orgId={orgId} workspaceId={""} sprints={[]} sprintTasks={{}} backlogTasks={[]} />
                         </div>
@@ -1185,7 +1185,7 @@ export default function ManagerDashboard({
                         <div className="fade-in p-8 space-y-6">
                             <div>
                                 <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Timeline & Gantt</h1>
-                                <p className="text-sm text-[#86868b] mt-1">Visualize project dependencies and schedules.</p>
+                                <p className="text-sm text-[#6b6b73] mt-1">Visualize project dependencies and schedules.</p>
                             </div>
                             <GanttView tasks={tasks} profiles={projectId ? projectMembers : employees} onTaskClick={handleTaskClick} />
                         </div>
@@ -1195,7 +1195,7 @@ export default function ManagerDashboard({
                         <div className="fade-in p-8 max-w-7xl mx-auto space-y-6">
                             <div>
                                 <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Team Workload</h1>
-                                <p className="text-sm text-[#86868b] mt-1">Monitor capacity and prevent burnout.</p>
+                                <p className="text-sm text-[#6b6b73] mt-1">Monitor capacity and prevent burnout.</p>
                             </div>
                             <WorkloadView
                                 members={Object.entries(workloadData || {}).map(([userId, data]) => {
@@ -1220,7 +1220,7 @@ export default function ManagerDashboard({
                         <div className="fade-in p-8 max-w-5xl mx-auto space-y-6">
                             <div>
                                 <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Automations Center</h1>
-                                <p className="text-sm text-[#86868b] mt-1">Streamline your workflow with custom trigger-action rules.</p>
+                                <p className="text-sm text-[#6b6b73] mt-1">Streamline your workflow with custom trigger-action rules.</p>
                             </div>
                             <AutomationsManager rules={[]} />
                         </div>
@@ -1245,9 +1245,9 @@ export default function ManagerDashboard({
                                 <div className="flex items-center justify-between mb-8">
                                     <div>
                                         <h3 className="text-xl font-black text-[#1d1d1f] tracking-tight">Team Activity Feed</h3>
-                                        <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">Real-time system updates</p>
+                                        <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-widest mt-1">Real-time system updates</p>
                                     </div>
-                                    <div className="p-3 rounded-2xl bg-[#f5f5f7] text-[#86868b] border border-[#e5e5ea]">
+                                    <div className="p-3 rounded-2xl bg-[#f5f5f7] text-[#6b6b73] border border-[#e5e5ea]">
                                         <Clock size={20} strokeWidth={2.5} />
                                     </div>
                                 </div>
@@ -1256,14 +1256,14 @@ export default function ManagerDashboard({
                                 {auditLogs.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-20 bg-[#f5f5f7]/50 rounded-[24px] border-2 border-dashed border-[#eceef0]">
                                         <div className="text-4xl mb-4">📜</div>
-                                        <p className="text-[11px] font-black text-[#86868b] uppercase tracking-widest">No activity recorded yet</p>
+                                        <p className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest">No activity recorded yet</p>
                                     </div>
                                 ) : (
                                     auditLogs
                                         .filter(log => !projectId || projectMembers.some(m => m.id === log.actor_id))
                                         .slice(0, 20) // Limit to top 20 for performance
                                         .map((log) => (
-                                            <div key={log.id} className="flex gap-4 p-4 rounded-2xl hover:bg-[#f5f5f7] transition-all border border-transparent hover:border-[#eceef0] group/log">
+                                            <div key={log.id} className="flex gap-4 p-4 rounded-2xl hover:bg-[#f5f5f7] transition-colors border border-transparent hover:border-[#eceef0] group/log">
                                                 <UserAvatar
                                                     name={log.actor_name || 'S'}
                                                     avatarUrl={employees.find(e => e.id === log.actor_id)?.avatar_url}
@@ -1275,7 +1275,7 @@ export default function ManagerDashboard({
                                                         {formatAuditEntry(log)}
                                                     </p>
                                                     <div className="flex items-center gap-2 mt-1.5">
-                                                        <span className="text-[9px] font-black text-[#86868b] uppercase tracking-widest bg-[#f5f5f7] px-2 py-0.5 rounded-md border border-[#eceef0]">
+                                                        <span className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest bg-[#f5f5f7] px-2 py-0.5 rounded-md border border-[#eceef0]">
                                                             {log.type?.replace(/_/g, ' ') || 'Activity'}
                                                         </span>
                                                     </div>
@@ -1293,9 +1293,9 @@ export default function ManagerDashboard({
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-[#eceef0]">
                                 <div>
                                     <h3 className="text-base font-black text-[#1d1d1f] tracking-tight">Communication Center</h3>
-                                    <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-widest mt-0.5">Alert Broadcast System</p>
+                                    <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-widest mt-0.5">Alert Broadcast System</p>
                                 </div>
-                                <Button onClick={() => setShowBroadcastModal(true)} className="w-full sm:w-auto rounded-lg h-9 px-6 bg-brand-blue text-white font-bold text-[10px] tracking-tight shadow-sm hover:bg-brand-blue-dark transition-colors">📢 BROADCAST ALERT</Button>
+                                <Button onClick={() => setShowBroadcastModal(true)} className="w-full sm:w-auto rounded-lg h-9 px-6 bg-brand-blue text-white font-bold text-[11px] tracking-tight shadow-sm hover:bg-brand-blue-dark transition-colors">📢 BROADCAST ALERT</Button>
                             </div>
                             
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1305,13 +1305,13 @@ export default function ManagerDashboard({
                                     <div className="flex bg-[#f5f5f7] p-0.5 rounded-lg border border-[#e5e5ea]">
                                         <button 
                                             onClick={() => setMemberFormMode('invite')} 
-                                            className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tight transition-all ${memberFormMode === 'invite' ? 'bg-white shadow-sm text-brand-blue' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+                                            className={`px-3 py-1 rounded-md text-[11px] font-black tracking-tight transition-colors ${memberFormMode === 'invite' ? 'bg-white shadow-sm text-brand-blue' : 'text-[#6b6b73] hover:text-[#1d1d1f]'}`}
                                         >
                                             INVITE
                                         </button>
                                         <button 
                                             onClick={() => setMemberFormMode('direct')} 
-                                            className={`px-3 py-1 rounded-md text-[9px] font-black tracking-tight transition-all ${memberFormMode === 'direct' ? 'bg-white shadow-sm text-brand-blue' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+                                            className={`px-3 py-1 rounded-md text-[11px] font-black tracking-tight transition-colors ${memberFormMode === 'direct' ? 'bg-white shadow-sm text-brand-blue' : 'text-[#6b6b73] hover:text-[#1d1d1f]'}`}
                                         >
                                             DIRECT
                                         </button>
@@ -1321,11 +1321,11 @@ export default function ManagerDashboard({
                                 {memberFormMode === 'invite' ? (
                                     <form onSubmit={handleInviteMember} className="space-y-4">
                                         <div className="space-y-1.5">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Email Address</label>
                                             <input type="email" required value={inviteForm.email} onChange={e => setInviteForm({ ...inviteForm, email: e.target.value })} placeholder="colleague@company.com" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-brand-blue" />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Role</label>
                                             <select 
                                                 value={inviteForm.role} 
                                                 onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value })}
@@ -1337,21 +1337,21 @@ export default function ManagerDashboard({
                                         </div>
                                         
                                         {inviteResult && (
-                                            <p className={`text-[10px] font-bold px-4 ${inviteResult.type === 'error' ? 'text-[#ff3b30]' : 'text-[#34c759]'}`}>
+                                            <p className={`text-[11px] font-bold px-4 ${inviteResult.type === 'error' ? 'text-[#ff3b30]' : 'text-[#34c759]'}`}>
                                                 {inviteResult.text}
                                             </p>
                                         )}
-                                        <button type="submit" className="w-full h-10 rounded-xl bg-brand-blue text-white font-black tracking-widest text-[10px] mt-2 shadow-sm hover:bg-brand-blue-dark transition-colors">SEND INVITATION</button>
+                                        <button type="submit" className="w-full h-10 rounded-xl bg-brand-blue text-white font-black tracking-widest text-[11px] mt-2 shadow-sm hover:bg-brand-blue-dark transition-colors">SEND INVITATION</button>
                                     </form>
                                 ) : (
                                     <form onSubmit={handleDirectAdd} className="space-y-4">
                                         <div className="grid grid-cols-2 gap-3">
                                             <div className="space-y-1.5">
-                                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Full Name</label>
                                                 <input required value={directAddForm.name} onChange={e => setDirectAddForm({ ...directAddForm, name: e.target.value })} placeholder="John Doe" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-brand-blue" />
                                             </div>
                                             <div className="space-y-1.5">
-                                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>
+                                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Role</label>
                                                 <select 
                                                     value={directAddForm.role} 
                                                     onChange={(e) => setDirectAddForm({ ...directAddForm, role: e.target.value })}
@@ -1363,20 +1363,20 @@ export default function ManagerDashboard({
                                             </div>
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Email Address</label>
                                             <input type="email" required value={directAddForm.email} onChange={e => setDirectAddForm({ ...directAddForm, email: e.target.value })} placeholder="email@example.com" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-brand-blue" />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Temp Password</label>
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Temp Password</label>
                                             <input type="text" required value={directAddForm.password} onChange={e => setDirectAddForm({ ...directAddForm, password: e.target.value })} placeholder="Min 6 chars" className="w-full h-10 rounded-xl bg-[#f5f5f7] border-none px-5 text-[11px] font-bold outline-none focus:ring-1 ring-brand-blue" />
                                         </div>
                                         
                                         {inviteResult && (
-                                            <p className={`text-[10px] font-bold px-4 ${inviteResult.type === 'error' ? 'text-[#ff3b30]' : 'text-[#34c759]'}`}>
+                                            <p className={`text-[11px] font-bold px-4 ${inviteResult.type === 'error' ? 'text-[#ff3b30]' : 'text-[#34c759]'}`}>
                                                 {inviteResult.text}
                                             </p>
                                         )}
-                                        <button type="submit" className="w-full h-10 rounded-xl bg-[#1d1d1f] text-white font-black tracking-widest text-[10px] mt-2 shadow-sm hover:bg-black transition-colors">CREATE MEMBER ACCOUNT</button>
+                                        <button type="submit" className="w-full h-10 rounded-xl bg-[#1d1d1f] text-white font-black tracking-widest text-[11px] mt-2 shadow-sm hover:bg-black transition-colors">CREATE MEMBER ACCOUNT</button>
                                     </form>
                                 )}
                             </Card>
@@ -1392,15 +1392,15 @@ export default function ManagerDashboard({
                                                 <UserAvatar
                                                     name={emp.name}
                                                     avatarUrl={emp.avatar_url}
-                                                    className="w-8 h-8 rounded-full bg-white border border-[#e5e5ea] shadow-sm group-hover:bg-brand-blue transition-all flex-shrink-0"
-                                                    textClassName="text-[10px] font-black text-[#1d1d1f] group-hover:text-white"
+                                                    className="w-8 h-8 rounded-full bg-white border border-[#e5e5ea] shadow-sm group-hover:bg-brand-blue transition-colors flex-shrink-0"
+                                                    textClassName="text-[11px] font-black text-[#1d1d1f] group-hover:text-white"
                                                 />
                                                     <div className="min-w-0">
                                                         <div className="flex items-center gap-1.5">
                                                             <p className="text-[11px] font-bold text-[#1d1d1f] truncate leading-tight">{emp.name}</p>
                                                             {emp.role === 'manager' && <Badge className="bg-brand-blue text-white border-none text-[7px] px-1.5 flex-shrink-0">ADMIN</Badge>}
                                                         </div>
-                                                        <p className="text-[9px] font-medium text-[#86868b] truncate leading-none">{emp.email}</p>
+                                                        <p className="text-[11px] font-medium text-[#6b6b73] truncate leading-none">{emp.email}</p>
                                                     </div>
                                             </div>
                                             <div className="flex gap-1.5 ml-3 flex-shrink-0 items-center">
@@ -1503,22 +1503,22 @@ export default function ManagerDashboard({
 
                         <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(editingEmpId); }} className="space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
+                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Full Name</label>
                                 <Input required value={editEmpForm.name} onChange={e => setEditEmpForm({ ...editEmpForm, name: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Email Address</label>
+                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Email Address</label>
                                 <Input required type="email" value={editEmpForm.email} onChange={e => setEditEmpForm({ ...editEmpForm, email: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Role</label>
+                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Role</label>
                                 <Select value={editEmpForm.role} onChange={e => setEditEmpForm({ ...editEmpForm, role: e.target.value as any })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
                                     <option value="employee">Employee</option>
                                     <option value="manager">Manager</option>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">New Password (leave blank to keep current)</label>
+                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">New Password (leave blank to keep current)</label>
                                 <Input type="password" value={editEmpForm.password} onChange={e => setEditEmpForm({ ...editEmpForm, password: e.target.value })} placeholder="••••••••" className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
                             </div>
                             <Button type="submit" className="w-full h-16 rounded-[28px] font-black tracking-widest shadow-2xl shadow-brand-blue/30 mt-4">SAVE CHANGES</Button>
@@ -1543,7 +1543,7 @@ export default function ManagerDashboard({
                             <div className="space-y-6">
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Project</label>
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Project</label>
                                         <Select 
                                             value={assignForm.project_id} 
                                             onChange={e => setAssignForm({ ...assignForm, project_id: e.target.value })}
@@ -1557,7 +1557,7 @@ export default function ManagerDashboard({
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Owner</label>
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Owner</label>
                                         <Select required value={assignForm.employee_id} onChange={e => setAssignForm({ ...assignForm, employee_id: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
                                             <option value="">Select owner</option>
                                             {(projectId ? projectMembers : employees).map(emp => (
@@ -1567,7 +1567,7 @@ export default function ManagerDashboard({
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Additional Collaborators</label>
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Additional Collaborators</label>
                                         <div className="flex flex-wrap gap-2 p-4 bg-[#f5f5f7] rounded-[24px]">
                                             {(projectId ? projectMembers : employees).filter(e => e.id !== assignForm.employee_id).map(emp => {
                                                 const isSelected = assignForm.assignee_ids?.includes(emp.id);
@@ -1582,7 +1582,7 @@ export default function ManagerDashboard({
                                                                 : [...current, emp.id];
                                                             setAssignForm({ ...assignForm, assignee_ids: next });
                                                         }}
-                                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${isSelected ? 'bg-brand-blue text-white shadow-md' : 'bg-white text-[#86868b] hover:bg-[#e5e5ea]'}`}
+                                                        className={`px-3 py-1.5 rounded-xl text-[11px] font-black transition-colors ${isSelected ? 'bg-brand-blue text-white shadow-md' : 'bg-white text-[#6b6b73] hover:bg-[#e5e5ea]'}`}
                                                     >
                                                         {emp.name}
                                                     </button>
@@ -1593,13 +1593,13 @@ export default function ManagerDashboard({
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Task Objective</label>
+                                    <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Task Objective</label>
                                     <Input required value={assignForm.name} onChange={e => {
                                         setAssignForm({ ...assignForm, name: e.target.value });
                                         if (assignError) setAssignError(null);
                                     }} placeholder="What needs to be done?" className={`h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold ${assignError ? 'ring-2 ring-red-500' : ''}`} />
                                     {assignError && (
-                                        <p className="mt-2 text-[10px] font-black text-red-500 uppercase tracking-widest ml-4 animate-in fade-in slide-in-from-top-2">
+                                        <p className="mt-2 text-[11px] font-black text-red-500 uppercase tracking-widest ml-4 animate-in fade-in slide-in-from-top-2">
                                             {assignError}
                                         </p>
                                     )}
@@ -1607,16 +1607,16 @@ export default function ManagerDashboard({
 
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Start Date</label>
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Start Date</label>
                                         <Input type="date" required value={assignForm.start_date} onChange={e => setAssignForm({ ...assignForm, start_date: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">End Date</label>
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">End Date</label>
                                         <Input type="date" required value={assignForm.deadline} onChange={e => setAssignForm({ ...assignForm, deadline: e.target.value })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold" />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Priority</label>
+                                    <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Priority</label>
                                     <Select value={assignForm.priority} onChange={e => setAssignForm({ ...assignForm, priority: e.target.value as any })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
                                         <option>Low</option>
                                         <option>Medium</option>
@@ -1666,14 +1666,14 @@ export default function ManagerDashboard({
 
                         <form onSubmit={handleBroadcastAlert} className="space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Alert Type</label>
+                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Alert Type</label>
                                 <Select value={broadcastForm.type} onChange={e => setBroadcastForm({ ...broadcastForm, type: e.target.value as any })} className="h-14 rounded-[20px] bg-[#f5f5f7] border-none px-6 font-bold">
                                     <option value="system">Standard System Notification</option>
                                     <option value="urgent">Urgent Priority Alert</option>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-[#86868b] ml-4">Message</label>
+                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Message</label>
                                 <textarea 
                                     required 
                                     value={broadcastForm.message} 
@@ -1702,21 +1702,21 @@ export default function ManagerDashboard({
                             </div>
                             
                             <h3 className="text-lg font-black text-[#1d1d1f] tracking-tight mb-2 uppercase tracking-widest text-[11px]">Confirm Deletion</h3>
-                            <p className="text-[13px] text-[#86868b] font-medium leading-relaxed mb-8">
+                            <p className="text-[13px] text-[#6b6b73] font-medium leading-relaxed mb-8">
                                 Permanently delete <span className="text-[#1d1d1f] font-black underline decoration-[#ff3b30]/30">"{taskToDelete?.name}"</span>?
                             </p>
 
                             <div className="grid grid-cols-2 gap-3 w-full">
                                 <Button 
                                     variant="secondary" 
-                                    className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#86868b]"
+                                    className="h-11 rounded-xl font-black text-[11px] uppercase tracking-widest border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#6b6b73]"
                                     onClick={cancelDeleteTask}
                                     disabled={isDeletingTask}
                                 >
                                     Cancel
                                 </Button>
                                 <Button 
-                                    className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-[#ff3b30] hover:bg-[#e03126] text-white border-none shadow-lg shadow-[#ff3b30]/20"
+                                    className="h-11 rounded-xl font-black text-[11px] uppercase tracking-widest bg-[#ff3b30] hover:bg-[#e03126] text-white border-none shadow-lg shadow-[#ff3b30]/20"
                                     onClick={confirmDeleteTask}
                                     disabled={isDeletingTask}
                                 >
@@ -1741,21 +1741,21 @@ export default function ManagerDashboard({
                             </div>
                             
                             <h3 className="text-lg font-black text-[#1d1d1f] tracking-tight mb-2 uppercase tracking-widest text-[11px]">Remove Member</h3>
-                            <p className="text-[13px] text-[#86868b] font-medium leading-relaxed mb-8">
+                            <p className="text-[13px] text-[#6b6b73] font-medium leading-relaxed mb-8">
                                 Permanently remove <span className="text-[#1d1d1f] font-black underline decoration-[#ff3b30]/30">"{employeeToDelete?.name}"</span>?
                             </p>
 
                             <div className="grid grid-cols-2 gap-3 w-full">
                                 <Button 
                                     variant="secondary" 
-                                    className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#86868b]"
+                                    className="h-11 rounded-xl font-black text-[11px] uppercase tracking-widest border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#6b6b73]"
                                     onClick={cancelDeleteEmployee}
                                     disabled={deletingEmpId !== null}
                                 >
                                     Cancel
                                 </Button>
                                 <Button 
-                                    className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-[#ff3b30] hover:bg-[#e03126] text-white border-none shadow-lg shadow-[#ff3b30]/20"
+                                    className="h-11 rounded-xl font-black text-[11px] uppercase tracking-widest bg-[#ff3b30] hover:bg-[#e03126] text-white border-none shadow-lg shadow-[#ff3b30]/20"
                                     onClick={confirmDeleteEmployee}
                                     disabled={deletingEmpId !== null}
                                 >
@@ -1780,21 +1780,21 @@ export default function ManagerDashboard({
                             </div>
                             
                             <h3 className="text-lg font-black text-[#1d1d1f] tracking-tight mb-2 uppercase tracking-widest text-[11px]">Confirm Delete Work Log</h3>
-                            <p className="text-[13px] text-[#86868b] font-medium leading-relaxed mb-8">
+                            <p className="text-[13px] text-[#6b6b73] font-medium leading-relaxed mb-8">
                                 Permanently delete <span className="text-[#1d1d1f] font-black underline decoration-[#ff3b30]/30">"{subtaskToDelete.subtaskName}"</span>?
                             </p>
 
                             <div className="grid grid-cols-2 gap-3 w-full">
                                 <Button 
                                     variant="secondary" 
-                                    className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#86868b]"
+                                    className="h-11 rounded-xl font-black text-[11px] uppercase tracking-widest border-[#d2d2d7] hover:bg-[#f5f5f7] text-[#6b6b73]"
                                     onClick={cancelDeleteSubtask}
                                     disabled={isDeletingSubtask}
                                 >
                                     Cancel
                                 </Button>
                                 <Button 
-                                    className="h-11 rounded-xl font-black text-[10px] uppercase tracking-widest bg-[#ff3b30] hover:bg-[#e03126] text-white border-none shadow-lg shadow-[#ff3b30]/20"
+                                    className="h-11 rounded-xl font-black text-[11px] uppercase tracking-widest bg-[#ff3b30] hover:bg-[#e03126] text-white border-none shadow-lg shadow-[#ff3b30]/20"
                                     onClick={confirmDeleteSubtask}
                                     disabled={isDeletingSubtask}
                                 >
@@ -1844,7 +1844,7 @@ export default function ManagerDashboard({
                                 <div className="w-3 h-3 bg-[#ff3b30] rounded-full relative"></div>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-[#86868b] leading-none mb-1">Active Timer</span>
+                                <span className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] leading-none mb-1">Active Timer</span>
                                 <span className="text-xl font-black tabular-nums tracking-tight">
                                     {formatElapsed(Object.values(activeTimers)[0])}
                                 </span>
@@ -1859,7 +1859,7 @@ export default function ManagerDashboard({
                                     : Object.keys(subtasksMap).find(tId => subtasksMap[tId].some(s => s.id === subtaskId));
                                 if (taskId) handleStopTimer(subtaskId, taskId);
                             }}
-                            className="px-5 py-2.5 bg-white text-[#1d1d1f] rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#ff3b30] hover:text-white transition-all shadow-lg active:scale-95"
+                            className="px-5 py-2.5 bg-white text-[#1d1d1f] rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#ff3b30] hover:text-white transition-[transform,opacity,color,background-color,border-color,box-shadow] shadow-lg active:scale-95"
                         >
                             STOP TIMER
                         </button>

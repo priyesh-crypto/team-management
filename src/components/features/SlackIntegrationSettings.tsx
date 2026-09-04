@@ -96,7 +96,7 @@ export function SlackIntegrationSettings() {
                     {integration?.is_active && (
                         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[10px] font-black text-emerald-700">Connected</span>
+                            <span className="text-[11px] font-black text-emerald-700">Connected</span>
                         </div>
                     )}
                 </div>

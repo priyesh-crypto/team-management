@@ -43,7 +43,7 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
       <button
         onClick={() => router.push('/dashboard')}
         className={cn(
-          "flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 w-full text-left group relative outline-none",
+          "flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-colors duration-300 w-full text-left group relative outline-none",
           !projectId
             ? "bg-brand-blue/10 text-brand-blue"
             : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
@@ -56,7 +56,7 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
         )}
       </button>
 
-      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-4 py-4 mt-2">
+      <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-4 py-4 mt-2">
         My Projects
       </div>
 
@@ -66,7 +66,7 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
             key={project.id}
             onClick={() => router.push(`/dashboard/projects/${project.id}`)}
             className={cn(
-              "flex items-center gap-3 px-4 py-2.5 rounded-xl text-[10px] font-bold transition-all duration-300 w-full text-left group cursor-pointer relative",
+              "flex items-center gap-3 px-4 py-2.5 rounded-xl text-[11px] font-bold transition-colors duration-300 w-full text-left group cursor-pointer relative",
               projectId === project.id
                 ? "bg-brand-blue/10 text-brand-blue"
                 : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
@@ -82,7 +82,7 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
             <div className="flex items-center gap-2 ml-auto">
                 {/* Task count badge */}
                 <span className={cn(
-                    "text-[9px] font-bold px-2 py-0.5 rounded-lg transition-colors tabular-nums",
+                    "text-[11px] font-bold px-2 py-0.5 rounded-lg transition-colors tabular-nums",
                     projectId === project.id 
                         ? "bg-brand-blue text-white" 
                         : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
@@ -94,7 +94,7 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
                 {userRole === 'manager' && (
                     <button
                         onClick={(e) => handleDeleteClick(e, project.id, project.name)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-colors"
                     >
                         <Trash2 size={12} strokeWidth={2.5} />
                     </button>
@@ -105,7 +105,7 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
             )}
           </div>
         )) : (
-            <div className="px-4 py-2 text-[10px] text-slate-400 italic font-medium">
+            <div className="px-4 py-2 text-[11px] text-slate-400 italic font-medium">
                 No active projects
             </div>
         )}
@@ -115,9 +115,9 @@ export function ProjectSwitcher({ projects, userRole }: { projects: Project[], u
       {userRole === 'manager' && (
         <button
           onClick={() => router.push('/dashboard/projects/new')}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-[9px] font-bold text-slate-400 hover:text-brand-blue transition-all duration-300 mt-4 group uppercase tracking-widest bg-slate-50/50 hover:bg-slate-50"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-bold text-slate-400 hover:text-brand-blue transition-colors duration-300 mt-4 group uppercase tracking-widest bg-slate-50/50 hover:bg-slate-50"
         >
-          <div className="w-5 h-5 rounded-lg bg-white border border-slate-100 flex items-center justify-center group-hover:bg-brand-blue group-hover:text-white transition-all shadow-sm">
+          <div className="w-5 h-5 rounded-lg bg-white border border-slate-100 flex items-center justify-center group-hover:bg-brand-blue group-hover:text-white transition-colors shadow-sm">
               <Plus size={12} strokeWidth={3} />
           </div>
           Create Project

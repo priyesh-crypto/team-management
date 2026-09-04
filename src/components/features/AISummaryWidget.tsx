@@ -59,7 +59,7 @@ export function AISummaryWidget({ initialSummaries }: Props) {
                             <Sparkles size={14} className="text-white" />
                         </div>
                         <div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">AI Weekly Summary</div>
+                            <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider">AI Weekly Summary</div>
                             {latest && (
                                 <div className="text-[11px] font-bold text-slate-500">
                                     Week of {new Date(latest.week_start).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
@@ -71,8 +71,8 @@ export function AISummaryWidget({ initialSummaries }: Props) {
                         <button
                             onClick={generateSummary}
                             disabled={generating}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-blue text-white text-[10px] font-black disabled:opacity-50 hover:bg-brand-blue-dark transition-colors"
-                        >
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-blue text-white text-[11px] font-black disabled:opacity-50 hover:bg-brand-blue-dark transition-colors"
+                         aria-label="Refresh">
                             <RefreshCw size={10} className={generating ? "animate-spin" : ""} />
                             {generating ? "Generating…" : "Generate"}
                         </button>
@@ -94,7 +94,7 @@ export function AISummaryWidget({ initialSummaries }: Props) {
                             ].map(s => (
                                 <div key={s.label} className="bg-white/60 rounded-xl p-3 text-center">
                                     <div className={`text-xl font-black ${s.color}`}>{s.value}</div>
-                                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5">{s.label}</div>
+                                    <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mt-0.5">{s.label}</div>
                                 </div>
                             ))}
                         </div>

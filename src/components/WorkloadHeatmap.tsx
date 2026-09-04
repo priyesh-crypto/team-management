@@ -145,15 +145,15 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                     name={hoveredCell.userName}
                                     avatarUrl={data[hoveredCell.userId]?.avatar_url}
                                     className="w-8 h-8 rounded-xl bg-white/10"
-                                    textClassName="text-[10px] font-black text-white"
+                                    textClassName="text-[11px] font-black text-white"
                                 />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-white/50 truncate">{hoveredCell.userName}</p>
+                                    <p className="text-[11px] font-black uppercase tracking-widest text-white/50 truncate">{hoveredCell.userName}</p>
                                     <p className="text-xs font-bold">{format(hoveredCell.date, 'EEEE, MMM do')}</p>
                                 </div>
                             </div>
                             <div className="flex items-center justify-between gap-4 pt-2 border-t border-white/10">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-white/50">{getMetricLabel(mode)}</span>
+                                <span className="text-[11px] font-black uppercase tracking-widest text-white/50">{getMetricLabel(mode)}</span>
                                 <span className="text-sm font-black text-brand-blue">
                                     {hoveredCell.value === null ? 'No data' : hoveredCell.value}
                                 </span>
@@ -167,7 +167,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                 <div>
                     <h3 className="text-2xl font-black text-[#1d1d1f] tracking-tight mb-1">Team Capacity</h3>
-                    <p className="text-sm font-medium text-[#86868b] flex items-center gap-2">
+                    <p className="text-sm font-medium text-[#6b6b73] flex items-center gap-2">
                         <Users size={14} className="text-brand-blue" />
                         Weekly workload overview and team utilization
                     </p>
@@ -181,10 +181,10 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                 key={m}
                                 onClick={() => setMode(m)}
                                 className={cn(
-                                    'px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] transition-all duration-300 rounded-xl',
+                                    'px-4 py-2 text-[11px] font-black uppercase tracking-[0.1em] transition-colors duration-300 rounded-xl',
                                     mode === m 
                                         ? 'bg-white text-brand-blue shadow-[0_2px_8px_rgba(0,0,0,0.08)] scale-[1.02]' 
-                                        : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/50'
+                                        : 'text-[#6b6b73] hover:text-[#1d1d1f] hover:bg-white/50'
                                 )}
                             >
                                 {getMetricLabel(m)}
@@ -197,11 +197,11 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                         <button
                             onClick={() => navigate(-1)}
                             disabled={navigating}
-                            className="p-2 rounded-xl hover:bg-white hover:shadow-sm transition-all disabled:opacity-40"
+                            className="p-2 rounded-xl hover:bg-white hover:shadow-sm transition-colors disabled:opacity-40"
                         >
                             <ChevronLeft size={16} className="text-[#1d1d1f]" />
                         </button>
-                        <span className="px-4 text-[10px] font-black text-[#1d1d1f] whitespace-nowrap min-w-[130px] text-center">
+                        <span className="px-4 text-[11px] font-black text-[#1d1d1f] whitespace-nowrap min-w-[130px] text-center">
                             {navigating
                                 ? <Loader2 size={12} className="animate-spin" />
                                 : isCurrentWeek ? 'THIS WEEK' : `${format(weekStart, 'MMM d')} – ${format(addDays(weekStart, 6), 'MMM d')}`.toUpperCase()
@@ -210,7 +210,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                         <button
                             onClick={() => navigate(+1)}
                             disabled={navigating}
-                            className="p-2 rounded-xl hover:bg-white hover:shadow-sm transition-all disabled:opacity-40"
+                            className="p-2 rounded-xl hover:bg-white hover:shadow-sm transition-colors disabled:opacity-40"
                         >
                             <ChevronRight size={16} className="text-[#1d1d1f]" />
                         </button>
@@ -261,7 +261,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                 <div className="mb-10 space-y-3 bg-white/40 backdrop-blur-sm rounded-[32px] p-8 border border-white/60 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
                     <div className="flex items-center justify-between mb-6 px-1">
                         <div>
-                            <p className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.25em] mb-1">
+                            <p className="text-[11px] font-black text-[#6b6b73] uppercase tracking-[0.25em] mb-1">
                                 TEAM UTILIZATION
                             </p>
                             <p className="text-[11px] font-bold text-[#1d1d1f] opacity-60">
@@ -284,19 +284,19 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                 key={uid} 
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className="flex items-center gap-4 bg-white/60 hover:bg-white p-3 rounded-[24px] transition-all duration-300 group/row border border-transparent hover:border-brand-blue/10 hover:shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
+                                className="flex items-center gap-4 bg-white/60 hover:bg-white p-3 rounded-[24px] transition-colors duration-300 group/row border border-transparent hover:border-brand-blue/10 hover:shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
                             >
                                 <UserAvatar
                                     name={member.name}
                                     avatarUrl={member.avatar_url}
                                     className="w-12 h-12 rounded-[18px] bg-[#1d1d1f] shrink-0 shadow-sm group-hover/row:scale-105 transition-transform"
-                                    textClassName="text-[10px] font-black text-white"
+                                    textClassName="text-[11px] font-black text-white"
                                 />
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-[13px] font-black text-[#1d1d1f] tracking-tight truncate">{member.name}</span>
                                         <div className="flex items-center gap-2">
-                                            <span className={cn('text-[10px] font-black tabular-nums', colors.text)}>
+                                            <span className={cn('text-[11px] font-black tabular-nums', colors.text)}>
                                                 {total}{mode === 'hours' ? 'H' : mode === 'tasks' ? ' TASKS' : ' PTS'}
                                             </span>
                                         </div>
@@ -338,11 +338,11 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                 <table className="w-full border-separate border-spacing-y-2">
                     <thead>
                         <tr className="border-b border-[#f5f5f7]">
-                            <th className="text-left text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] pb-6 pl-4 w-48">Resource Allocation</th>
+                            <th className="text-left text-[11px] font-black text-[#6b6b73] uppercase tracking-[0.2em] pb-6 pl-4 w-48">Resource Allocation</th>
                             {days.map(d => (
-                                <th key={d.toISOString()} className="text-center text-[10px] font-black text-[#86868b] uppercase tracking-wider pb-6 px-1">
+                                <th key={d.toISOString()} className="text-center text-[11px] font-black text-[#6b6b73] uppercase tracking-wider pb-6 px-1">
                                     <div className="flex flex-col items-center">
-                                        <span className={cn('mb-1 px-2 py-0.5 rounded-md transition-colors', isSameDay(d, new Date()) ? 'bg-brand-blue text-white' : 'text-[#86868b]')}>
+                                        <span className={cn('mb-1 px-2 py-0.5 rounded-md transition-colors', isSameDay(d, new Date()) ? 'bg-brand-blue text-white' : 'text-[#6b6b73]')}>
                                             {format(d, 'EEE').toUpperCase()}
                                         </span>
                                         <span className={cn('text-xs font-bold transition-colors', isSameDay(d, new Date()) ? 'text-brand-blue' : 'text-[#1d1d1f]')}>
@@ -356,7 +356,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                     <tbody>
                         {Object.keys(data).length === 0 ? (
                             <tr>
-                                <td colSpan={8} className="py-12 text-center text-sm font-medium text-[#86868b] bg-[#f5f5f7] rounded-[24px]">
+                                <td colSpan={8} className="py-12 text-center text-sm font-medium text-[#6b6b73] bg-[#f5f5f7] rounded-[24px]">
                                     No workload data available for this week.
                                 </td>
                             </tr>
@@ -369,7 +369,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                                 name={member.name}
                                                 avatarUrl={member.avatar_url}
                                                 className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#1d1d1f] to-[#434343]"
-                                                textClassName="text-[9px] font-black text-white"
+                                                textClassName="text-[11px] font-black text-white"
                                             />
                                             <span className="text-xs font-bold text-[#1d1d1f] truncate max-w-[100px]">
                                                 {member.name}
@@ -391,7 +391,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                                     whileHover={{ scale: 1.1, y: -2, rotate: 1 }}
                                                     whileTap={{ scale: 0.9 }}
                                                     className={cn(
-                                                        'w-full h-12 min-w-[44px] rounded-[14px] flex items-center justify-center transition-all duration-300 cursor-pointer border shadow-sm relative group/cell',
+                                                        'w-full h-12 min-w-[44px] rounded-[14px] flex items-center justify-center transition-colors duration-300 cursor-pointer border shadow-sm relative group/cell',
                                                         colors.bg, colors.text, colors.border,
                                                         isSelected ? 'ring-2 ring-offset-2 ring-brand-blue border-brand-blue z-10' : '',
                                                         isToday && !isSelected ? 'ring-2 ring-brand-blue/20 border-brand-blue/30' : ''
@@ -450,7 +450,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                     <h4 className="text-xl font-black text-[#1d1d1f] tracking-tight">
                                         Work Details — {selectedCell.userName}
                                     </h4>
-                                    <p className="text-sm font-medium text-[#86868b]">
+                                    <p className="text-sm font-medium text-[#6b6b73]">
                                         {format(selectedCell.date, 'EEEE, MMMM do, yyyy')}
                                     </p>
                                 </div>
@@ -459,7 +459,7 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                 onClick={() => setSelectedCell(null)}
                                 className="p-2 hover:bg-[#f5f5f7] rounded-full transition-colors group"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-[#86868b] group-hover:text-[#1d1d1f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-[#6b6b73] group-hover:text-[#1d1d1f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
@@ -488,35 +488,35 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
                                     <span className="text-2xl">☕</span>
                                 </div>
                                 <h5 className="text-sm font-bold text-[#1d1d1f] mb-1">No activity logged</h5>
-                                <p className="text-xs font-medium text-[#86868b]">
+                                <p className="text-xs font-medium text-[#6b6b73]">
                                     {selectedCell.userName} has no logged work for this day.
                                 </p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {details.map((detail, idx) => (
-                                    <div key={idx} className="group/card bg-white p-6 rounded-[28px] border border-[#e5e5ea] hover:border-brand-blue hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300">
+                                    <div key={idx} className="group/card bg-white p-6 rounded-[28px] border border-[#e5e5ea] hover:border-brand-blue hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-colors duration-300">
                                         <div className="flex items-center justify-between mb-4">
-                                            <span className="text-[10px] font-black text-brand-blue uppercase tracking-[0.2em] bg-brand-blue/5 px-3 py-1 rounded-full">
+                                            <span className="text-[11px] font-black text-brand-blue uppercase tracking-[0.2em] bg-brand-blue/5 px-3 py-1 rounded-full">
                                                 Task Record
                                             </span>
-                                            <span className="text-[10px] font-bold text-[#86868b]">
+                                            <span className="text-[11px] font-bold text-[#6b6b73]">
                                                 {format(new Date(detail.created_at), 'h:mm a')}
                                             </span>
                                         </div>
                                         <h5 className="text-[15px] font-black text-[#1d1d1f] tracking-tight mb-2 line-clamp-1 group-hover/card:text-brand-blue transition-colors">
                                             {detail.task_name}
                                         </h5>
-                                        <p className="text-sm font-medium text-[#86868b] mb-6 line-clamp-2 leading-relaxed">
+                                        <p className="text-sm font-medium text-[#6b6b73] mb-6 line-clamp-2 leading-relaxed">
                                             {detail.subtask_name}
                                         </p>
                                         <div className="flex items-center justify-between pt-4 border-t border-[#f5f5f7]">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-2 h-2 rounded-full bg-[#34c759] shadow-[0_0_8px_rgba(52,199,89,0.4)]" />
-                                                <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest">Time Logged</span>
+                                                <span className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest">Time Logged</span>
                                             </div>
                                             <span className="text-lg font-black text-[#1d1d1f] tracking-tighter">
-                                                {detail.hours_spent} <span className="text-[10px] text-[#86868b] tracking-normal font-bold">hrs</span>
+                                                {detail.hours_spent} <span className="text-[11px] text-[#6b6b73] tracking-normal font-bold">hrs</span>
                                             </span>
                                         </div>
                                     </div>
@@ -530,19 +530,19 @@ export function WorkloadHeatmap({ data: initialData }: { data: WorkloadMap }) {
             {/* ── Legend ───────────────────────────────────────────── */}
             <div className="flex flex-col sm:flex-row items-center justify-between mt-10 gap-4 p-5 bg-white/40 backdrop-blur-sm rounded-2xl border border-white/60 shadow-sm">
                 <div className="flex items-center gap-8">
-                    <span className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em]">Scale Guide</span>
+                    <span className="text-[11px] font-black text-[#6b6b73] uppercase tracking-[0.2em]">Scale Guide</span>
                     <div className="flex items-center gap-4">
                         {(['free', 'moderate', 'busy', 'overloaded'] as const).map((level, i) => (
                             <div key={level} className="flex items-center gap-2 group/legend">
                                 <div className={cn('w-4 h-4 rounded-[6px] shadow-sm transition-transform group-hover/legend:scale-110', HEAT_COLORS[level].bg, HEAT_COLORS[level].border, 'border')} />
-                                <span className="text-[10px] font-bold text-[#1d1d1f] opacity-70 group-hover/legend:opacity-100 transition-opacity whitespace-nowrap">
+                                <span className="text-[11px] font-bold text-[#1d1d1f] opacity-70 group-hover/legend:opacity-100 transition-opacity whitespace-nowrap">
                                     {['Optimal', 'Moderate', 'Busy', 'Critical'][i]}
                                 </span>
                             </div>
                         ))}
                     </div>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-brand-blue bg-brand-blue/5 px-4 py-2 rounded-full border border-brand-blue/10">
+                <div className="flex items-center gap-2 text-[11px] font-bold text-brand-blue bg-brand-blue/5 px-4 py-2 rounded-full border border-brand-blue/10">
                     <div className="w-1.5 h-1.5 rounded-full bg-brand-blue animate-pulse" />
                     Interative View: Click any cell for drill-down
                 </div>
@@ -565,14 +565,14 @@ function SummaryPill({
     return (
         <motion.div 
             whileHover={{ y: -4, boxShadow: '0 12px 24px rgba(0,0,0,0.05)' }}
-            className={cn('rounded-[24px] p-5 flex items-center gap-4 border transition-all duration-500', bg, 'border-white/40 shadow-[0_4px_12px_rgba(0,0,0,0.02)]')}
+            className={cn('rounded-[24px] p-5 flex items-center gap-4 border transition-colors duration-500', bg, 'border-white/40 shadow-[0_4px_12px_rgba(0,0,0,0.02)]')}
         >
             <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm border border-black/5', color)}>
                 {icon}
             </div>
             <div className="min-w-0">
                 <p className={cn('text-2xl font-black leading-tight tracking-tighter', color)}>{value}</p>
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#86868b] mt-0.5 truncate opacity-70">
+                <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[#6b6b73] mt-0.5 truncate opacity-70">
                     {label} <span className="text-[#1d1d1f]/30">/ {total}</span>
                 </p>
             </div>

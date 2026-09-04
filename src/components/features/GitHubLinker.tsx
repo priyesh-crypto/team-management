@@ -86,7 +86,7 @@ export function GitHubLinker({ taskId, orgId, connection, initialLinks }: Props)
                     </div>
                     {connection?.is_active && (
                         <button onClick={() => setShowForm(s => !s)}
-                            className="flex items-center gap-1 text-[10px] font-black text-brand-blue hover:underline">
+                            className="flex items-center gap-1 text-[11px] font-black text-brand-blue hover:underline">
                             <Plus size={10} /> Link
                         </button>
                     )}
@@ -101,7 +101,7 @@ export function GitHubLinker({ taskId, orgId, connection, initialLinks }: Props)
                         <div className="flex gap-1">
                             {(["pr", "issue", "commit"] as const).map(t => (
                                 <button key={t} type="button" onClick={() => setLinkType(t)}
-                                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-black transition-colors ${linkType === t ? "bg-brand-blue text-white" : "bg-white text-slate-500 hover:bg-slate-100"}`}>
+                                    className={`flex-1 py-1.5 rounded-lg text-[11px] font-black transition-colors ${linkType === t ? "bg-brand-blue text-white" : "bg-white text-slate-500 hover:bg-slate-100"}`}>
                                     {t.toUpperCase()}
                                 </button>
                             ))}
@@ -118,10 +118,10 @@ export function GitHubLinker({ taskId, orgId, connection, initialLinks }: Props)
                             placeholder={linkType === "commit" ? "Commit SHA" : `${linkType === "pr" ? "PR" : "Issue"} number`}
                             className="w-full px-2 py-1.5 rounded-lg border border-slate-200 text-xs font-bold focus:outline-none bg-white" />
                         <div className="flex gap-1.5">
-                            <button type="submit" disabled={pending} className="flex-1 py-1.5 rounded-lg bg-brand-blue text-white text-[10px] font-black disabled:opacity-50">
+                            <button type="submit" disabled={pending} className="flex-1 py-1.5 rounded-lg bg-brand-blue text-white text-[11px] font-black disabled:opacity-50">
                                 {pending ? "Linking…" : "Link"}
                             </button>
-                            <button type="button" onClick={() => setShowForm(false)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-bold text-slate-500">
+                            <button type="button" onClick={() => setShowForm(false)} className="px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-500">
                                 Cancel
                             </button>
                         </div>
@@ -131,7 +131,7 @@ export function GitHubLinker({ taskId, orgId, connection, initialLinks }: Props)
                 <div className="space-y-1.5">
                     {links.map(link => (
                         <div key={link.id} className="flex items-center gap-2 group py-1">
-                            <span className={`flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded ${STATE_COLORS[link.state ?? "open"] ?? STATE_COLORS.open}`}>
+                            <span className={`flex items-center gap-1 text-[11px] font-black px-1.5 py-0.5 rounded ${STATE_COLORS[link.state ?? "open"] ?? STATE_COLORS.open}`}>
                                 {LINK_ICONS[link.link_type]}
                                 {link.state ?? link.link_type}
                             </span>
@@ -139,7 +139,7 @@ export function GitHubLinker({ taskId, orgId, connection, initialLinks }: Props)
                                 <div className="text-xs font-bold text-[#1d1d1f] truncate">
                                     {link.title ?? (link.ref_number ? `#${link.ref_number}` : link.ref_sha?.slice(0, 7))}
                                 </div>
-                                <div className="text-[9px] text-slate-400">{link.repo}</div>
+                                <div className="text-[11px] text-slate-400">{link.repo}</div>
                             </div>
                             {link.url && (
                                 <a href={link.url} target="_blank" rel="noopener noreferrer"

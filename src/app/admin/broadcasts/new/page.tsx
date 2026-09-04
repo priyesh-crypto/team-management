@@ -8,7 +8,7 @@ export default function NewBroadcastPage() {
             <div>
                 <Link
                     href="/admin/broadcasts"
-                    className="text-[10px] font-black uppercase tracking-widest text-[#86868b] hover:text-brand-blue transition"
+                    className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] hover:text-brand-blue transition"
                 >
                     ← Broadcasts
                 </Link>

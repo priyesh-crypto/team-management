@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useFeature } from "@/context/EntitlementContext";
+import { Lock } from 'lucide-react';
 
 const FEATURE_NAMES: Record<string, string> = {
     recurring_tasks: "Recurring Tasks",
@@ -98,7 +99,7 @@ function PaywallModal({ feature, onClose }: PaywallModalProps) {
                 </button>
 
                 <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-blue/10 text-brand-blue text-2xl mb-5 mx-auto">
-                    🔒
+                    <Lock size={18} strokeWidth={2} aria-hidden="true" />
                 </div>
 
                 <h2 className="text-xl font-black text-[#1d1d1f] text-center mb-2">
@@ -173,9 +174,9 @@ export function UpgradeGate({ feature, children, mode = "hide" }: UpgradeGatePro
         <>
             <button
                 onClick={() => setShowModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-blue/20 bg-brand-blue/5 text-brand-blue text-[10px] font-black uppercase tracking-wider hover:bg-brand-blue/10 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-brand-blue/20 bg-brand-blue/5 text-brand-blue text-[11px] font-black uppercase tracking-wider hover:bg-brand-blue/10 transition-colors"
             >
-                <span>🔒</span>
+                <Lock size={14} strokeWidth={2} aria-hidden="true" />
                 {featureName} · {tier}
             </button>
             {showModal && (

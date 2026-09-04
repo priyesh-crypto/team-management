@@ -335,7 +335,7 @@ export function TaskDetailsView({
                         </div>
                         <div>
                             <div className="flex items-center gap-2.5">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">TASK ID {task.id.slice(0, 8)}</span>
+                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">TASK ID {task.id.slice(0, 8)}</span>
                                 <div className="w-1 h-1 bg-slate-200 rounded-full"></div>
                                 <Badge variant={task.priority} className="text-[8px] px-2 py-0.5 font-bold uppercase tracking-widest rounded-lg">{task.priority}</Badge>
                             </div>
@@ -359,7 +359,7 @@ export function TaskDetailsView({
                         {(isManager || isEditable) && (
                             <button 
                                 onClick={() => setIsEditing(!isEditing)}
-                                className={`h-11 px-5 rounded-xl flex items-center gap-2.5 transition-all font-bold text-[10px] uppercase tracking-widest shadow-sm ${isEditing ? 'bg-red-500 text-white shadow-red-100' : 'bg-white border border-slate-100 hover:bg-slate-50 text-slate-800'}`}
+                                className={`h-11 px-5 rounded-xl flex items-center gap-2.5 transition-colors font-bold text-[11px] uppercase tracking-widest shadow-sm ${isEditing ? 'bg-red-500 text-white shadow-red-100' : 'bg-white border border-slate-100 hover:bg-slate-50 text-slate-800'}`}
                             >
                                 {isEditing ? <X size={14} strokeWidth={2.5} /> : <PencilIcon size={14} strokeWidth={2.5} />}
                                 {isEditing ? "Cancel" : "Edit"}
@@ -377,30 +377,30 @@ export function TaskDetailsView({
                         {isEditing ? (
                             <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
                                 <div className="space-y-2">
-                                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 ml-1">Task Name</label>
-                                    <Input value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 px-5 text-lg font-bold tracking-tight focus:bg-white transition-all" />
+                                    <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1">Task Name</label>
+                                    <Input value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 px-5 text-lg font-bold tracking-tight focus:bg-white transition-colors" />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 ml-1">Notes</label>
-                                    <textarea value={editData.notes} onChange={e => setEditData({...editData, notes: e.target.value})} className="w-full min-h-[140px] rounded-[20px] bg-slate-50 border border-slate-200 p-5 text-sm font-medium resize-none focus:bg-white transition-all outline-none" />
+                                    <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1">Notes</label>
+                                    <textarea value={editData.notes} onChange={e => setEditData({...editData, notes: e.target.value})} className="w-full min-h-[140px] rounded-[20px] bg-slate-50 border border-slate-200 p-5 text-sm font-medium resize-none focus:bg-white transition-colors outline-none" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 ml-1">Start Date</label>
-                                        <Input type="date" value={editData.start_date} onChange={e => setEditData({...editData, start_date: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 px-5 text-sm font-bold focus:bg-white transition-all" />
+                                        <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1">Start Date</label>
+                                        <Input type="date" value={editData.start_date} onChange={e => setEditData({...editData, start_date: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 px-5 text-sm font-bold focus:bg-white transition-colors" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 ml-1">Deadline</label>
-                                        <Input type="date" value={editData.deadline} onChange={e => setEditData({...editData, deadline: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 px-5 text-sm font-bold focus:bg-white transition-all" />
+                                        <label className="text-[11px] font-bold uppercase tracking-widest text-slate-400 ml-1">Deadline</label>
+                                        <Input type="date" value={editData.deadline} onChange={e => setEditData({...editData, deadline: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 px-5 text-sm font-bold focus:bg-white transition-colors" />
                                     </div>
                                 </div>
-                                <Button onClick={handleSaveEdit} disabled={isSaving} className="w-full h-12 rounded-xl bg-brand-blue hover:bg-[#0077ed] text-white font-bold tracking-widest text-[10px] uppercase">
+                                <Button onClick={handleSaveEdit} disabled={isSaving} className="w-full h-12 rounded-xl bg-brand-blue hover:bg-[#0077ed] text-white font-bold tracking-widest text-[11px] uppercase">
                                     {isSaving ? 'Saving...' : 'Save Changes'}
                                 </Button>
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-3">
+                                <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-3">
                                     <Info size={14} className="text-brand-blue" strokeWidth={2.5} />
                                     <span>Description</span>
                                 </h3>
@@ -415,7 +415,7 @@ export function TaskDetailsView({
 
                     <section>
                         <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-3">
+                            <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-3">
                                 <Timer size={14} className="text-brand-blue" strokeWidth={2.5} />
                                 <span>Work Logs & Time Tracking</span>
                             </h3>
@@ -431,7 +431,7 @@ export function TaskDetailsView({
                                     <Input type="date" value={subtaskForm.date} onChange={e => setSubtaskForm({...subtaskForm, date: e.target.value})} className="h-12 bg-white border-slate-200 rounded-xl px-4 text-[13px] font-medium" />
                                 </div>
                                 <div className="flex gap-4">
-                                    <Button onClick={handleAddSubtask} disabled={isAddingSubtask || !subtaskForm.name.trim()} className="w-full h-11 bg-brand-blue text-white rounded-2xl font-black text-[9px] uppercase tracking-widest">
+                                    <Button onClick={handleAddSubtask} disabled={isAddingSubtask || !subtaskForm.name.trim()} className="w-full h-11 bg-brand-blue text-white rounded-2xl font-black text-[11px] uppercase tracking-widest">
                                         {isAddingSubtask ? 'Logging...' : 'Upload Work Log'}
                                     </Button>
                                 </div>
@@ -440,10 +440,10 @@ export function TaskDetailsView({
 
                         <div className="space-y-3">
                             {subtasks.sort((a,b) => new Date(b.date_logged || '').getTime() - new Date(a.date_logged || '').getTime()).map((sub) => (
-                                <div key={sub.id} className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between hover:border-brand-blue transition-all">
+                                <div key={sub.id} className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between hover:border-brand-blue transition-colors">
                                     <div>
                                         <p className="text-[12px] font-bold text-slate-800">{sub.name}</p>
-                                        <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest mt-1">{sub.date_logged} • {sub.hours_spent} hrs</p>
+                                        <p className="text-[11px] text-slate-400 uppercase font-black tracking-widest mt-1">{sub.date_logged} • {sub.hours_spent} hrs</p>
                                     </div>
                                 </div>
                             ))}
@@ -458,7 +458,7 @@ export function TaskDetailsView({
                 <div className="lg:col-span-4 bg-slate-50/30 border-l border-slate-100 p-8 space-y-6">
                     <div className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm space-y-6">
                         <div className="space-y-3">
-                            <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                 <CheckCircle2 size={12} className="text-[#34c759]" />
                                 <span>Status</span>
                             </h4>

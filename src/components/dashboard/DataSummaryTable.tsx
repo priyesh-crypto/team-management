@@ -64,7 +64,7 @@ const BASIS_COLORS: Record<string, string> = {
 export function DataSummaryTable() {
     return (
         <div className="space-y-3">
-            <p className="text-[11px] text-[#86868b] font-medium leading-relaxed">
+            <p className="text-[11px] text-[#6b6b73] font-medium leading-relaxed">
                 The table below shows every category of personal data we hold about you,
                 why we hold it, and how long we keep it.
             </p>
@@ -74,23 +74,23 @@ export function DataSummaryTable() {
                 <table className="w-full text-[11px]">
                     <thead>
                         <tr className="bg-[#f5f5f7] border-b border-[#eceef0]">
-                            <th className="text-left px-4 py-3 font-black text-[9px] uppercase tracking-[0.25em] text-[#86868b]">Data</th>
-                            <th className="text-left px-4 py-3 font-black text-[9px] uppercase tracking-[0.25em] text-[#86868b]">Examples</th>
-                            <th className="text-left px-4 py-3 font-black text-[9px] uppercase tracking-[0.25em] text-[#86868b]">Lawful basis</th>
-                            <th className="text-left px-4 py-3 font-black text-[9px] uppercase tracking-[0.25em] text-[#86868b]">Kept for</th>
+                            <th className="text-left px-4 py-3 font-black text-[11px] uppercase tracking-[0.25em] text-[#6b6b73]">Data</th>
+                            <th className="text-left px-4 py-3 font-black text-[11px] uppercase tracking-[0.25em] text-[#6b6b73]">Examples</th>
+                            <th className="text-left px-4 py-3 font-black text-[11px] uppercase tracking-[0.25em] text-[#6b6b73]">Lawful basis</th>
+                            <th className="text-left px-4 py-3 font-black text-[11px] uppercase tracking-[0.25em] text-[#6b6b73]">Kept for</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-[#f0f0f2]">
                         {DATA_CATEGORIES.map((row) => (
                             <tr key={row.category} className="bg-white hover:bg-[#fafafa] transition-colors">
                                 <td className="px-4 py-3 font-bold text-[#1d1d1f]">{row.category}</td>
-                                <td className="px-4 py-3 text-[#86868b]">{row.examples}</td>
+                                <td className="px-4 py-3 text-[#6b6b73]">{row.examples}</td>
                                 <td className="px-4 py-3">
-                                    <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${BASIS_COLORS[row.lawfulBasis]}`}>
+                                    <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-widest ${BASIS_COLORS[row.lawfulBasis]}`}>
                                         {row.lawfulBasis}
                                     </span>
                                 </td>
-                                <td className="px-4 py-3 text-[#86868b]">{row.retentionLabel}</td>
+                                <td className="px-4 py-3 text-[#6b6b73]">{row.retentionLabel}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -103,19 +103,19 @@ export function DataSummaryTable() {
                     <div key={row.category} className="rounded-2xl border border-[#eceef0] bg-white p-4 space-y-2">
                         <div className="flex items-start justify-between gap-2">
                             <span className="font-bold text-[12px] text-[#1d1d1f]">{row.category}</span>
-                            <span className={`shrink-0 inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${BASIS_COLORS[row.lawfulBasis]}`}>
+                            <span className={`shrink-0 inline-block px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-widest ${BASIS_COLORS[row.lawfulBasis]}`}>
                                 {row.lawfulBasis}
                             </span>
                         </div>
-                        <p className="text-[11px] text-[#86868b]">{row.examples}</p>
-                        <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest">
+                        <p className="text-[11px] text-[#6b6b73]">{row.examples}</p>
+                        <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-widest">
                             Kept for: <span className="normal-case font-medium">{row.retentionLabel}</span>
                         </p>
                     </div>
                 ))}
             </div>
 
-            <p className="text-[10px] text-[#86868b] pt-1">
+            <p className="text-[11px] text-[#6b6b73] pt-1">
                 Processing is carried out under GDPR Art. 6. To request a correction, email us directly.
             </p>
         </div>

@@ -91,7 +91,7 @@ export function AdminNav({ userEmail }: { userEmail: string }) {
                         <p className="text-xs font-medium text-[#1d1d1f] truncate">
                             {userEmail.split("@")[0]}
                         </p>
-                        <p className="text-[11px] text-[#86868b] truncate">
+                        <p className="text-[11px] text-[#6b6b73] truncate">
                             Super Admin
                         </p>
                     </div>

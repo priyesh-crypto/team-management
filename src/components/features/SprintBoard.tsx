@@ -7,7 +7,7 @@ import { createSprint, updateSprintStatus, assignTaskToSprint, getSprints, getSp
 import { UpgradeGate } from "@/components/ui/UpgradeGate";
 
 const STATUS_COLORS: Record<string, string> = {
-    "To Do": "#86868b",
+    "To Do": "#6b6b73",
     "In Progress": "#ff9500",
     "In Review": "#0051e6",
     "Blocked": "#ff3b30",
@@ -125,12 +125,12 @@ export function SprintBoard({ orgId, workspaceId, sprints: initialSprints, sprin
                             <input value={form.goal} onChange={e => setForm(f => ({ ...f, goal: e.target.value }))}
                                 placeholder="Sprint goal (optional)" className="col-span-2 px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none" />
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Start</label>
+                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">Start</label>
                                 <input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} required
                                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none" />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">End</label>
+                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">End</label>
                                 <input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} required
                                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none" />
                             </div>
@@ -159,18 +159,18 @@ export function SprintBoard({ orgId, workspaceId, sprints: initialSprints, sprin
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-black text-[#1d1d1f]">{sprint.name}</span>
-                                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.color}`}>{cfg.label}</span>
+                                        <span className={`text-[11px] font-black px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.color}`}>{cfg.label}</span>
                                     </div>
                                     {sprint.goal && <div className="text-xs text-slate-400 mt-0.5 truncate">{sprint.goal}</div>}
                                     <div className="flex items-center gap-3 mt-1">
-                                        <span className="text-[10px] text-slate-400">
+                                        <span className="text-[11px] text-slate-400">
                                             {new Date(sprint.start_date).toLocaleDateString()} – {new Date(sprint.end_date).toLocaleDateString()}
                                         </span>
                                         {sprint.status === "active" && daysLeft >= 0 && (
-                                            <span className="text-[10px] font-bold text-[#ff9500]">{daysLeft}d left</span>
+                                            <span className="text-[11px] font-bold text-[#ff9500]">{daysLeft}d left</span>
                                         )}
                                         {total > 0 && (
-                                            <span className="text-[10px] font-bold text-slate-500">{done}/{total} pts</span>
+                                            <span className="text-[11px] font-bold text-slate-500">{done}/{total} pts</span>
                                         )}
                                     </div>
                                 </div>
@@ -197,7 +197,7 @@ export function SprintBoard({ orgId, workspaceId, sprints: initialSprints, sprin
                                     {total > 0 && (
                                         <div className="px-5 pt-3">
                                             <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div className="h-full bg-[#34c759] rounded-full transition-all duration-500"
+                                                <div className="h-full bg-[#34c759] rounded-full transition-colors duration-500"
                                                     style={{ width: `${total > 0 ? (done / total) * 100 : 0}%` }} />
                                             </div>
                                         </div>
@@ -205,13 +205,13 @@ export function SprintBoard({ orgId, workspaceId, sprints: initialSprints, sprin
                                     <div className="divide-y divide-slate-50">
                                         {tasks.map(task => (
                                             <div key={task.id} className="flex items-center gap-3 px-5 py-3 group">
-                                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_COLORS[task.status] ?? "#86868b" }} />
+                                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_COLORS[task.status] ?? "#6b6b73" }} />
                                                 <span className="flex-1 text-sm font-bold text-[#1d1d1f] truncate">{task.name}</span>
                                                 {task.story_points != null && (
-                                                    <span className="text-[10px] font-black px-1.5 py-0.5 bg-slate-100 rounded text-slate-500">{task.story_points}pt</span>
+                                                    <span className="text-[11px] font-black px-1.5 py-0.5 bg-slate-100 rounded text-slate-500">{task.story_points}pt</span>
                                                 )}
                                                 <button onClick={() => handleMoveToBacklog(task, sprint.id)} disabled={pending}
-                                                    className="text-[10px] font-bold text-slate-300 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    className="text-[11px] font-bold text-slate-300 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     → Backlog
                                                 </button>
                                             </div>
@@ -237,11 +237,11 @@ export function SprintBoard({ orgId, workspaceId, sprints: initialSprints, sprin
                                 const planningSprint = sprints.find(s => s.status === "planning");
                                 return (
                                     <div key={task.id} className="flex items-center gap-3 px-5 py-3 group">
-                                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_COLORS[task.status] ?? "#86868b" }} />
+                                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_COLORS[task.status] ?? "#6b6b73" }} />
                                         <span className="flex-1 text-sm font-bold text-[#1d1d1f] truncate">{task.name}</span>
                                         {planningSprint && (
                                             <button onClick={() => handleMoveToSprint(task, planningSprint.id)} disabled={pending}
-                                                className="text-[10px] font-bold text-brand-blue hover:underline opacity-0 group-hover:opacity-100 transition-opacity">
+                                                className="text-[11px] font-bold text-brand-blue hover:underline opacity-0 group-hover:opacity-100 transition-opacity">
                                                 + Add to {planningSprint.name}
                                             </button>
                                         )}

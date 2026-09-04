@@ -66,7 +66,7 @@ export function TimeTrackerButton({ taskId, runningEntry, totalHours }: Props) {
                 <button
                     onClick={isRunning ? handleStop : handleStart}
                     disabled={pending}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black transition-all disabled:opacity-50 ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black transition-colors disabled:opacity-50 ${
                         isRunning
                             ? "bg-[#ff3b30]/10 text-[#ff3b30] hover:bg-[#ff3b30]/20 border border-[#ff3b30]/20"
                             : "bg-[#34c759]/10 text-[#34c759] hover:bg-[#34c759]/20 border border-[#34c759]/20"
@@ -80,7 +80,7 @@ export function TimeTrackerButton({ taskId, runningEntry, totalHours }: Props) {
                 </button>
 
                 {totalHours > 0 && (
-                    <span className="text-[10px] font-bold text-slate-400">
+                    <span className="text-[11px] font-bold text-slate-400">
                         {totalHours}h logged
                     </span>
                 )}

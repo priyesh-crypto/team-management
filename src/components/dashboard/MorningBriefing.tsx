@@ -50,14 +50,14 @@ export function MorningBriefingWidget({ briefing, loading, onAction }: Props) {
                         <div className="w-8 h-8 rounded-xl bg-brand-blue flex items-center justify-center">
                             <Sparkles size={16} />
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">Morning Intelligence Brief</span>
+                        <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white/50">Morning Intelligence Brief</span>
                     </div>
                     
                     <h2 className="text-3xl font-black tracking-tight leading-tight max-w-xl">
                         {briefing.summary}
                     </h2>
                     
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-white/60">
+                    <div className="flex items-center gap-4 text-[11px] font-bold text-white/60">
                         <div className="flex items-center gap-1.5">
                             <Calendar size={12} />
                             {briefing.date}
@@ -79,7 +79,7 @@ export function MorningBriefingWidget({ briefing, loading, onAction }: Props) {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className={`p-6 rounded-[28px] border transition-all hover:scale-[1.02] ${
+                        className={`p-6 rounded-[28px] border transition-[transform,opacity,color,background-color,border-color,box-shadow] hover:scale-[1.02] ${
                             section.priority === 'high' ? 'bg-red-50/50 border-red-100' :
                             section.priority === 'medium' ? 'bg-amber-50/50 border-amber-100' :
                             'bg-slate-50 border-slate-100'
@@ -112,7 +112,7 @@ export function MorningBriefingWidget({ briefing, loading, onAction }: Props) {
                         
                         <button 
                             onClick={() => onAction(section.type, section.metadata)}
-                            className="flex items-center gap-2 text-[10px] font-black text-brand-blue uppercase tracking-widest hover:gap-3 transition-all"
+                            className="flex items-center gap-2 text-[11px] font-black text-brand-blue uppercase tracking-widest hover:gap-3 transition-colors"
                         >
                             Take Action <ChevronRight size={12} />
                         </button>
@@ -122,12 +122,12 @@ export function MorningBriefingWidget({ briefing, loading, onAction }: Props) {
 
             {/* Quick Action Footer */}
             <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI Command Suggestions:</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">AI Command Suggestions:</p>
                 <div className="flex items-center gap-3">
-                    <button className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest hover:border-brand-blue transition-all">
+                    <button className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-[11px] font-black uppercase tracking-widest hover:border-brand-blue transition-colors">
                         Reschedule Overdue
                     </button>
-                    <button className="px-4 py-2 rounded-xl bg-brand-blue text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-brand-blue/20">
+                    <button className="px-4 py-2 rounded-xl bg-brand-blue text-white text-[11px] font-black uppercase tracking-widest shadow-lg shadow-brand-blue/20">
                         View Team Capacity
                     </button>
                 </div>

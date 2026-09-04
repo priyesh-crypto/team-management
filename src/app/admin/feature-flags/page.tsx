@@ -21,7 +21,7 @@ export default async function FeatureFlagsPage() {
 
             {overrides.length === 0 ? (
                 <Card>
-                    <p className="text-sm text-[#86868b] text-center py-6">
+                    <p className="text-sm text-[#6b6b73] text-center py-6">
                         No overrides active. All orgs use their plan defaults.
                     </p>
                 </Card>
@@ -67,7 +67,7 @@ export default async function FeatureFlagsPage() {
                                         </span>
                                     ))}
                                 </div>
-                                <p className="text-xs text-[#86868b] mt-2">
+                                <p className="text-xs text-[#6b6b73] mt-2">
                                     Last updated {new Date(orgOverrides[0].updated_at).toLocaleString()}
                                 </p>
                             </Card>

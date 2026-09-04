@@ -224,7 +224,7 @@ export function BillingClient({
         <div className="mx-auto max-w-6xl p-8 space-y-8">
             {/* Header */}
             <header>
-                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue mb-1.5">
+                <div className="text-[11px] font-black uppercase tracking-[0.2em] text-brand-blue mb-1.5">
                     Plans & Billing
                 </div>
                 <h1 className="text-3xl font-black tracking-tight text-[#1d1d1f]">
@@ -239,7 +239,7 @@ export function BillingClient({
             <section className="rounded-2xl border border-slate-200 p-6 bg-white">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
-                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
                             Current Plan
                         </div>
                         <div className="text-2xl font-black mt-1 text-[#1d1d1f]">
@@ -247,7 +247,7 @@ export function BillingClient({
                         </div>
                         <div className="mt-2 flex items-center gap-2 flex-wrap">
                             <span
-                                className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full ${
+                                className={`px-2 py-0.5 text-[11px] font-black uppercase tracking-wider rounded-full ${
                                     status === "active"
                                         ? "bg-emerald-100 text-emerald-700"
                                         : status === "trialing"
@@ -276,7 +276,7 @@ export function BillingClient({
                             onClick={openPortal}
                             disabled={loading === "portal"}
                             className="px-4 py-2.5 rounded-xl bg-[#1d1d1f] text-white text-sm font-black hover:bg-[#434343] disabled:opacity-50 transition-colors flex items-center gap-2"
-                        >
+                         aria-label="Next">
                             {loading === "portal" ? "Opening..." : "Manage billing"}
                             <ArrowRight size={14} />
                         </button>
@@ -314,7 +314,7 @@ export function BillingClient({
                                 className={`relative rounded-2xl border-2 p-6 bg-white transition-shadow hover:shadow-md ${meta.accent}`}
                             >
                                 {meta.badge && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-blue text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-blue text-white text-[11px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md">
                                         {meta.badge}
                                     </div>
                                 )}
@@ -402,7 +402,7 @@ export function BillingClient({
                     <table className="w-full">
                         <thead className="sticky top-0 bg-white">
                             <tr className="border-b border-slate-100">
-                                <th className="text-left px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400 w-2/5">
+                                <th className="text-left px-6 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 w-2/5">
                                     Feature
                                 </th>
                                 {orderedPlans.map(plan => (
@@ -410,7 +410,7 @@ export function BillingClient({
                                         plan.id === "pro" ? "bg-brand-blue/5" : ""
                                     }`}>
                                         <div className="flex items-center justify-center gap-1.5">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-[#1d1d1f]">
+                                            <span className="text-[11px] font-black uppercase tracking-widest text-[#1d1d1f]">
                                                 {plan.name}
                                             </span>
                                             {plan.id === "pro" && (
@@ -428,7 +428,7 @@ export function BillingClient({
                                 <React.Fragment key={group.label}>
                                     <tr className="bg-slate-50/50">
                                         <td colSpan={orderedPlans.length + 1}
-                                            className="px-6 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                            className="px-6 py-2 text-[11px] font-black uppercase tracking-widest text-slate-500">
                                             {group.label}
                                         </td>
                                     </tr>
@@ -437,7 +437,7 @@ export function BillingClient({
                                             <td className="px-6 py-2.5">
                                                 <div className="text-xs font-bold text-[#1d1d1f]">{row.label}</div>
                                                 {row.description && (
-                                                    <div className="text-[10px] text-slate-400 mt-0.5">{row.description}</div>
+                                                    <div className="text-[11px] text-slate-400 mt-0.5">{row.description}</div>
                                                 )}
                                             </td>
                                             {orderedPlans.map(plan => (
@@ -496,14 +496,14 @@ function UsageBar({
             {limit ? (
                 <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                     <div
-                        className={`h-full transition-all ${
+                        className={`h-full transition-colors ${
                             pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-brand-blue"
                         }`}
                         style={{ width: `${pct}%` }}
                     />
                 </div>
             ) : (
-                <div className="text-[10px] text-emerald-600 font-black uppercase tracking-wider">Unlimited</div>
+                <div className="text-[11px] text-emerald-600 font-black uppercase tracking-wider">Unlimited</div>
             )}
         </div>
     );

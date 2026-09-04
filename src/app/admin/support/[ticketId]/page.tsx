@@ -9,7 +9,7 @@ const PRIORITY_STYLES: Record<string, string> = {
     urgent: "bg-red-50 text-red-700",
     high:   "bg-orange-50 text-orange-700",
     normal: "bg-slate-50 text-slate-600",
-    low:    "bg-[#f5f5f7] text-[#86868b]",
+    low:    "bg-[#f5f5f7] text-[#6b6b73]",
 };
 
 export default async function TicketPage({
@@ -27,7 +27,7 @@ export default async function TicketPage({
             <div>
                 <Link
                     href="/admin/support"
-                    className="inline-flex items-center gap-1 text-xs text-[#86868b] hover:text-brand-blue transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-[#6b6b73] hover:text-brand-blue transition-colors"
                 >
                     <ArrowLeft size={12} strokeWidth={2} />
                     Support tickets
@@ -49,7 +49,7 @@ export default async function TicketPage({
                             <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${PRIORITY_STYLES[ticket.priority] ?? ""}`}>
                                 {ticket.priority}
                             </span>
-                            <span className="text-[10px] text-[#86868b]">
+                            <span className="text-[11px] text-[#6b6b73]">
                                 Created {new Date(ticket.created_at).toLocaleDateString()}
                             </span>
                         </div>

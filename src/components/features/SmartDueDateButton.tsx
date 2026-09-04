@@ -62,9 +62,9 @@ export function SmartDueDateButton({
                 <button
                     onClick={getSuggestion}
                     disabled={loading}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-brand-blue/20 bg-brand-blue/5 text-brand-blue text-[10px] font-black hover:bg-brand-blue/10 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-brand-blue/20 bg-brand-blue/5 text-brand-blue text-[11px] font-black hover:bg-brand-blue/10 transition-colors disabled:opacity-50"
                     title="AI-suggest due date"
-                >
+                 aria-label="AI-suggest due date">
                     {loading ? <Loader2 size={11} className="animate-spin" /> : <Wand2 size={11} />}
                     Suggest date
                 </button>
@@ -76,11 +76,11 @@ export function SmartDueDateButton({
                             <span className="text-[11px] font-black text-emerald-700">
                                 {new Date(suggestion.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                             </span>
-                            <span className="text-[10px] text-emerald-600 ml-1 hidden sm:inline">— {suggestion.reasoning}</span>
+                            <span className="text-[11px] text-emerald-600 ml-1 hidden sm:inline">— {suggestion.reasoning}</span>
                         </div>
                         <button
                             onClick={apply}
-                            className="text-[10px] font-black text-emerald-700 underline hover:no-underline ml-1"
+                            className="text-[11px] font-black text-emerald-700 underline hover:no-underline ml-1"
                         >
                             Apply
                         </button>

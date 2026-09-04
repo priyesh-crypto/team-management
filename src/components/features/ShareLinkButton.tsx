@@ -58,7 +58,7 @@ export function ShareLinkButton({ resourceType, resourceId, existingLinks }: Pro
                     <Link2 size={12} />
                     Share
                     {links.length > 0 && (
-                        <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue text-[9px] font-black">
+                        <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue text-[11px] font-black">
                             {links.length}
                         </span>
                     )}
@@ -73,7 +73,7 @@ export function ShareLinkButton({ resourceType, resourceId, existingLinks }: Pro
                             <button
                                 onClick={handleCreate}
                                 disabled={pending}
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-brand-blue text-white text-[10px] font-black disabled:opacity-50"
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-brand-blue text-white text-[11px] font-black disabled:opacity-50"
                             >
                                 <Plus size={10} /> New link
                             </button>
@@ -93,7 +93,7 @@ export function ShareLinkButton({ resourceType, resourceId, existingLinks }: Pro
                                         <div key={t.id} className="px-4 py-3 flex items-center gap-3">
                                             <div className="flex-1 min-w-0">
                                                 <div className="text-[11px] font-bold text-slate-700 truncate">{url}</div>
-                                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                                <div className="text-[11px] text-slate-400 mt-0.5">
                                                     {t.view_count} views
                                                     {t.expires_at && ` · Expires ${new Date(t.expires_at).toLocaleDateString()}`}
                                                 </div>

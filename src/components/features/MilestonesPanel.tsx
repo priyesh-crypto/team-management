@@ -117,14 +117,14 @@ export function MilestonesPanel({ orgId, workspaceId, milestones: initialMilesto
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-black text-[#1d1d1f]">{m.name}</span>
-                                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.color}`}>
+                                        <span className={`text-[11px] font-black px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.color}`}>
                                             {cfg.label}
                                         </span>
-                                        {isOverdue && <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#ff3b30]/10 text-[#ff3b30]">Overdue</span>}
+                                        {isOverdue && <span className="text-[11px] font-black px-1.5 py-0.5 rounded bg-[#ff3b30]/10 text-[#ff3b30]">Overdue</span>}
                                     </div>
                                     {m.description && <div className="text-xs text-slate-400 mt-0.5">{m.description}</div>}
                                     {m.due_date && (
-                                        <div className="text-[10px] text-slate-400 mt-1">
+                                        <div className="text-[11px] text-slate-400 mt-1">
                                             Due {new Date(m.due_date).toLocaleDateString()}
                                         </div>
                                     )}

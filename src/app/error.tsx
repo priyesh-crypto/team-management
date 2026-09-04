@@ -18,7 +18,7 @@ export default function GlobalError({
         <main className="min-h-screen flex items-center justify-center p-6">
             <div className="max-w-md text-center">
                 <h1 className="text-2xl font-black text-[#1d1d1f] mb-2">Something went wrong</h1>
-                <p className="text-sm font-medium text-[#86868b] mb-8">
+                <p className="text-sm font-medium text-[#6b6b73] mb-8">
                     An unexpected error occurred. You can try again, or head back to the dashboard.
                 </p>
                 <div className="flex items-center justify-center gap-3">

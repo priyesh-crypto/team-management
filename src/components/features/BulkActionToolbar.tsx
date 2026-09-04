@@ -37,7 +37,7 @@ export function BulkSelectionCheckbox({
         <UpgradeGate feature="bulk_actions" mode="disable">
             <button
                 onClick={e => { e.stopPropagation(); onToggle(taskId); }}
-                className={`w-5 h-5 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
+                className={`w-5 h-5 rounded-md flex items-center justify-center transition-colors flex-shrink-0 ${
                     selected
                         ? "bg-brand-blue text-white border border-brand-blue"
                         : "border border-slate-200 text-slate-200 hover:border-brand-blue/50 hover:text-brand-blue/50"
@@ -134,8 +134,8 @@ export function BulkActionToolbar({
 
             <button
                 onClick={onClearSelection}
-                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
-            >
+                className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors min-h-11 min-w-11 inline-flex items-center justify-center"
+             aria-label="Close">
                 <X size={14} />
             </button>
         </div>

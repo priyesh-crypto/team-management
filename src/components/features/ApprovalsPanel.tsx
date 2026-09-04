@@ -32,7 +32,7 @@ export function ApprovalsPanel({ requests }: Props) {
                     <Clock size={16} className="text-[#ff9500]" />
                     <h3 className="text-sm font-black text-[#1d1d1f]">Pending Approvals</h3>
                     {requests.length > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-[#ff9500]/10 text-[#ff9500] text-[10px] font-black">
+                        <span className="px-2 py-0.5 rounded-full bg-[#ff9500]/10 text-[#ff9500] text-[11px] font-black">
                             {requests.length}
                         </span>
                     )}
@@ -52,11 +52,11 @@ export function ApprovalsPanel({ requests }: Props) {
                                     <div className="text-sm font-black text-[#1d1d1f]">
                                         {req.task_name ?? `Task #${req.task_id.slice(0, 8)}`}
                                     </div>
-                                    <div className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                    <div className="text-[11px] font-bold text-slate-400 mt-0.5">
                                         Requested {new Date(req.created_at).toLocaleDateString()}
                                     </div>
                                 </div>
-                                <span className="px-2 py-1 rounded-lg bg-[#ff9500]/10 text-[#ff9500] text-[10px] font-black">
+                                <span className="px-2 py-1 rounded-lg bg-[#ff9500]/10 text-[#ff9500] text-[11px] font-black">
                                     Pending
                                 </span>
                             </div>

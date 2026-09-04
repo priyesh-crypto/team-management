@@ -72,7 +72,7 @@ export function MaintenancePanel() {
     return (
         <Card>
             <SectionLabel>Database Control Center</SectionLabel>
-            <p className="text-xs text-[#86868b] mb-4">
+            <p className="text-xs text-[#6b6b73] mb-4">
                 One-click maintenance operations. All actions are logged to the audit trail.
             </p>
             <div className="space-y-3">
@@ -83,9 +83,9 @@ export function MaintenancePanel() {
                     >
                         <div className="min-w-0">
                             <div className="text-sm font-semibold text-[#1d1d1f]">{op.label}</div>
-                            <p className="text-xs text-[#86868b] mt-0.5 leading-relaxed">{op.description}</p>
+                            <p className="text-xs text-[#6b6b73] mt-0.5 leading-relaxed">{op.description}</p>
                             {lastRun[op.id] && (
-                                <p className="text-[10px] text-emerald-600 font-medium mt-1">
+                                <p className="text-[11px] text-emerald-600 font-medium mt-1">
                                     Last run: {lastRun[op.id]}
                                 </p>
                             )}

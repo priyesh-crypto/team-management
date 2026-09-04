@@ -57,9 +57,9 @@ export default async function SystemPage() {
                             <HealthDot ok={ok} />
                             <span className="text-sm font-black text-[#1d1d1f]">{label}</span>
                         </div>
-                        <p className="text-xs text-[#86868b]">{detail}</p>
+                        <p className="text-xs text-[#6b6b73]">{detail}</p>
                         {href && (
-                            <Link href={href} className="text-[10px] font-black text-brand-blue hover:underline mt-2 inline-block">
+                            <Link href={href} className="text-[11px] font-black text-brand-blue hover:underline mt-2 inline-block">
                                 View →
                             </Link>
                         )}
@@ -72,15 +72,15 @@ export default async function SystemPage() {
                 <SectionLabel>API key usage</SectionLabel>
                 <div className="grid grid-cols-2 gap-6 mt-2">
                     <div>
-                        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[#86868b]">Active keys</div>
+                        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-[#6b6b73]">Active keys</div>
                         <div className="text-3xl font-black mt-1 text-[#1d1d1f]">{health.apiKeys.active}</div>
                     </div>
                     <div>
-                        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[#86868b]">Used last 7 days</div>
+                        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-[#6b6b73]">Used last 7 days</div>
                         <div className="text-3xl font-black mt-1 text-brand-blue">{health.apiKeys.usedLast7Days}</div>
                     </div>
                 </div>
-                <p className="text-[10px] text-[#86868b] mt-3">
+                <p className="text-[11px] text-[#6b6b73] mt-3">
                     {health.apiKeys.active - health.apiKeys.usedLast7Days} key{health.apiKeys.active - health.apiKeys.usedLast7Days !== 1 ? "s" : ""} inactive for 7+ days.
                 </p>
             </Card>
@@ -113,11 +113,11 @@ export default async function SystemPage() {
                             .map(([action, count]) => (
                                 <div key={action} className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#f5f5f7]">
                                     <span className="text-xs font-bold text-[#1d1d1f] truncate">{action.replace(/_/g, " ")}</span>
-                                    <span className="text-xs font-black text-[#86868b] ml-2 flex-shrink-0">{count}×</span>
+                                    <span className="text-xs font-black text-[#6b6b73] ml-2 flex-shrink-0">{count}×</span>
                                 </div>
                             ))}
                     </div>
-                    <Link href="/admin/audit" className="text-[10px] font-black text-brand-blue hover:underline mt-3 inline-block">
+                    <Link href="/admin/audit" className="text-[11px] font-black text-brand-blue hover:underline mt-3 inline-block">
                         Full audit log →
                     </Link>
                 </Card>

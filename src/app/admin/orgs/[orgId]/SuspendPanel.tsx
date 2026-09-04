@@ -48,7 +48,7 @@ export function SuspendPanel({ orgId, suspendedAt, suspendedReason }: Props) {
                     <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 space-y-1">
                         <p className="text-xs font-black text-amber-800 uppercase tracking-wider">Suspended</p>
                         <p className="text-xs text-amber-700">{suspendedReason}</p>
-                        <p className="text-[10px] text-amber-600">
+                        <p className="text-[11px] text-amber-600">
                             Since {new Date(suspendedAt!).toLocaleString()}
                         </p>
                     </div>
@@ -73,7 +73,7 @@ export function SuspendPanel({ orgId, suspendedAt, suspendedReason }: Props) {
                     >
                         {pending ? "Suspending…" : "Suspend organization"}
                     </Button>
-                    <p className="text-[10px] text-[#86868b]">
+                    <p className="text-[11px] text-[#6b6b73]">
                         Org members will see a suspended notice and cannot use the app until reinstated.
                     </p>
                 </div>

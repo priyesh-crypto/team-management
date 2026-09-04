@@ -111,26 +111,26 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                             </h2>
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-[#34c759]" />
-                                <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest">Team Capacity: {Math.round(Object.values(dayStats).reduce((acc, curr) => acc + curr.load, 0) / Object.values(dayStats).length || 0)}% Avg</span>
+                                <span className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest">Team Capacity: {Math.round(Object.values(dayStats).reduce((acc, curr) => acc + curr.load, 0) / Object.values(dayStats).length || 0)}% Avg</span>
                             </div>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 bg-[#f5f5f7] p-1.5 rounded-2xl">
                         <button 
                             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                            className="p-2 hover:bg-white hover:shadow-sm rounded-xl transition-all text-slate-600"
+                            className="p-2 hover:bg-white hover:shadow-sm rounded-xl transition-colors text-slate-600"
                         >
                             <ChevronLeft size={20} />
                         </button>
                         <button 
                             onClick={() => setCurrentMonth(new Date())}
-                            className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#1d1d1f] hover:bg-white hover:shadow-sm rounded-xl transition-all"
+                            className="px-4 py-2 text-[11px] font-black uppercase tracking-widest text-[#1d1d1f] hover:bg-white hover:shadow-sm rounded-xl transition-colors"
                         >
                             Today
                         </button>
                         <button 
                             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                            className="p-2 hover:bg-white hover:shadow-sm rounded-xl transition-all text-slate-600"
+                            className="p-2 hover:bg-white hover:shadow-sm rounded-xl transition-colors text-slate-600"
                         >
                             <ChevronRight size={20} />
                         </button>
@@ -141,7 +141,7 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                 <div className="flex-1 overflow-auto custom-scrollbar">
                     <div className="grid grid-cols-7 border-b border-slate-100">
                         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                            <div key={day} className="py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            <div key={day} className="py-4 text-center text-[11px] font-black text-slate-400 uppercase tracking-widest">
                                 {day}
                             </div>
                         ))}
@@ -157,7 +157,7 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                                 <div 
                                     key={dayKey}
                                     onClick={() => onDateClick(day)}
-                                    className={`min-h-[120px] p-3 border-r border-b border-slate-50 transition-all cursor-pointer group hover:bg-slate-50/50 ${!isSameMonth(day, monthStart) ? 'bg-slate-50/30' : ''} ${isSelected ? 'ring-2 ring-inset ring-brand-blue bg-brand-blue/5' : ''}`}
+                                    className={`min-h-[120px] p-3 border-r border-b border-slate-50 transition-colors cursor-pointer group hover:bg-slate-50/50 ${!isSameMonth(day, monthStart) ? 'bg-slate-50/30' : ''} ${isSelected ? 'ring-2 ring-inset ring-brand-blue bg-brand-blue/5' : ''}`}
                                 >
                                     <div className="flex items-center justify-between mb-3">
                                         <span className={`text-xs font-black ${isToday(day) ? 'w-7 h-7 bg-brand-blue text-white rounded-lg flex items-center justify-center shadow-md' : isSameMonth(day, monthStart) ? 'text-slate-900' : 'text-slate-300'}`}>
@@ -176,7 +176,7 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                                                 key={task.id}
                                                 layoutId={task.id}
                                                 onClick={(e) => { e.stopPropagation(); onTaskClick(task); }}
-                                                className={`p-2 rounded-xl text-[10px] font-bold border truncate shadow-sm transition-transform hover:scale-102 ${
+                                                className={`p-2 rounded-xl text-[11px] font-bold border truncate shadow-sm transition-transform hover:scale-102 ${
                                                     task.priority === 'Urgent' ? 'bg-red-50 text-red-700 border-red-100' :
                                                     task.priority === 'High' ? 'bg-orange-50 text-orange-700 border-orange-100' :
                                                     'bg-blue-50 text-blue-700 border-blue-100'
@@ -186,7 +186,7 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                                             </motion.div>
                                         ))}
                                         {dayTasks.length > 3 && (
-                                            <div className="text-[9px] font-black text-slate-400 pl-2 uppercase tracking-widest">
+                                            <div className="text-[11px] font-black text-slate-400 pl-2 uppercase tracking-widest">
                                                 + {dayTasks.length - 3} more
                                             </div>
                                         )}
@@ -194,7 +194,7 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
 
                                     {/* Quick Add Button */}
                                     <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center">
-                                        <div className="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center hover:text-brand-blue hover:border-brand-blue transition-all">
+                                        <div className="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center hover:text-brand-blue hover:border-brand-blue transition-colors">
                                             <Plus size={14} />
                                         </div>
                                     </div>
@@ -220,18 +220,18 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                                 <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mx-auto mb-3">
                                     <CheckCircle2 size={20} />
                                 </div>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase">Queue Clear</p>
+                                <p className="text-[11px] font-bold text-slate-400 uppercase">Queue Clear</p>
                             </div>
                         ) : (
                             tasks.filter(t => t.status === 'To Do' && !t.deadline).map(task => (
                                 <div 
                                     key={task.id}
                                     onClick={() => setSelectedTask(task)}
-                                    className={`p-4 rounded-[24px] border transition-all cursor-pointer group ${selectedTask?.id === task.id ? 'bg-brand-blue border-brand-blue shadow-lg shadow-brand-blue/20' : 'bg-slate-50 border-transparent hover:border-slate-200'}`}
+                                    className={`p-4 rounded-[24px] border transition-colors cursor-pointer group ${selectedTask?.id === task.id ? 'bg-brand-blue border-brand-blue shadow-lg shadow-brand-blue/20' : 'bg-slate-50 border-transparent hover:border-slate-200'}`}
                                 >
                                     <h4 className={`text-[11px] font-bold mb-1 ${selectedTask?.id === task.id ? 'text-white' : 'text-slate-900'}`}>{task.name}</h4>
                                     <div className="flex items-center gap-3">
-                                        <div className={`flex items-center gap-1 text-[9px] font-black uppercase ${selectedTask?.id === task.id ? 'text-white/60' : 'text-slate-400'}`}>
+                                        <div className={`flex items-center gap-1 text-[11px] font-black uppercase ${selectedTask?.id === task.id ? 'text-white/60' : 'text-slate-400'}`}>
                                             <Users size={10} />
                                             {employees.find(e => e.id === task.employee_id)?.name || 'Unassigned'}
                                         </div>
@@ -265,7 +265,7 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                                             start_date: format(rec.day, 'yyyy-MM-dd'),
                                             deadline: format(rec.day, 'yyyy-MM-dd') 
                                         })}
-                                        className="w-full bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl p-4 transition-all text-left group"
+                                        className="w-full bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl p-4 transition-colors text-left group"
                                     >
                                         <div className="flex items-center justify-between mb-1">
                                             <span className="text-xs font-bold">{format(rec.day, 'EEEE, MMM do')}</span>
@@ -273,14 +273,14 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                                                 {Math.round(rec.load)}% LOAD
                                             </span>
                                         </div>
-                                        <p className="text-[10px] text-white/60 font-medium">Predicted high velocity slot based on team capacity.</p>
+                                        <p className="text-[11px] text-white/60 font-medium">Predicted high velocity slot based on team capacity.</p>
                                     </button>
                                 ))}
                             </div>
 
                             <button 
                                 onClick={() => setSelectedTask(null)}
-                                className="w-full mt-6 py-4 rounded-2xl bg-white text-black text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all"
+                                className="w-full mt-6 py-4 rounded-2xl bg-white text-black text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-[transform,opacity,color,background-color,border-color,box-shadow]"
                             >
                                 Cancel Selection
                             </button>
@@ -290,19 +290,19 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
 
                 {/* Legend */}
                 <div className="bg-white rounded-[32px] border border-slate-200 p-6 shadow-xl shadow-slate-200/50">
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Color Guide</h3>
+                    <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Color Guide</h3>
                     <div className="space-y-3">
                         <div className="flex items-center gap-3">
                             <div className="w-4 h-4 rounded-lg bg-red-50 border border-red-100" />
-                            <span className="text-[10px] font-bold text-slate-600">Overloaded (&gt;80%)</span>
+                            <span className="text-[11px] font-bold text-slate-600">Overloaded (&gt;80%)</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="w-4 h-4 rounded-lg bg-amber-50 border border-amber-100" />
-                            <span className="text-[10px] font-bold text-slate-600">Moderate (40-80%)</span>
+                            <span className="text-[11px] font-bold text-slate-600">Moderate (40-80%)</span>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="w-4 h-4 rounded-lg bg-emerald-50 border border-emerald-100" />
-                            <span className="text-[10px] font-bold text-slate-600">Available (&lt;40%)</span>
+                            <span className="text-[11px] font-bold text-slate-600">Available (&lt;40%)</span>
                         </div>
                     </div>
                 </div>

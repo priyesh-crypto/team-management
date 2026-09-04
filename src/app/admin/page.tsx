@@ -58,7 +58,7 @@ export default async function AdminDashboard() {
                     <SectionLabel>Revenue by plan</SectionLabel>
                     <table className="w-full">
                         <thead>
-                            <tr className="text-left text-xs font-medium text-[#86868b] border-b border-[#f0f0f2]">
+                            <tr className="text-left text-xs font-medium text-[#6b6b73] border-b border-[#f0f0f2]">
                                 <th className="pb-2.5 font-medium">Plan</th>
                                 <th className="pb-2.5 text-center font-medium">Active</th>
                                 <th className="pb-2.5 text-center font-medium">Trial</th>
@@ -76,13 +76,13 @@ export default async function AdminDashboard() {
                                     <td className="py-3 text-center text-sm text-[#1d1d1f] tabular-nums">
                                         {r.active_count ?? 0}
                                     </td>
-                                    <td className="py-3 text-center text-sm text-[#86868b] tabular-nums">
+                                    <td className="py-3 text-center text-sm text-[#6b6b73] tabular-nums">
                                         {r.trialing_count ?? 0}
                                     </td>
-                                    <td className="py-3 text-center text-sm text-[#86868b] tabular-nums">
+                                    <td className="py-3 text-center text-sm text-[#6b6b73] tabular-nums">
                                         {r.past_due_count ?? 0}
                                     </td>
-                                    <td className="py-3 text-center text-sm text-[#86868b] tabular-nums">
+                                    <td className="py-3 text-center text-sm text-[#6b6b73] tabular-nums">
                                         {r.active_seats ?? 0}
                                     </td>
                                     <td className="py-3 text-right text-sm font-medium text-[#1d1d1f] tabular-nums">
@@ -92,7 +92,7 @@ export default async function AdminDashboard() {
                             ))}
                             {(revenue ?? []).length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="py-8 text-center text-sm text-[#86868b]">
+                                    <td colSpan={6} className="py-8 text-center text-sm text-[#6b6b73]">
                                         No data yet.
                                     </td>
                                 </tr>
@@ -122,7 +122,7 @@ export default async function AdminDashboard() {
                             </Link>
                         ))}
                         {(recentOrgs ?? []).length === 0 && (
-                            <p className="text-sm text-[#86868b] text-center py-6">No orgs yet.</p>
+                            <p className="text-sm text-[#6b6b73] text-center py-6">No orgs yet.</p>
                         )}
                     </div>
                 </Card>

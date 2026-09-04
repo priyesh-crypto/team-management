@@ -22,7 +22,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                     <h1 className="text-lg font-semibold text-[#1d1d1f]">
                         Platform admin only
                     </h1>
-                    <p className="mt-1.5 text-sm text-[#86868b]">
+                    <p className="mt-1.5 text-sm text-[#6b6b73]">
                         You don&apos;t have access to this area.
                     </p>
                     <Link

@@ -46,7 +46,7 @@ const CircularProgress = ({ percentage, color = '#0051e6', size = 160, strokeWid
                 >
                     {Math.round(percentage)}%
                 </motion.span>
-                <span className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.2em] mt-1">Focus</span>
+                <span className="text-[11px] font-black text-[#6b6b73] uppercase tracking-[0.2em] mt-1">Focus</span>
             </div>
         </div>
     );
@@ -86,7 +86,7 @@ export function EmployeeRightPanel({
         <aside className="w-72 overflow-y-auto hidden xl:block border-l border-slate-100 bg-white p-5 custom-scrollbar">
             <div className="flex flex-col gap-5">
                 <Card className="p-5 flex flex-col items-center bg-slate-50/50 border-slate-100 rounded-[20px] shadow-sm">
-                    <h4 className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-5">Focus Performance</h4>
+                    <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-5">Focus Performance</h4>
                     <CircularProgress percentage={efficiencyPercentage} />
                     <div className="grid grid-cols-2 gap-2 w-full mt-6">
                         <div className="bg-white p-3 rounded-xl flex flex-col items-center border border-slate-100 shadow-sm">
@@ -100,19 +100,19 @@ export function EmployeeRightPanel({
                     </div>
                 </Card>
 
-                <Card className="p-5 border-slate-100/50 bg-white/80 backdrop-blur-xl rounded-[20px] shadow-sm transition-all duration-500 hover:shadow-md">
+                <Card className="p-5 border-slate-100/50 bg-white/80 backdrop-blur-xl rounded-[20px] shadow-sm transition-colors duration-500 hover:shadow-md">
                     <div className="flex items-center gap-2 mb-5">
                         <div className="w-7 h-7 bg-brand-blue/10 rounded-lg flex items-center justify-center text-brand-blue">
                             <Plus size={14} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h3 className="text-[9px] font-bold text-slate-800 uppercase tracking-widest">Quick Log</h3>
+                            <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-widest">Quick Log</h3>
                             <p className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter">Instant task creation</p>
                         </div>
                     </div>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Project Context</label>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Project Context</label>
                             <Select 
                                 value={formData.project_id || ''} 
                                 onChange={e => setFormData({ ...formData, project_id: e.target.value })} 
@@ -126,7 +126,7 @@ export function EmployeeRightPanel({
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Task Definition</label>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Task Definition</label>
                             <Input 
                                 required 
                                 value={formData.name} 
@@ -138,18 +138,18 @@ export function EmployeeRightPanel({
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Start Date</label>
-                                <Input type="date" required value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="h-10 text-[10px] font-bold w-full bg-white border-none shadow-none ring-1 ring-[#eceef0]" />
+                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Start Date</label>
+                                <Input type="date" required value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="h-10 text-[11px] font-bold w-full bg-white border-none shadow-none ring-1 ring-[#eceef0]" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">End Date</label>
-                                <Input type="date" required value={formData.deadline} onChange={e => setFormData({ ...formData, deadline: e.target.value })} className="h-10 text-[10px] font-bold w-full bg-white border-none shadow-none ring-1 ring-[#eceef0]" />
+                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">End Date</label>
+                                <Input type="date" required value={formData.deadline} onChange={e => setFormData({ ...formData, deadline: e.target.value })} className="h-10 text-[11px] font-bold w-full bg-white border-none shadow-none ring-1 ring-[#eceef0]" />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Priority</label>
+                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Priority</label>
                                 <Select 
                                     value={formData.priority} 
                                     onChange={e => setFormData({ ...formData, priority: e.target.value as Priority })} 
@@ -162,7 +162,7 @@ export function EmployeeRightPanel({
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Schedule</label>
+                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Schedule</label>
                                 <Select 
                                     value={formData.status} 
                                     onChange={e => setFormData({ ...formData, status: e.target.value as Status })} 
@@ -179,18 +179,18 @@ export function EmployeeRightPanel({
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Notes & Context</label>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Notes & Context</label>
                             <textarea 
                                 value={formData.notes}
                                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                className="w-full h-24 bg-slate-50/50 border border-slate-100 rounded-xl p-4 text-[13px] font-medium resize-none focus:bg-white focus:border-brand-blue/30 transition-all outline-none"
+                                className="w-full h-24 bg-slate-50/50 border border-slate-100 rounded-xl p-4 text-[13px] font-medium resize-none focus:bg-white focus:border-brand-blue/30 transition-colors outline-none"
                                 placeholder="Add any specific details here..."
                             />
                         </div>
 
                         <Button 
                             type="submit" 
-                            className="w-full py-3 text-[10px] shadow-md" 
+                            className="w-full py-3 text-[11px] shadow-md" 
                             disabled={loading}
                         >
                             {loading ? 'Logging Entry...' : 'Create Task'}

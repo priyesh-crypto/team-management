@@ -166,13 +166,13 @@ export function APIDocsClient({ orgId }: Props) {
 
             {/* Auth box */}
             <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5">
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3">Authentication</div>
+                <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-3">Authentication</div>
                 <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-200 px-4 py-3">
                     <code className="flex-1 text-sm font-mono text-slate-700">Authorization: Bearer tf_your_api_key</code>
                     <CopyButton text="Authorization: Bearer tf_your_api_key" />
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Base URL</div>
+                    <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Base URL</div>
                     <code className="text-xs font-mono text-slate-600">{BASE}</code>
                 </div>
             </div>
@@ -205,13 +205,13 @@ export function APIDocsClient({ orgId }: Props) {
                                         <div key={key}>
                                             <button onClick={() => setOpenEndpoint(k => k === key ? "" : key)}
                                                 className="w-full flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50/50 transition-colors text-left">
-                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wide min-w-[44px] text-center ${METHOD_COLORS[ep.method]}`}>
+                                                <span className={`text-[11px] font-black px-2 py-0.5 rounded uppercase tracking-wide min-w-[44px] text-center ${METHOD_COLORS[ep.method]}`}>
                                                     {ep.method}
                                                 </span>
                                                 <code className="text-sm font-mono text-slate-700">{ep.path}</code>
                                                 <span className="text-xs text-slate-400 flex-1">{ep.summary}</span>
                                                 {ep.scope && (
-                                                    <span className="text-[9px] font-black px-1.5 py-0.5 bg-[#ff9500]/10 text-[#ff9500] rounded">scope:{ep.scope}</span>
+                                                    <span className="text-[11px] font-black px-1.5 py-0.5 bg-[#ff9500]/10 text-[#ff9500] rounded">scope:{ep.scope}</span>
                                                 )}
                                                 {isOpen ? <ChevronDown size={12} className="text-slate-400 flex-shrink-0" /> : <ChevronRight size={12} className="text-slate-400 flex-shrink-0" />}
                                             </button>
@@ -222,14 +222,14 @@ export function APIDocsClient({ orgId }: Props) {
 
                                                     {ep.params && ep.params.length > 0 && (
                                                         <div>
-                                                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Parameters</div>
+                                                            <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">Parameters</div>
                                                             <div className="rounded-xl border border-slate-200 overflow-hidden bg-white">
                                                                 {ep.params.map((p, i) => (
                                                                     <div key={p.name} className={`flex items-start gap-3 px-4 py-3 text-sm ${i < ep.params!.length - 1 ? "border-b border-slate-50" : ""}`}>
                                                                         <code className="font-mono font-bold text-brand-blue min-w-[120px]">{p.name}</code>
                                                                         <div className="flex-1 min-w-0">
-                                                                            <span className="text-[10px] font-bold text-slate-400">{p.in} · {p.type}</span>
-                                                                            {p.required && <span className="ml-2 text-[9px] font-black text-[#ff3b30]">required</span>}
+                                                                            <span className="text-[11px] font-bold text-slate-400">{p.in} · {p.type}</span>
+                                                                            {p.required && <span className="ml-2 text-[11px] font-black text-[#ff3b30]">required</span>}
                                                                             <div className="text-xs text-slate-500 mt-0.5">{p.description}</div>
                                                                         </div>
                                                                     </div>
@@ -239,7 +239,7 @@ export function APIDocsClient({ orgId }: Props) {
                                                     )}
 
                                                     <div>
-                                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Example</div>
+                                                        <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">Example</div>
                                                         <div className="space-y-2">
                                                             <div className="rounded-xl bg-[#1d1d1f] p-4 relative group">
                                                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -248,7 +248,7 @@ export function APIDocsClient({ orgId }: Props) {
                                                                 <pre className="text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre-wrap">{curlExample}</pre>
                                                             </div>
                                                             <div className="rounded-xl bg-slate-800 p-4 relative group">
-                                                                <div className="text-[9px] font-black text-slate-500 uppercase mb-2">Response</div>
+                                                                <div className="text-[11px] font-black text-slate-500 uppercase mb-2">Response</div>
                                                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                     <CopyButton text={ep.example.response} />
                                                                 </div>

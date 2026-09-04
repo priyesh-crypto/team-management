@@ -162,7 +162,7 @@ export function computeAgingBuckets(tasks: RawTask[]) {
 
 export function computeFunnel(tasks: RawTask[]) {
     const COLORS: Record<string, string> = {
-        "To Do": "#86868b",
+        "To Do": "#6b6b73",
         "In Progress": "#0051e6",
         "In Review": "#5e5ce6",
         Completed: "#22be66",

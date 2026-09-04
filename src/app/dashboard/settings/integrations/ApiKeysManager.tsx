@@ -131,7 +131,7 @@ export function ApiKeysManager({ orgId, keys: initialKeys }: Props) {
                         <div key={k.id} className="flex items-center gap-4 px-6 py-4">
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-black text-[#1d1d1f]">{k.name}</div>
-                                <div className="text-[10px] font-bold text-slate-400 mt-0.5 flex items-center gap-2">
+                                <div className="text-[11px] font-bold text-slate-400 mt-0.5 flex items-center gap-2">
                                     <code className="bg-slate-100 px-1.5 rounded font-mono">{k.key_prefix}…</code>
                                     {k.scopes.join(", ")}
                                     {k.last_used_at && ` · Last used ${new Date(k.last_used_at).toLocaleDateString()}`}

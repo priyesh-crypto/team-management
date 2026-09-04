@@ -121,7 +121,7 @@ export function TaskComments({ taskId, orgId, currentUserId, initialComments, in
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-baseline gap-2 mb-1">
                                     <span className="text-[11px] font-black text-[#1d1d1f]">{profiles[comment.user_id] || comment.user_id.slice(0, 8)}</span>
-                                    <span className="text-[9px] text-slate-400">
+                                    <span className="text-[11px] text-slate-400">
                                         {new Date(comment.created_at).toLocaleString()}
                                         {comment.edited_at && " (edited)"}
                                     </span>
@@ -159,7 +159,7 @@ export function TaskComments({ taskId, orgId, currentUserId, initialComments, in
                                         <button key={emoji} onClick={() => handleReaction(comment.id, emoji)}
                                             className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs transition-colors ${mine ? "border-brand-blue/30 bg-brand-blue/5 text-brand-blue" : "border-slate-200 bg-white hover:border-slate-300"}`}>
                                             <span>{emoji}</span>
-                                            <span className="font-bold text-[10px]">{count}</span>
+                                            <span className="font-bold text-[11px]">{count}</span>
                                         </button>
                                     ))}
 
@@ -209,7 +209,7 @@ export function TaskComments({ taskId, orgId, currentUserId, initialComments, in
                         className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none resize-none"
                     />
                     <button type="submit" disabled={pending || !draft.trim()}
-                        className="p-2.5 rounded-xl bg-brand-blue text-white hover:bg-brand-blue-dark disabled:opacity-40 transition-colors flex-shrink-0">
+                        className="p-2.5 rounded-xl bg-brand-blue text-white hover:bg-brand-blue-dark disabled:opacity-40 transition-colors flex-shrink-0 min-h-11 min-w-11 inline-flex items-center justify-center" aria-label="Send message">
                         <Send size={14} />
                     </button>
                 </form>

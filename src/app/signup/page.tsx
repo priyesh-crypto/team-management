@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/server';
-import { Card, Button, Input } from '@/components/ui/components';
+import { Card, Input } from '@/components/ui/components';
 import Logo from '@/components/ui/Logo';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import UrlToaster from '@/components/ui/UrlToaster';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
@@ -103,9 +104,12 @@ export default async function SignupPage({
             <Input name="email" type="email" required placeholder="Work Email" className="w-full h-12" />
             <Input name="password" type="password" required placeholder="Choose Password" className="w-full h-12" />
 
-            <Button type="submit" className="w-full h-12 text-md font-bold mt-2 bg-gradient-to-r from-brand-blue to-brand-accent hover:brightness-110 transition-all shadow-md shadow-brand-blue/20">
+            <SubmitButton
+              pendingText="Creating account…"
+              className="w-full h-12 text-md font-bold mt-2 bg-gradient-to-r from-brand-blue to-brand-accent hover:brightness-110 transition-[filter,transform] shadow-md shadow-brand-blue/20"
+            >
               Create Account
-            </Button>
+            </SubmitButton>
           </form>
 
           <p className="mt-6 text-center text-xs text-[#52525b] font-medium">

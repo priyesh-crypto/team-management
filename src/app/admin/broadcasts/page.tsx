@@ -32,7 +32,7 @@ export default async function BroadcastsPage() {
 
             {broadcasts.length === 0 ? (
                 <Card>
-                    <p className="text-sm text-[#86868b] text-center py-8">
+                    <p className="text-sm text-[#6b6b73] text-center py-8">
                         No broadcasts yet.{" "}
                         <Link href="/admin/broadcasts/new" className="text-brand-blue font-medium hover:underline">
                             Create one
@@ -68,8 +68,8 @@ export default async function BroadcastsPage() {
                                                 </span>
                                             ))}
                                         </div>
-                                        <p className="text-sm text-[#86868b] mt-1 line-clamp-2">{b.body}</p>
-                                        <div className="flex items-center gap-3 mt-2 text-xs text-[#86868b] flex-wrap">
+                                        <p className="text-sm text-[#6b6b73] mt-1 line-clamp-2">{b.body}</p>
+                                        <div className="flex items-center gap-3 mt-2 text-xs text-[#6b6b73] flex-wrap">
                                             <span className="inline-flex items-center gap-1"><Target size={12} strokeWidth={2} /> {targetLabel}</span>
                                             {b.sent_at && (
                                                 <span className="inline-flex items-center gap-1">
@@ -83,17 +83,17 @@ export default async function BroadcastsPage() {
                                         {b.sent_at && (
                                             <div className="flex items-center gap-5 mt-3 pt-3 border-t border-[#f0f0f2]">
                                                 <div>
-                                                    <div className="text-xs text-[#86868b]">Recipients</div>
+                                                    <div className="text-xs text-[#6b6b73]">Recipients</div>
                                                     <div className="text-sm font-medium text-[#1d1d1f] mt-0.5 tabular-nums">{s.total}</div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-xs text-[#86868b]">Read</div>
+                                                    <div className="text-xs text-[#6b6b73]">Read</div>
                                                     <div className="text-sm font-medium text-emerald-600 mt-0.5 tabular-nums">
-                                                        {s.read} <span className="text-xs text-[#86868b]">({readPct}%)</span>
+                                                        {s.read} <span className="text-xs text-[#6b6b73]">({readPct}%)</span>
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <div className="text-xs text-[#86868b]">Clicked</div>
+                                                    <div className="text-xs text-[#6b6b73]">Clicked</div>
                                                     <div className="text-sm font-medium text-brand-blue mt-0.5 tabular-nums">{s.clicked}</div>
                                                 </div>
                                                 {s.total === 0 && (

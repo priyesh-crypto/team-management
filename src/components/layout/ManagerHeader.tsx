@@ -69,19 +69,19 @@ export function ManagerHeader({
                     </h1>
                     <div className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-[#34c759] animate-pulse" />
-                        <span className="text-[9px] font-black text-[#86868b] uppercase tracking-widest leading-none">Live System Active</span>
+                        <span className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest leading-none">Live System Active</span>
                     </div>
                 </div>
             </div>
 
             <div className="flex items-center gap-6">
-                <div className="hidden md:flex items-center gap-6 text-[10px] font-black tracking-[0.2em] text-[#86868b]">
+                <div className="hidden md:flex items-center gap-6 text-[11px] font-black tracking-[0.2em] text-[#6b6b73]">
                     <button className={`hover:text-[#1d1d1f] transition-colors ${activeTab === 'board' ? 'text-brand-blue' : ''}`} onClick={() => setActiveTab('board')}>BOARD</button>
                     <span className="opacity-20">•</span>
                     <button className="hover:text-[#1d1d1f] transition-colors" onClick={() => setActiveTab('planning')}>DAILY TASKS ▾</button>
                 </div>
                 <div className="relative group hidden sm:block">
-                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#86868b]">
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#6b6b73]">
                         <Search size={12} strokeWidth={3} />
                     </div>
                     <input 
@@ -89,19 +89,19 @@ export function ManagerHeader({
                         placeholder="System search..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 pr-4 py-2 bg-[#f5f5f7] border-none rounded-xl text-[10px] font-black text-[#1d1d1f] w-48 lg:w-64 focus:ring-2 focus:ring-brand-blue/20 transition-all outline-none" 
+                        className="pl-9 pr-4 py-2 bg-[#f5f5f7] border-none rounded-xl text-[11px] font-black text-[#1d1d1f] w-48 lg:w-64 focus:ring-2 focus:ring-brand-blue/20 transition-colors outline-none" 
                     />
                 </div>
 
                 <div className="flex items-center gap-2">
                     <button 
                         onClick={onOpenVoiceCommand}
-                        className="w-10 h-10 rounded-xl bg-brand-blue text-white flex items-center justify-center shadow-lg hover:bg-brand-blue-dark transition-all active:scale-95"
-                    >
+                        className="w-10 h-10 rounded-xl bg-brand-blue text-white flex items-center justify-center shadow-lg hover:bg-brand-blue-dark transition-[transform,opacity,color,background-color,border-color,box-shadow] active:scale-95"
+                     aria-label="Voice command">
                         <Mic size={18} />
                     </button>
                     <button 
-                        className="rounded-xl h-10 px-5 bg-black text-white font-black text-[9px] tracking-[0.2em] shadow-lg shadow-black/10 hover:bg-[#1d1d1f] transition-all hover:-translate-y-0.5 active:scale-95 uppercase" 
+                        className="rounded-xl h-10 px-5 bg-black text-white font-black text-[11px] tracking-[0.2em] shadow-lg shadow-black/10 hover:bg-[#1d1d1f] transition-[transform,opacity,color,background-color,border-color,box-shadow] hover:-translate-y-0.5 active:scale-95 uppercase" 
                         onClick={() => setShowAssignModal(true)}
                     >
                         + Create task
@@ -111,7 +111,7 @@ export function ManagerHeader({
                 <div className="relative" ref={notificationRef}>
                     <button 
                         onClick={() => setShowNotifications(!showNotifications)}
-                        className="p-2 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] rounded-xl transition-all relative group"
+                        className="p-2 bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] rounded-xl transition-colors relative group"
                     >
                         <Bell size={18} strokeWidth={2.5} className="group-hover:rotate-12 transition-transform" />
                         {unreadCount > 0 && (
@@ -122,7 +122,7 @@ export function ManagerHeader({
                     {showNotifications && (
                         <div className="absolute right-0 mt-3 w-80 bg-white rounded-3xl shadow-2xl border border-[#e5e5ea] z-50 overflow-hidden fade-in">
                             <div className="p-4 border-b border-[#f5f5f7] flex justify-between items-center bg-[#f5f5f7]/50">
-                                <h3 className="font-black text-[10px] uppercase tracking-widest text-[#1d1d1f]">Notifications</h3>
+                                <h3 className="font-black text-[11px] uppercase tracking-widest text-[#1d1d1f]">Notifications</h3>
                                 <div className="flex gap-4">
                                     <button 
                                         onClick={async (e) => {
@@ -130,7 +130,7 @@ export function ManagerHeader({
                                             await markAllNotificationsAsRead(userId);
                                             refreshData();
                                         }}
-                                        className="text-[9px] font-black text-brand-blue uppercase tracking-widest hover:underline"
+                                        className="text-[11px] font-black text-brand-blue uppercase tracking-widest hover:underline"
                                     >
                                         Mark All Read
                                     </button>
@@ -139,7 +139,7 @@ export function ManagerHeader({
                                             e.stopPropagation();
                                             await clearNotifications();
                                         }}
-                                        className="text-[9px] font-black text-[#ff3b30] uppercase tracking-widest hover:underline"
+                                        className="text-[11px] font-black text-[#ff3b30] uppercase tracking-widest hover:underline"
                                     >
                                         Clear All
                                     </button>
@@ -149,9 +149,9 @@ export function ManagerHeader({
                                 {notifications.length === 0 ? (
                                     <div className="p-12 text-center">
                                         <div className="w-12 h-12 bg-[#f5f5f7] rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <Bell size={20} className="text-[#86868b] opacity-20" />
+                                            <Bell size={20} className="text-[#6b6b73] opacity-20" />
                                         </div>
-                                        <p className="text-[11px] font-bold text-[#86868b] italic">No notifications yet</p>
+                                        <p className="text-[11px] font-bold text-[#6b6b73] italic">No notifications yet</p>
                                     </div>
                                 ) : (
                                     notifications.map(n => (
@@ -163,11 +163,11 @@ export function ManagerHeader({
                                             <div className="flex gap-3 pr-8">
                                                 <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.type === 'urgent' ? 'bg-[#ff3b30]' : 'bg-brand-blue'} ${n.is_read ? 'opacity-20' : 'animate-pulse'}`} />
                                                 <div className="flex-1 min-w-0">
-                                                    <p className={`text-[11px] leading-snug ${!n.is_read ? 'font-bold text-[#1d1d1f]' : 'text-[#86868b]'}`}>
+                                                    <p className={`text-[11px] leading-snug ${!n.is_read ? 'font-bold text-[#1d1d1f]' : 'text-[#6b6b73]'}`}>
                                                         {n.message || n.title}
                                                     </p>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-[9px] font-medium text-[#86868b] opacity-60">
+                                                        <span className="text-[11px] font-medium text-[#6b6b73] opacity-60">
                                                             {new Date(n.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                         {n.task_id && (
@@ -187,13 +187,13 @@ export function ManagerHeader({
                                                             e.stopPropagation();
                                                             handleMarkAsRead(n);
                                                         }}
-                                                        className="p-2 hover:bg-white rounded-full shadow-sm text-brand-blue transition-all"
+                                                        className="p-2 hover:bg-white rounded-full shadow-sm text-brand-blue transition-colors"
                                                         title="Mark as read"
                                                     >
                                                         <Check size={14} strokeWidth={3} />
                                                     </button>
                                                 ) : (
-                                                    <div className="p-2 text-[#86868b] opacity-40">
+                                                    <div className="p-2 text-[#6b6b73] opacity-40">
                                                         <Check size={14} strokeWidth={3} />
                                                     </div>
                                                 )}

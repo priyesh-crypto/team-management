@@ -52,14 +52,14 @@ export function ConfirmationModal({
                         {title}
                     </h3>
                     
-                    <div className="text-[14px] text-[#86868b] font-medium leading-relaxed mb-8">
+                    <div className="text-[14px] text-[#6b6b73] font-medium leading-relaxed mb-8">
                         {description}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 w-full">
                         <Button 
                             variant="secondary" 
-                            className="h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest border-[#e5e5ea] hover:bg-[#f5f5f7] text-[#86868b]"
+                            className="h-12 rounded-2xl font-black text-[11px] uppercase tracking-widest border-[#e5e5ea] hover:bg-[#f5f5f7] text-[#6b6b73]"
                             onClick={onClose}
                             disabled={isLoading}
                         >
@@ -68,7 +68,7 @@ export function ConfirmationModal({
                         <Button 
                             variant={variant === 'danger' ? 'danger' : 'primary'}
                             className={cn(
-                                "h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest border-none shadow-lg",
+                                "h-12 rounded-2xl font-black text-[11px] uppercase tracking-widest border-none shadow-lg",
                                 variant === 'danger' ? "bg-[#ff3b30] hover:bg-[#e03126] shadow-[#ff3b30]/20" : ""
                             )}
                             onClick={onConfirm}

@@ -13,7 +13,7 @@ function TypeBadge({ type }: { type: string }) {
         json:    "bg-amber-50 text-amber-600",
     };
     return (
-        <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-medium ${map[type] ?? map.string}`}>
+        <span className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-medium ${map[type] ?? map.string}`}>
             {type}
         </span>
     );
@@ -70,7 +70,7 @@ function ConfigRow({ entry }: { entry: ConfigEntry }) {
                     <TypeBadge type={entry.type} />
                 </div>
                 {entry.description && (
-                    <p className="text-xs text-[#86868b] mb-2">{entry.description}</p>
+                    <p className="text-xs text-[#6b6b73] mb-2">{entry.description}</p>
                 )}
                 {editing ? (
                     <div className="space-y-2 mt-2">

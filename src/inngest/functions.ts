@@ -65,7 +65,7 @@ export const onMemberInvited = inngest.createFunction(
                     <h2 style="color:#1d1d1f;">You've been invited!</h2>
                     <p>You have been invited to join <strong>${orgName}</strong> as a <strong>${role}</strong> by ${invitedBy}.</p>
                     <a href="${inviteUrl}" style="display:inline-block;padding:12px 24px;background:#0051e6;color:#fff;text-decoration:none;border-radius:980px;font-weight:600;font-size:14px;">Accept Invitation</a>
-                    <p style="font-size:12px;color:#86868b;margin-top:24px;">Or copy: ${inviteUrl}</p>
+                    <p style="font-size:12px;color:#6b6b73;margin-top:24px;">Or copy: ${inviteUrl}</p>
                 </div>
             `,
         });

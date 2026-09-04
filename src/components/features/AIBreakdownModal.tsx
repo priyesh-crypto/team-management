@@ -83,18 +83,18 @@ function Modal({
                             <Sparkles size={16} className="text-brand-blue" />
                         </div>
                         <div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">AI Assistant</div>
+                            <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider">AI Assistant</div>
                             <div className="text-sm font-black text-[#1d1d1f]">Break down task into subtasks</div>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400">
+                    <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 min-h-11 min-w-11 inline-flex items-center justify-center" aria-label="Close">
                         <X size={16} />
                     </button>
                 </div>
 
                 {/* Task context */}
                 <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Task</div>
+                    <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">Task</div>
                     <div className="text-sm font-bold text-[#1d1d1f]">{taskName}</div>
                     {taskNotes && <div className="text-xs text-slate-400 mt-1 line-clamp-2">{taskNotes}</div>}
                 </div>
@@ -103,7 +103,7 @@ function Modal({
                 <div className="px-6 py-5">
                     {!generated ? (
                         <div className="text-center py-8">
-                            <div className="text-4xl mb-3">✨</div>
+                            <Sparkles size={36} strokeWidth={1.5} className="mx-auto mb-3 text-brand-blue" aria-hidden="true" />
                             <p className="text-sm text-slate-500 mb-6 leading-relaxed">
                                 Claude will analyze your task and suggest concrete, actionable subtasks with time estimates.
                             </p>
@@ -135,7 +135,7 @@ function Modal({
                                     <button
                                         key={i}
                                         onClick={() => toggleItem(i)}
-                                        className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-start gap-3 ${
+                                        className={`w-full text-left px-4 py-3 rounded-xl border transition-colors flex items-start gap-3 ${
                                             selected.has(i)
                                                 ? "border-brand-blue bg-brand-blue/5"
                                                 : "border-slate-200 bg-white hover:border-slate-300"

@@ -81,13 +81,13 @@ export function FeatureOverridesPanel({ orgId, overrides }: Props) {
     return (
         <Card>
             <SectionLabel>Feature flag overrides</SectionLabel>
-            <p className="text-[10px] text-[#86868b] mb-4">
+            <p className="text-[11px] text-[#6b6b73] mb-4">
                 Overrides are merged on top of the org&apos;s plan. Green = force-on, Red = force-off, Grey = no override (plan default).
             </p>
             <div className="space-y-4">
                 {Object.entries(groups).map(([tier, features]) => (
                     <div key={tier}>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#86868b] mb-2">{tier}</p>
+                        <p className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] mb-2">{tier}</p>
                         <div className="grid grid-cols-2 gap-1.5">
                             {features.map(([feature]) => {
                                 const override = overrideMap[feature];
@@ -101,17 +101,17 @@ export function FeatureOverridesPanel({ orgId, overrides }: Props) {
                                                     : "bg-red-50 border-red-200"
                                                 : "border-[#e5e5ea] bg-[#f5f5f7]/40"
                                         }`}>
-                                        <span className={`font-bold truncate ${hasOverride ? (override ? "text-emerald-800" : "text-red-800") : "text-[#86868b]"}`}>
+                                        <span className={`font-bold truncate ${hasOverride ? (override ? "text-emerald-800" : "text-red-800") : "text-[#6b6b73]"}`}>
                                             {feature}
                                         </span>
                                         <div className="flex gap-1 ml-2 flex-shrink-0">
                                             <button
                                                 disabled={pending}
                                                 onClick={() => handleToggle(feature, override, true)}
-                                                className={`px-2 py-0.5 rounded-md text-[10px] font-black transition-colors ${
+                                                className={`px-2 py-0.5 rounded-md text-[11px] font-black transition-colors ${
                                                     hasOverride && override
                                                         ? "bg-emerald-600 text-white"
-                                                        : "bg-[#e5e5ea] text-[#86868b] hover:bg-emerald-100 hover:text-emerald-700"
+                                                        : "bg-[#e5e5ea] text-[#6b6b73] hover:bg-emerald-100 hover:text-emerald-700"
                                                 }`}
                                             >
                                                 ON
@@ -119,10 +119,10 @@ export function FeatureOverridesPanel({ orgId, overrides }: Props) {
                                             <button
                                                 disabled={pending}
                                                 onClick={() => handleToggle(feature, override, false)}
-                                                className={`px-2 py-0.5 rounded-md text-[10px] font-black transition-colors ${
+                                                className={`px-2 py-0.5 rounded-md text-[11px] font-black transition-colors ${
                                                     hasOverride && !override
                                                         ? "bg-red-500 text-white"
-                                                        : "bg-[#e5e5ea] text-[#86868b] hover:bg-red-100 hover:text-red-700"
+                                                        : "bg-[#e5e5ea] text-[#6b6b73] hover:bg-red-100 hover:text-red-700"
                                                 }`}
                                             >
                                                 OFF

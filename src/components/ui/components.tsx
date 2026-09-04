@@ -9,7 +9,7 @@ export function Card({ className, children, hover = false, glass = false }: { cl
             whileHover={hover ? { y: -4, boxShadow: "0 20px 40px rgba(0,0,0,0.06)" } : {}}
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
             className={cn(
-                "rounded-[28px] border transition-all duration-500",
+                "rounded-[28px] border transition-colors duration-500",
                 glass 
                     ? "bg-white/70 backdrop-blur-2xl border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.02)]" 
                     : "bg-white border-slate-100/80 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.02)]",
@@ -37,7 +37,7 @@ export function Button({
         <motion.button
             whileTap={{ scale: 0.98 }}
             className={cn(
-                "px-6 py-3 rounded-2xl font-bold text-[10px] uppercase tracking-[0.18em] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed",
+                "px-6 py-3 rounded-2xl font-bold text-[11px] uppercase tracking-[0.18em] transition-colors duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed",
                 variants[variant],
                 className
             )}
@@ -50,7 +50,7 @@ export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInp
     return (
         <input
             className={cn(
-                "bg-slate-50/50 border border-slate-100 text-slate-900 rounded-xl px-5 py-3 outline-none transition-all duration-300 focus:bg-white focus:border-[#0c64ef]/30 focus:ring-4 focus:ring-[#0c64ef]/5 placeholder-slate-400 font-medium text-[13px]",
+                "bg-slate-50/50 border border-slate-100 text-slate-900 rounded-xl px-5 py-3 outline-none transition-colors duration-300 focus:bg-white focus:border-[#0c64ef]/30 focus:ring-4 focus:ring-[#0c64ef]/5 placeholder-slate-400 font-medium text-[13px]",
                 className
             )}
             {...props}
@@ -63,7 +63,7 @@ export function Select({ className, children, ...props }: React.SelectHTMLAttrib
         <div className="relative group">
             <select
                 className={cn(
-                    "w-full bg-slate-50/50 border border-slate-100 text-slate-900 rounded-xl px-5 py-3 outline-none transition-all duration-300 focus:bg-white focus:border-[#0c64ef]/30 focus:ring-4 focus:ring-[#0c64ef]/5 appearance-none font-bold text-[9px] uppercase tracking-widest cursor-pointer",
+                    "w-full bg-slate-50/50 border border-slate-100 text-slate-900 rounded-xl px-5 py-3 outline-none transition-colors duration-300 focus:bg-white focus:border-[#0c64ef]/30 focus:ring-4 focus:ring-[#0c64ef]/5 appearance-none font-bold text-[11px] uppercase tracking-widest cursor-pointer",
                     className
                 )}
                 {...props}
@@ -90,7 +90,7 @@ export function Badge({ children, variant = 'default', className }: { children: 
 
     return (
         <span className={cn(
-            "px-2.5 py-1 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition-all duration-300", 
+            "px-2.5 py-1 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition-colors duration-300", 
             variants[variant] || variants.default, 
             className
         )}>

@@ -91,16 +91,16 @@ export function CreditsPanel({ orgId, credits }: Props) {
 
                 {credits.length > 0 && (
                     <div className="space-y-1.5 pt-2 border-t border-[#f5f5f7]">
-                        <p className="text-[10px] font-black uppercase tracking-wider text-[#86868b]">History</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider text-[#6b6b73]">History</p>
                         {credits.map(c => (
                             <div key={c.id} className="flex items-center justify-between text-xs p-2 rounded-lg hover:bg-[#f5f5f7]">
                                 <div>
                                     <span className="font-bold text-[#1d1d1f]">
                                         +{formatMoney(c.amount_cents)} {c.currency}
                                     </span>
-                                    <span className="text-[#86868b] ml-2">{c.reason}</span>
+                                    <span className="text-[#6b6b73] ml-2">{c.reason}</span>
                                 </div>
-                                <div className="text-[10px] text-[#86868b]">
+                                <div className="text-[11px] text-[#6b6b73]">
                                     {c.applied_at
                                         ? <span className="text-emerald-600 font-bold">Applied</span>
                                         : <span className="text-amber-600 font-bold">Pending</span>}

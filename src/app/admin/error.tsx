@@ -18,7 +18,7 @@ export default function AdminError({
         <div className="p-6">
             <Card className="p-8 text-center max-w-md mx-auto">
                 <h2 className="text-lg font-black text-[#1d1d1f] mb-2">Admin panel error</h2>
-                <p className="text-sm font-medium text-[#86868b] mb-6">
+                <p className="text-sm font-medium text-[#6b6b73] mb-6">
                     Something went wrong in the platform admin panel.
                 </p>
                 <Button onClick={() => reset()}>Try again</Button>

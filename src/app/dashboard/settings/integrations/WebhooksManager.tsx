@@ -97,7 +97,7 @@ export function WebhooksManager({ orgId, webhooks: initialWebhooks }: Props) {
                             required
                         />
                         <div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Events to send</div>
+                            <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">Events to send</div>
                             <div className="grid grid-cols-2 gap-y-1.5 gap-x-4">
                                 {ALL_EVENTS.map(ev => (
                                     <label key={ev} className="flex items-center gap-2 cursor-pointer">
@@ -139,16 +139,16 @@ export function WebhooksManager({ orgId, webhooks: initialWebhooks }: Props) {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-black text-[#1d1d1f] truncate">{wh.url}</div>
-                                <div className="text-[10px] font-bold text-slate-400 mt-0.5 flex flex-wrap gap-1 mt-1">
+                                <div className="text-[11px] font-bold text-slate-400 mt-0.5 flex flex-wrap gap-1 mt-1">
                                     {wh.events.map(ev => (
                                         <span key={ev} className="bg-slate-100 px-1.5 py-0.5 rounded font-mono">{ev}</span>
                                     ))}
                                 </div>
                                 {wh.failure_count > 0 && (
-                                    <div className="text-[10px] font-bold text-[#ff3b30] mt-1">{wh.failure_count} recent failures</div>
+                                    <div className="text-[11px] font-bold text-[#ff3b30] mt-1">{wh.failure_count} recent failures</div>
                                 )}
                                 {wh.last_triggered_at && (
-                                    <div className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                    <div className="text-[11px] font-bold text-slate-400 mt-0.5">
                                         Last triggered {new Date(wh.last_triggered_at).toLocaleDateString()}
                                     </div>
                                 )}

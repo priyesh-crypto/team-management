@@ -16,7 +16,7 @@ export function PageHeader({
                     {title}
                 </h1>
                 {subtitle && (
-                    <p className="text-sm text-[#86868b] mt-1">{subtitle}</p>
+                    <p className="text-sm text-[#6b6b73] mt-1">{subtitle}</p>
                 )}
             </div>
             {actions && <div className="flex items-center gap-2">{actions}</div>}
@@ -73,14 +73,14 @@ export function StatCard({
         <Card padding="p-4">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <div className="text-xs font-medium text-[#86868b]">
+                    <div className="text-xs font-medium text-[#6b6b73]">
                         {label}
                     </div>
                     <div className={`text-2xl font-semibold mt-1 tracking-tight tabular-nums ${accentColor[accent]}`}>
                         {value}
                     </div>
                     {sub && (
-                        <div className="text-xs text-[#86868b] mt-1">
+                        <div className="text-xs text-[#6b6b73] mt-1">
                             {sub}
                         </div>
                     )}
@@ -104,7 +104,7 @@ export function StatusPill({ status }: { status: string | null }) {
         trialing: { bg: "bg-brand-blue/10", fg: "text-brand-blue", dot: "bg-brand-blue" },
         past_due: { bg: "bg-amber-50", fg: "text-amber-700", dot: "bg-amber-500" },
         canceled: { bg: "bg-red-50", fg: "text-red-700", dot: "bg-red-500" },
-        free: { bg: "bg-[#f5f5f7]", fg: "text-[#52525b]", dot: "bg-[#86868b]" },
+        free: { bg: "bg-[#f5f5f7]", fg: "text-[#52525b]", dot: "bg-[#6b6b73]" },
     };
     const cls = map[s] ?? map.free;
     return (
@@ -181,7 +181,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     return (
         <input
             {...props}
-            className={`w-full px-3 py-2 rounded-md border border-[#e5e5ea] bg-white text-sm text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 transition-colors ${
+            className={`w-full px-3 py-2 rounded-md border border-[#e5e5ea] bg-white text-sm text-[#1d1d1f] placeholder:text-[#6b6b73] focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 transition-colors ${
                 props.className ?? ""
             }`}
         />
@@ -206,7 +206,7 @@ export function Field({ label, children, hint }: { label: string; children: Reac
                 {label}
             </div>
             {children}
-            {hint && <div className="text-xs text-[#86868b] mt-1.5">{hint}</div>}
+            {hint && <div className="text-xs text-[#6b6b73] mt-1.5">{hint}</div>}
         </label>
     );
 }

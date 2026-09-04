@@ -2,7 +2,7 @@
 
 import React, { useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Calendar, Clock } from 'lucide-react';
+import { Trash2, Calendar, Clock, Sparkles } from 'lucide-react';
 import { Task, Subtask, Profile } from '@/app/actions/actions';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Card, Badge, Button } from '@/components/ui/components';
@@ -35,15 +35,15 @@ function MorningBriefing({ userName, tasks }: MorningBriefingProps) {
       
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-lg">✨</span>
-          <h4 className="text-[9px] font-black text-[#86868b] uppercase tracking-[0.3em]">Command Center Briefing</h4>
+          <Sparkles size={16} strokeWidth={2} className="text-brand-blue" aria-hidden="true" />
+          <h4 className="text-[11px] font-black text-[#6b6b73] uppercase tracking-[0.3em]">Command Center Briefing</h4>
         </div>
         
         <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight mb-2">
           {mounted ? (new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening') : '...'}, <span className="text-[#0c64ef]">{userName.split(' ')[0]}</span>.
         </h1>
         
-        <p className="text-sm font-bold text-[#86868b] max-w-2xl leading-relaxed">
+        <p className="text-sm font-bold text-[#6b6b73] max-w-2xl leading-relaxed">
           Today is {mounted ? new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : '...'}. 
           {highPriorityTasks.length > 0 
             ? ` You have ${highPriorityTasks.length} critical items requiring your immediate attention today.` 
@@ -53,7 +53,7 @@ function MorningBriefing({ userName, tasks }: MorningBriefingProps) {
         <div className="flex flex-wrap gap-3 mt-4">
           <div className="bg-white/50 backdrop-blur-md border border-white/40 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm">
             <div className="w-1.5 h-1.5 rounded-full bg-[#ff3b30] animate-pulse" />
-            <span className="text-[9px] font-black text-[#1d1d1f] uppercase tracking-widest">{highPriorityTasks.length} Critical Tasks</span>
+            <span className="text-[11px] font-black text-[#1d1d1f] uppercase tracking-widest">{highPriorityTasks.length} Critical Tasks</span>
           </div>
         </div>
       </div>
@@ -99,7 +99,7 @@ function BoardColumn({
           )} />
           <h3 className="text-[11px] font-black text-[#1d1d1f] tracking-[0.15em] uppercase">{title}</h3>
         </div>
-        <span className="px-3 py-1 rounded-xl bg-white border border-[#f0f0f2] shadow-sm text-[10px] font-black text-[#1d1d1f] tabular-nums">
+        <span className="px-3 py-1 rounded-xl bg-white border border-[#f0f0f2] shadow-sm text-[11px] font-black text-[#1d1d1f] tabular-nums">
           {tasks.length}
         </span>
       </div>
@@ -107,7 +107,7 @@ function BoardColumn({
       <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar pb-10">
         {tasks.length === 0 ? (
           <div className="h-24 border border-dashed border-[#e5e5ea] rounded-3xl flex items-center justify-center">
-            <span className="text-[9px] font-black text-[#86868b] uppercase tracking-widest opacity-40">Empty Queue</span>
+            <span className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest opacity-40">Empty Queue</span>
           </div>
         ) : (
           tasks.map((task) => {
@@ -143,7 +143,7 @@ function BoardColumn({
                 exit={{ opacity: 0, scale: 0.95 }}
                 onClick={() => onTaskClick(task)}
                 className={cn(
-                  "group relative bg-white rounded-3xl p-5 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-[#0c64ef]/5 hover:-translate-y-1 transition-all duration-500 cursor-pointer overflow-hidden",
+                  "group relative bg-white rounded-3xl p-5 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-[#0c64ef]/5 hover:-translate-y-1 transition-[transform,opacity,color,background-color,border-color,box-shadow] duration-500 cursor-pointer overflow-hidden",
                   task.status === 'Blocked' && "grayscale opacity-70"
                 )}
               >
@@ -169,7 +169,7 @@ function BoardColumn({
                   <h4 className="text-sm font-black text-[#1d1d1f] mb-2 leading-tight group-hover:text-[#0c64ef] transition-colors line-clamp-2">{task.name}</h4>
                   
                   {task.notes && (
-                    <p className="text-[10px] font-bold text-[#86868b] line-clamp-2 mb-4 leading-relaxed group-hover:text-[#424245]">
+                    <p className="text-[11px] font-bold text-[#6b6b73] line-clamp-2 mb-4 leading-relaxed group-hover:text-[#424245]">
                       {task.notes}
                     </p>
                   )}
@@ -177,7 +177,7 @@ function BoardColumn({
                   <div className="space-y-4">
                     {(subtasks.length > 0 || progress > 0) && (
                       <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-[8px] font-black text-[#86868b] uppercase tracking-widest">
+                        <div className="flex justify-between items-center text-[8px] font-black text-[#6b6b73] uppercase tracking-widest">
                           <span>Progression</span>
                           <span className="text-[#0c64ef] tabular-nums">{Math.round(progress)}%</span>
                         </div>
@@ -218,19 +218,19 @@ function BoardColumn({
 
                       <div className="flex items-center gap-3">
                         {totalHours > 0 && (
-                          <div className="flex items-center gap-1.5 text-[#86868b]">
-                            <span className="text-[10px]">⏱️</span>
-                            <span className="text-[9px] font-black tabular-nums">{Math.round(totalHours * 10) / 10}h</span>
+                          <div className="flex items-center gap-1.5 text-[#6b6b73]">
+                            <span className="text-[11px]">⏱️</span>
+                            <span className="text-[11px] font-black tabular-nums">{Math.round(totalHours * 10) / 10}h</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-1.5 text-[#86868b]">
-                          <span className="text-[10px]">💬</span>
-                          <span className="text-[9px] font-black tabular-nums">{commentCounts[task.id] || 0}</span>
+                        <div className="flex items-center gap-1.5 text-[#6b6b73]">
+                          <span className="text-[11px]">💬</span>
+                          <span className="text-[11px] font-black tabular-nums">{commentCounts[task.id] || 0}</span>
                         </div>
                         {(attachmentCounts[task.id] || 0) > 0 && (
-                          <div className="flex items-center gap-1.5 text-[#86868b]">
-                            <span className="text-[10px]">📎</span>
-                            <span className="text-[9px] font-black tabular-nums">{attachmentCounts[task.id]}</span>
+                          <div className="flex items-center gap-1.5 text-[#6b6b73]">
+                            <span className="text-[11px]">📎</span>
+                            <span className="text-[11px] font-black tabular-nums">{attachmentCounts[task.id]}</span>
                           </div>
                         )}
                       </div>
@@ -241,13 +241,13 @@ function BoardColumn({
                         {dateInfo ? (
                           <div className={cn(
                             "flex items-center gap-1.5 px-2 py-1 rounded-lg",
-                            dateInfo.color === 'red' ? 'bg-[#fff2f2] text-[#ff3b30]' : 'bg-[#f5f5f7] text-[#86868b]'
+                            dateInfo.color === 'red' ? 'bg-[#fff2f2] text-[#ff3b30]' : 'bg-[#f5f5f7] text-[#6b6b73]'
                           )}>
                             <Clock size={10} strokeWidth={3} />
                             <span className="text-[8px] font-black uppercase tracking-wider">{dateInfo.label}</span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#f5f5f7] text-[#86868b]">
+                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#f5f5f7] text-[#6b6b73]">
                             <Calendar size={10} strokeWidth={3} />
                             <span className="text-[8px] font-black uppercase tracking-wider">No Deadline</span>
                           </div>
@@ -258,7 +258,7 @@ function BoardColumn({
                           e.stopPropagation();
                           onDeleteTask(task.id, task.name);
                         }}
-                        className="p-1.5 hover:bg-[#ff3b30]/10 hover:text-[#ff3b30] rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                        className="p-1.5 hover:bg-[#ff3b30]/10 hover:text-[#ff3b30] rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                       >
                         <Trash2 size={12} strokeWidth={2.5} />
                       </button>
@@ -316,7 +316,7 @@ export function ManagerBoardView({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
         <Card className="p-6 rounded-[24px] bg-white border-[#eceef0] shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-[10px] font-black text-[#86868b] tracking-widest uppercase">Efficiency</h3>
+            <h3 className="text-[11px] font-black text-[#6b6b73] tracking-widest uppercase">Efficiency</h3>
             <Badge variant="secondary" className="bg-[#f0f0f2] text-[#1d1d1f] font-bold text-[8px]">2026</Badge>
           </div>
           
@@ -326,7 +326,7 @@ export function ManagerBoardView({
                 <circle cx="64" cy="64" r="56" className="stroke-[#f0f0f2] stroke-[10] fill-none" />
                 <circle 
                   cx="64" cy="64" r="56" 
-                  className="stroke-[#0c64ef] stroke-[10] fill-none transition-all duration-1000 ease-out"
+                  className="stroke-[#0c64ef] stroke-[10] fill-none transition-colors duration-1000 ease-out"
                   style={{ 
                     strokeDasharray: '352',
                     strokeDashoffset: 352 - (352 * (boardStats.completed / (boardStats.total || 1)))
@@ -335,7 +335,7 @@ export function ManagerBoardView({
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-2xl font-black text-[#1d1d1f]">{Math.round((boardStats.completed / (boardStats.total || 1)) * 100)}%</span>
-                <span className="text-[9px] font-bold text-[#86868b] uppercase tracking-wider">Done</span>
+                <span className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-wider">Done</span>
               </div>
             </div>
 
@@ -343,18 +343,18 @@ export function ManagerBoardView({
               <div className="p-4 bg-[#f5f5f7] rounded-3xl border border-white/50">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 rounded-full bg-[#0c64ef]"></div>
-                  <span className="text-[9px] font-black text-[#86868b] tracking-wider uppercase">Total Assigned</span>
+                  <span className="text-[11px] font-black text-[#6b6b73] tracking-wider uppercase">Total Assigned</span>
                 </div>
                 <p className="text-2xl font-black text-[#1d1d1f]">{boardStats.total}</p>
-                <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-tighter mt-1 opacity-60">Across all projects</p>
+                <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-tighter mt-1 opacity-60">Across all projects</p>
               </div>
               <div className="p-4 bg-[#f5f5f7] rounded-3xl border border-white/50">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-2 h-2 rounded-full bg-[#34c759]"></div>
-                  <span className="text-[9px] font-black text-[#86868b] tracking-wider uppercase">Completed</span>
+                  <span className="text-[11px] font-black text-[#6b6b73] tracking-wider uppercase">Completed</span>
                 </div>
                 <p className="text-2xl font-black text-[#1d1d1f]">{boardStats.completed}</p>
-                <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-tighter mt-1 opacity-60">Verified & Finished</p>
+                <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-tighter mt-1 opacity-60">Verified & Finished</p>
               </div>
             </div>
           </div>
@@ -362,21 +362,21 @@ export function ManagerBoardView({
 
         <Card className="p-6 rounded-[24px] bg-white border-[#eceef0] shadow-sm">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-[10px] font-black text-[#86868b] tracking-widest uppercase">Hotspots</h3>
+            <h3 className="text-[11px] font-black text-[#6b6b73] tracking-widest uppercase">Hotspots</h3>
             <div className="w-1.5 h-1.5 rounded-full bg-[#ff3b30] animate-pulse"></div>
           </div>
-          <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-wider mb-4 opacity-50">Critical Signals · Real-time</p>
+          <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-wider mb-4 opacity-50">Critical Signals · Real-time</p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="p-3 bg-[#fff2f2] rounded-xl border border-[#ff3b30]/10">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-black text-[#ff3b30] uppercase tracking-widest">Overdue</span>
+                  <span className="text-[11px] font-black text-[#ff3b30] uppercase tracking-widest">Overdue</span>
                   <span className="text-base font-black text-[#ff3b30]">{heatmapData.overdue.length}</span>
                 </div>
                 <div className="h-1 w-full bg-[#ff3b30]/10 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-[#ff3b30] rounded-full transition-all duration-1000"
+                    className="h-full bg-[#ff3b30] rounded-full transition-colors duration-1000"
                     style={{ width: `${Math.min(100, (heatmapData.overdue.length / (heatmapData.active.length + heatmapData.overdue.length || 1)) * 100)}%` }}
                   ></div>
                 </div>
@@ -384,12 +384,12 @@ export function ManagerBoardView({
 
               <div className="p-3 bg-[#f5f5f7] rounded-xl border border-[#e5e5ea]">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-black text-[#1d1d1f] uppercase tracking-widest">High/Urgent</span>
+                  <span className="text-[11px] font-black text-[#1d1d1f] uppercase tracking-widest">High/Urgent</span>
                   <span className="text-base font-black text-[#1d1d1f]">{heatmapData.active.length}</span>
                 </div>
                 <div className="h-1 w-full bg-[#e5e5ea] rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-[#1d1d1f] rounded-full transition-all duration-1000"
+                    className="h-full bg-[#1d1d1f] rounded-full transition-colors duration-1000"
                     style={{ width: `${Math.min(100, (heatmapData.active.length / (heatmapData.active.length + heatmapData.overdue.length || 1)) * 100)}%` }}
                   ></div>
                 </div>
@@ -397,15 +397,15 @@ export function ManagerBoardView({
             </div>
 
             <div className="space-y-2">
-              <p className="text-[8px] font-black text-[#86868b] uppercase tracking-[0.2em] mb-2 opacity-40">Immediate Attention</p>
+              <p className="text-[8px] font-black text-[#6b6b73] uppercase tracking-[0.2em] mb-2 opacity-40">Immediate Attention</p>
               {heatmapData.overdue.slice(0, 2).map(t => (
                 <div 
                   key={t.id} 
                   onClick={() => handleTaskClick(t)}
-                  className="group cursor-pointer p-2.5 bg-[#fff2f2]/50 hover:bg-[#fff2f2] rounded-lg border border-[#ff3b30]/5 transition-all"
+                  className="group cursor-pointer p-2.5 bg-[#fff2f2]/50 hover:bg-[#fff2f2] rounded-lg border border-[#ff3b30]/5 transition-colors"
                 >
                   <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-bold text-[#ff3b30] uppercase tracking-tight line-clamp-1 flex-1">{t.name}</span>
+                    <span className="text-[11px] font-bold text-[#ff3b30] uppercase tracking-tight line-clamp-1 flex-1">{t.name}</span>
                     <Badge className="bg-[#ff3b30] text-white text-[7px] font-black px-1 rounded ml-2">OVERDUE</Badge>
                   </div>
                 </div>
@@ -414,16 +414,16 @@ export function ManagerBoardView({
                 <div 
                   key={t.id} 
                   onClick={() => handleTaskClick(t)}
-                  className="group cursor-pointer p-2.5 bg-[#f5f5f7]/50 hover:bg-[#f5f5f7] rounded-lg border border-[#e5e5ea]/50 transition-all"
+                  className="group cursor-pointer p-2.5 bg-[#f5f5f7]/50 hover:bg-[#f5f5f7] rounded-lg border border-[#e5e5ea]/50 transition-colors"
                 >
                   <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-bold text-[#1d1d1f] uppercase tracking-tight line-clamp-1 flex-1">{t.name}</span>
+                    <span className="text-[11px] font-bold text-[#1d1d1f] uppercase tracking-tight line-clamp-1 flex-1">{t.name}</span>
                     <Badge className="bg-[#1d1d1f] text-white text-[7px] font-black px-1 rounded ml-2">{t.priority}</Badge>
                   </div>
                 </div>
               ))}
               {(heatmapData.overdue.length > 2 || heatmapData.active.length > 2) && (
-                <p className="text-[7px] font-bold text-center text-[#86868b] mt-1 tracking-widest uppercase opacity-40">+{heatmapData.overdue.length + heatmapData.active.length - 4} More</p>
+                <p className="text-[7px] font-bold text-center text-[#6b6b73] mt-1 tracking-widest uppercase opacity-40">+{heatmapData.overdue.length + heatmapData.active.length - 4} More</p>
               )}
             </div>
           </div>

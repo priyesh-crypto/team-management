@@ -110,11 +110,11 @@ export default function TaskRebalancer({ tasks, employees, onClose, memberId, me
                             <h2 className="text-2xl font-black text-[#1d1d1f] tracking-tight">
                                 Optimize Load for {memberName}
                             </h2>
-                            <p className="text-sm text-[#86868b] mt-1">
+                            <p className="text-sm text-[#6b6b73] mt-1">
                                 AI has identified {overloadedTasks.length} tasks that could be reassigned to prevent burnout.
                             </p>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-[#f5f5f7] rounded-full transition-colors">
+                        <button onClick={onClose} className="p-2 hover:bg-[#f5f5f7] rounded-full transition-colors min-h-11 min-w-11 inline-flex items-center justify-center" aria-label="Close">
                             <X size={20} />
                         </button>
                     </div>
@@ -125,7 +125,7 @@ export default function TaskRebalancer({ tasks, employees, onClose, memberId, me
                             {overloadedTasks.map((task) => (
                                 <div 
                                     key={task.id}
-                                    className={`group p-4 rounded-2xl border transition-all cursor-pointer ${selectedTaskIds.includes(task.id) ? 'border-brand-blue bg-brand-blue/[0.02] shadow-sm' : 'border-[#e5e5ea] hover:border-brand-blue/30'}`}
+                                    className={`group p-4 rounded-2xl border transition-colors cursor-pointer ${selectedTaskIds.includes(task.id) ? 'border-brand-blue bg-brand-blue/[0.02] shadow-sm' : 'border-[#e5e5ea] hover:border-brand-blue/30'}`}
                                     onClick={() => {
                                         setSelectedTaskIds(prev => 
                                             prev.includes(task.id) ? prev.filter(id => id !== task.id) : [...prev, task.id]
@@ -140,11 +140,11 @@ export default function TaskRebalancer({ tasks, employees, onClose, memberId, me
                                             <div>
                                                 <h4 className="text-[13px] font-bold text-[#1d1d1f]">{task.name}</h4>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${task.priority === 'Urgent' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : 'bg-[#f5f5f7] text-[#86868b]'}`}>
+                                                    <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${task.priority === 'Urgent' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : 'bg-[#f5f5f7] text-[#6b6b73]'}`}>
                                                         {task.priority}
                                                     </span>
                                                     {new Date(task.deadline) < new Date() && (
-                                                        <span className="text-[9px] font-bold text-[#ff3b30] flex items-center gap-1">
+                                                        <span className="text-[11px] font-bold text-[#ff3b30] flex items-center gap-1">
                                                             <Clock size={8} /> Overdue
                                                         </span>
                                                     )}
@@ -154,7 +154,7 @@ export default function TaskRebalancer({ tasks, employees, onClose, memberId, me
                                         
                                         <div className="flex items-center gap-3">
                                             <div className="text-right">
-                                                <p className="text-[9px] text-[#86868b] uppercase font-black tracking-widest mb-1">Suggested Reassignment</p>
+                                                <p className="text-[11px] text-[#6b6b73] uppercase font-black tracking-widest mb-1">Suggested Reassignment</p>
                                                 <div className="flex items-center gap-2 justify-end">
                                                     <span className="text-[11px] font-bold text-[#1d1d1f]">{task.suggestedAssignee?.name}</span>
                                                     <div className="w-6 h-6 rounded-full bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center text-[8px] font-black">
@@ -172,7 +172,7 @@ export default function TaskRebalancer({ tasks, employees, onClose, memberId, me
                                                 style={{ width: `${task.confidence}%` }}
                                             />
                                         </div>
-                                        <span className="text-[9px] font-black text-[#22be66] uppercase">{task.confidence}% AI Confidence</span>
+                                        <span className="text-[11px] font-black text-[#22be66] uppercase">{task.confidence}% AI Confidence</span>
                                     </div>
                                 </div>
                             ))}
@@ -181,20 +181,20 @@ export default function TaskRebalancer({ tasks, employees, onClose, memberId, me
 
                     {/* Footer */}
                     <div className="p-8 pt-4 border-t border-[#f0f0f2] flex items-center justify-between bg-[#f8f9fb]">
-                        <div className="text-[11px] text-[#86868b]">
+                        <div className="text-[11px] text-[#6b6b73]">
                             <span className="font-bold text-[#1d1d1f]">{selectedTaskIds.length}</span> tasks selected for optimization
                         </div>
                         <div className="flex gap-3">
                             <button 
                                 onClick={onClose}
-                                className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-[#1d1d1f] hover:bg-[#e5e5ea] transition-all"
+                                className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-[#1d1d1f] hover:bg-[#e5e5ea] transition-colors"
                             >
                                 Cancel
                             </button>
                             <button 
                                 onClick={handleRebalance}
                                 disabled={selectedTaskIds.length === 0 || isRebalancing}
-                                className={`px-8 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all flex items-center gap-2 ${selectedTaskIds.length > 0 ? 'bg-brand-blue hover:shadow-lg hover:translate-y-[-2px]' : 'bg-[#d1d1d6] cursor-not-allowed'}`}
+                                className={`px-8 py-2.5 rounded-xl text-[13px] font-bold text-white transition-[transform,opacity,color,background-color,border-color,box-shadow] flex items-center gap-2 ${selectedTaskIds.length > 0 ? 'bg-brand-blue hover:shadow-lg hover:translate-y-[-2px]' : 'bg-[#d1d1d6] cursor-not-allowed'}`}
                             >
                                 {isRebalancing ? 'Optimizing...' : 'Apply Optimization'}
                                 <ChevronRight size={16} />

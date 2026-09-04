@@ -67,7 +67,7 @@ export function GitHubSettings({ orgId, connection }: Props) {
                                 <Check size={11} /> Connected
                             </div>
                             <button onClick={handleDisconnect} disabled={pending}
-                                className="text-[10px] font-bold text-slate-400 hover:text-[#ff3b30] transition-colors">
+                                className="text-[11px] font-bold text-slate-400 hover:text-[#ff3b30] transition-colors">
                                 Disconnect
                             </button>
                         </div>
@@ -76,7 +76,7 @@ export function GitHubSettings({ orgId, connection }: Props) {
 
                 {connection?.is_active && !showForm ? (
                     <div className="px-6 py-4 space-y-3">
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Connected repos</div>
+                        <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Connected repos</div>
                         <div className="space-y-1.5">
                             {connection.repos.map(r => (
                                 <div key={r.full_name} className="flex items-center gap-2 text-sm font-bold text-slate-700">
@@ -99,26 +99,26 @@ export function GitHubSettings({ orgId, connection }: Props) {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">GitHub organization / username</label>
+                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">GitHub organization / username</label>
                             <input value={githubOrg} onChange={e => setGithubOrg(e.target.value)} required placeholder="acme-corp"
                                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none" />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Personal Access Token</label>
+                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">Personal Access Token</label>
                             <input type="password" value={token} onChange={e => setToken(e.target.value)}
                                 required={!connection?.is_active}
                                 placeholder={connection?.is_active ? "Leave blank to keep existing token" : "ghp_..."}
                                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none" />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Repositories</label>
+                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">Repositories</label>
                             <div className="flex gap-2 mb-2">
                                 <input value={repoInput} onChange={e => setRepoInput(e.target.value)}
                                     placeholder="owner/repo-name"
                                     className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none"
                                     onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addRepo(); } }} />
                                 <button type="button" onClick={addRepo}
-                                    className="px-3 py-2 rounded-xl bg-slate-100 text-slate-600 text-sm font-black hover:bg-slate-200 transition-colors">
+                                    className="px-3 py-2 rounded-xl bg-slate-100 text-slate-600 text-sm font-black hover:bg-slate-200 transition-colors" aria-label="Add">
                                     <Plus size={14} />
                                 </button>
                             </div>

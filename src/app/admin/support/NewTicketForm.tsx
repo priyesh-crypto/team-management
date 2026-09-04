@@ -67,7 +67,7 @@ export function NewTicketForm() {
                         {pending ? "Creating…" : "Create ticket"}
                     </Button>
                     <button type="button" onClick={() => setOpen(false)}
-                        className="px-4 py-2 rounded-xl border border-[#e5e5ea] text-sm font-bold text-[#86868b] hover:bg-[#f5f5f7] transition-colors">
+                        className="px-4 py-2 rounded-xl border border-[#e5e5ea] text-sm font-bold text-[#6b6b73] hover:bg-[#f5f5f7] transition-colors">
                         Cancel
                     </button>
                 </div>

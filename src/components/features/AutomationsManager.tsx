@@ -142,21 +142,21 @@ function NewRuleForm({ onDone }: { onDone: () => void }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
             <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Rule name</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Rule name</label>
                 <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="e.g. Notify manager on task creation"
                     className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none" required />
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">When (trigger)</label>
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">When (trigger)</label>
                     <select value={form.trigger_type} onChange={e => setForm(f => ({ ...f, trigger_type: e.target.value }))}
                         className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none">
                         {TRIGGER_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
                     </select>
                 </div>
                 <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Then (action)</label>
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Then (action)</label>
                     <select value={form.action_type} onChange={e => setForm(f => ({ ...f, action_type: e.target.value }))}
                         className="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none">
                         {ACTION_TYPES.map(a => <option key={a.id} value={a.id}>{a.label}</option>)}
@@ -164,14 +164,14 @@ function NewRuleForm({ onDone }: { onDone: () => void }) {
                 </div>
             </div>
             <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Conditions (Optional)</label>
+                <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Conditions (Optional)</label>
                 {form.conditions.map((c, i) => (
                     <div key={i} className="flex gap-2 items-center">
                         <select value={c.field} onChange={e => {
                             const newC = [...form.conditions];
                             newC[i].field = e.target.value;
                             setForm(f => ({ ...f, conditions: newC }));
-                        }} className="flex-1 px-2 py-1.5 rounded-lg border border-slate-200 text-[10px] font-bold">
+                        }} className="flex-1 px-2 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold">
                             <option value="priority">Priority</option>
                             <option value="status">Status</option>
                             <option value="name">Task Name</option>
@@ -180,7 +180,7 @@ function NewRuleForm({ onDone }: { onDone: () => void }) {
                             const newC = [...form.conditions];
                             newC[i].operator = e.target.value as any;
                             setForm(f => ({ ...f, conditions: newC }));
-                        }} className="w-20 px-2 py-1.5 rounded-lg border border-slate-200 text-[10px] font-bold">
+                        }} className="w-20 px-2 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold">
                             <option value="eq">is</option>
                             <option value="neq">is not</option>
                             <option value="contains">contains</option>
@@ -189,14 +189,14 @@ function NewRuleForm({ onDone }: { onDone: () => void }) {
                             const newC = [...form.conditions];
                             newC[i].value = e.target.value;
                             setForm(f => ({ ...f, conditions: newC }));
-                        }} placeholder="Value" className="flex-1 px-2 py-1.5 rounded-lg border border-slate-200 text-[10px] font-bold" />
+                        }} placeholder="Value" className="flex-1 px-2 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold" />
                         <button type="button" onClick={() => setForm(f => ({ ...f, conditions: f.conditions.filter((_, idx) => idx !== i) }))} className="text-slate-300 hover:text-red-500">
                             <Trash2 size={14} />
                         </button>
                     </div>
                 ))}
                 <button type="button" onClick={() => setForm(f => ({ ...f, conditions: [...f.conditions, { field: 'priority', operator: 'eq', value: '' }] }))}
-                    className="text-[10px] font-black text-brand-blue uppercase tracking-widest hover:underline flex items-center gap-1">
+                    className="text-[11px] font-black text-brand-blue uppercase tracking-widest hover:underline flex items-center gap-1">
                     <Plus size={10} /> Add condition
                 </button>
             </div>
@@ -271,7 +271,7 @@ export function AutomationsManager({ rules: initialRules }: Props) {
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ff9500]/10 text-[#ff9500] font-black uppercase tracking-widest">{rules.length} Active Rules</span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#ff9500]/10 text-[#ff9500] font-black uppercase tracking-widest">{rules.length} Active Rules</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <button onClick={() => setShowRecipes(s => !s)}
@@ -290,7 +290,7 @@ export function AutomationsManager({ rules: initialRules }: Props) {
                         <div className="flex items-center gap-2 mb-3">
                             <Wand2 size={14} className="text-brand-blue" />
                             <span className="text-xs font-black text-[#1d1d1f]">One-click Recipes</span>
-                            <span className="text-[10px] font-bold text-slate-400">Curated automations, ready to apply</span>
+                            <span className="text-[11px] font-bold text-slate-400">Curated automations, ready to apply</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {RECIPES.map(recipe => {
@@ -300,10 +300,10 @@ export function AutomationsManager({ rules: initialRules }: Props) {
                                         <div className="text-xl leading-none" aria-hidden>{recipe.icon}</div>
                                         <div className="flex-1 min-w-0">
                                             <div className="text-xs font-black text-[#1d1d1f]">{recipe.name}</div>
-                                            <div className="text-[10px] font-bold text-slate-400 mt-0.5 line-clamp-2">{recipe.description}</div>
+                                            <div className="text-[11px] font-bold text-slate-400 mt-0.5 line-clamp-2">{recipe.description}</div>
                                         </div>
                                         <button onClick={() => handleApplyRecipe(recipe)} disabled={installed}
-                                            className={`flex-shrink-0 text-[10px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg transition-colors ${installed ? "bg-slate-100 text-slate-400" : "bg-brand-blue text-white hover:bg-brand-blue-dark"}`}>
+                                            className={`flex-shrink-0 text-[11px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg transition-colors ${installed ? "bg-slate-100 text-slate-400" : "bg-brand-blue text-white hover:bg-brand-blue-dark"}`}>
                                             {installed ? "Installed" : "Apply"}
                                         </button>
                                     </div>
@@ -330,7 +330,7 @@ export function AutomationsManager({ rules: initialRules }: Props) {
                         <div key={rule.id} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-black text-[#1d1d1f]">{rule.name}</div>
-                                <div className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                <div className="text-[11px] font-bold text-slate-400 mt-0.5">
                                     <span className="text-brand-blue">{TRIGGER_LABEL[rule.trigger_type] ?? rule.trigger_type}</span>
                                     {" → "}
                                     <span className="text-[#ff9500]">{ACTION_LABEL[rule.action_type] ?? rule.action_type}</span>

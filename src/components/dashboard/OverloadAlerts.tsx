@@ -73,7 +73,7 @@ export function OverloadAlerts({ tasks, subtasksMap, employees, onRebalance }: P
                     </div>
                     <div>
                         <h3 className="text-sm font-black text-[#1d1d1f] tracking-tight uppercase">Burnout Risk Center</h3>
-                        <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-0.5">AI-powered workload monitoring</p>
+                        <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-widest mt-0.5">AI-powered workload monitoring</p>
                     </div>
                 </div>
             </div>
@@ -85,7 +85,7 @@ export function OverloadAlerts({ tasks, subtasksMap, employees, onRebalance }: P
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="bg-white rounded-[28px] p-5 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-[#0c64ef]/5 transition-all duration-500 relative overflow-hidden group"
+                        className="bg-white rounded-[28px] p-5 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-[#0c64ef]/5 transition-colors duration-500 relative overflow-hidden group"
                     >
                         <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-full -mr-12 -mt-12 opacity-10", alert.level === 'Critical' ? 'bg-[#ff3b30]' : 'bg-brand-blue')} />
                         
@@ -100,19 +100,19 @@ export function OverloadAlerts({ tasks, subtasksMap, employees, onRebalance }: P
                                     />
                                     <div>
                                         <div className="text-[13px] font-black text-[#1d1d1f] leading-tight">{alert.name}</div>
-                                        <div className={cn("text-[9px] font-black uppercase tracking-widest mt-0.5", alert.level === 'Critical' ? 'text-[#ff3b30]' : 'text-[#86868b]')}>
+                                        <div className={cn("text-[11px] font-black uppercase tracking-widest mt-0.5", alert.level === 'Critical' ? 'text-[#ff3b30]' : 'text-[#6b6b73]')}>
                                             {alert.level} RISK
                                         </div>
                                     </div>
                                 </div>
-                                <div className={cn("px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider", alert.color)}>
+                                <div className={cn("px-3 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider", alert.color)}>
                                     Score: {alert.score}
                                 </div>
                             </div>
 
                             <div className="space-y-3 mb-6">
                                 <div className="flex items-center justify-between text-[11px] font-bold">
-                                    <span className="text-[#86868b]">Active Workload</span>
+                                    <span className="text-[#6b6b73]">Active Workload</span>
                                     <span className="text-[#1d1d1f]">{alert.activeCount} tasks</span>
                                 </div>
                                 {alert.delayedCount > 0 && (
@@ -128,14 +128,14 @@ export function OverloadAlerts({ tasks, subtasksMap, employees, onRebalance }: P
                                     </div>
                                 )}
                                 <div className="flex items-center justify-between text-[11px] font-bold">
-                                    <span className="text-[#86868b]">Past Deadlines</span>
+                                    <span className="text-[#6b6b73]">Past Deadlines</span>
                                     <span className={cn(alert.overdueCount > 0 ? "text-[#ff3b30]" : "text-[#1d1d1f]")}>{alert.overdueCount}</span>
                                 </div>
                             </div>
 
                             <button 
                                 onClick={() => onRebalance(alert.id, alert.name)}
-                                className="w-full h-10 rounded-xl bg-brand-blue text-white text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-brand-blue-dark transition-all hover:shadow-lg hover:shadow-brand-blue/20 active:scale-[0.98]"
+                                className="w-full h-10 rounded-xl bg-brand-blue text-white text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-brand-blue-dark transition-[transform,opacity,color,background-color,border-color,box-shadow] hover:shadow-lg hover:shadow-brand-blue/20 active:scale-[0.98]"
                             >
                                 <Zap size={14} fill="currentColor" />
                                 Smart Rebalance

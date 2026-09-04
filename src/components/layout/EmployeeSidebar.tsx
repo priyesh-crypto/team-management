@@ -21,10 +21,10 @@ interface EmployeeSidebarProps {
 const NavItem = ({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active?: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group ${
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors duration-300 group ${
             active 
             ? 'bg-[#0c64ef] text-white shadow-lg shadow-[#0c64ef]/20 font-bold translate-x-1' 
-            : 'text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] font-medium'
+            : 'text-[#6b6b73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] font-medium'
         }`}
     >
         <div className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>
@@ -77,13 +77,13 @@ export function EmployeeSidebar({
                     <NavItem label="Settings" icon={<Settings size={16} strokeWidth={2.5} />} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
                     
                     <div className="mt-8 pt-4 border-t border-slate-100">
-                        <div className="px-4 mb-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest">Projects</div>
+                        <div className="px-4 mb-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Projects</div>
                         <ProjectSwitcher projects={projects} userRole={userRole} />
                     </div>
                 </nav>
 
                 <div className="mt-auto pt-6 border-t border-slate-100">
-                    <div className="flex items-center gap-3 px-2 py-3 rounded-2xl border border-transparent hover:border-slate-100 transition-all cursor-pointer group">
+                    <div className="flex items-center gap-3 px-2 py-3 rounded-2xl border border-transparent hover:border-slate-100 transition-colors cursor-pointer group">
                         <UserAvatar
                             name={userName}
                             avatarUrl={userAvatarUrl}
@@ -92,13 +92,13 @@ export function EmployeeSidebar({
                         />
                         <div className="flex-1 min-w-0">
                             <h2 className="text-xs font-bold text-[#1d1d1f] truncate">{userName}</h2>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Pro Account</p>
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">Pro Account</p>
                         </div>
                         <button 
                             onClick={handleSignOut}
-                            className="p-2 hover:bg-[#ff3b30]/10 text-slate-400 hover:text-[#ff3b30] rounded-lg transition-all"
+                            className="p-2 hover:bg-[#ff3b30]/10 text-slate-400 hover:text-[#ff3b30] rounded-lg transition-colors min-h-11 min-w-11 inline-flex items-center justify-center"
                             title="Sign Out"
-                        >
+                         aria-label="Sign Out">
                             <LogOut size={16} strokeWidth={2.5} />
                         </button>
                     </div>

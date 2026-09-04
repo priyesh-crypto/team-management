@@ -121,7 +121,7 @@ export function OrgDetailClient({
             <div>
                 <Link
                     href="/admin/orgs"
-                    className="inline-flex items-center gap-1 text-xs text-[#86868b] hover:text-brand-blue transition-colors"
+                    className="inline-flex items-center gap-1 text-xs text-[#6b6b73] hover:text-brand-blue transition-colors"
                 >
                     <ArrowLeft size={12} strokeWidth={2} />
                     All organizations
@@ -143,7 +143,7 @@ export function OrgDetailClient({
                                 </span>
                             )}
                         </div>
-                        <div className="text-xs font-mono text-[#86868b] mt-2">{org.id}</div>
+                        <div className="text-xs font-mono text-[#6b6b73] mt-2">{org.id}</div>
                     </div>
                     <div className="flex items-center gap-2">
                         <Link
@@ -195,7 +195,7 @@ export function OrgDetailClient({
                         >
                             {isPending ? "Updating…" : `Set plan → ${planSel}`}
                         </Button>
-                        <p className="text-[10px] text-[#86868b]">
+                        <p className="text-[11px] text-[#6b6b73]">
                             Changes the customer&apos;s plan immediately. If Stripe-managed, also
                             updates the Stripe subscription with prorations.
                         </p>
@@ -218,7 +218,7 @@ export function OrgDetailClient({
                         >
                             {isPending ? "Updating…" : `Update to ${seats} seats`}
                         </Button>
-                        <p className="text-[10px] text-[#86868b]">
+                        <p className="text-[11px] text-[#6b6b73]">
                             Stripe is updated with prorated billing if connected. Cannot drop below
                             current active members ({usage.active_seats}).
                         </p>
@@ -242,7 +242,7 @@ export function OrgDetailClient({
                         >
                             {isPending ? "Updating…" : `Add ${trialDays} trial days`}
                         </Button>
-                        <p className="text-[10px] text-[#86868b]">
+                        <p className="text-[11px] text-[#6b6b73]">
                             Only valid for non-paying customers. Pushes the trial end on Stripe too.
                         </p>
                     </div>
@@ -276,7 +276,7 @@ export function OrgDetailClient({
                         >
                             {isPending ? "Updating…" : `Comp ${compPlan} for ${compMonths} months`}
                         </Button>
-                        <p className="text-[10px] text-[#86868b]">
+                        <p className="text-[11px] text-[#6b6b73]">
                             Cancels any active Stripe subscription, then grants this plan free for
                             the chosen period.
                         </p>
@@ -305,7 +305,7 @@ export function OrgDetailClient({
                     <div className="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-[#f0f0f2]">
                         <div>
                             <p className="text-sm font-medium text-[#1d1d1f]">Cancel subscription</p>
-                            <p className="text-xs text-[#86868b] mt-0.5">
+                            <p className="text-xs text-[#6b6b73] mt-0.5">
                                 Stops billing. Org and data remain.
                             </p>
                         </div>
@@ -340,7 +340,7 @@ export function OrgDetailClient({
                     <div className="flex items-center justify-between flex-wrap gap-3">
                         <div>
                             <p className="text-sm font-medium text-red-700">Delete organization</p>
-                            <p className="text-xs text-[#86868b] mt-0.5">
+                            <p className="text-xs text-[#6b6b73] mt-0.5">
                                 Permanently removes the org, all members, projects, tasks, comments,
                                 and attachments. Cannot be undone.
                             </p>
@@ -363,7 +363,7 @@ export function OrgDetailClient({
                                 <h3 className="text-base font-semibold tracking-tight text-[#1d1d1f]">
                                     Delete this organization?
                                 </h3>
-                                <p className="text-xs text-[#86868b] mt-1">
+                                <p className="text-xs text-[#6b6b73] mt-1">
                                     This permanently removes <strong>{org.name}</strong>, all{" "}
                                     {members.length} members, {usage.project_count} projects, and{" "}
                                     {usage.task_count} tasks. Cannot be undone.
@@ -430,7 +430,7 @@ export function OrgDetailClient({
             <Card>
                 <SectionLabel>Members ({members.length})</SectionLabel>
                 {members.length === 0 ? (
-                    <p className="text-sm text-[#86868b]">No members.</p>
+                    <p className="text-sm text-[#6b6b73]">No members.</p>
                 ) : (
                     <div className="space-y-2">
                         {members.map((m) => {
@@ -452,7 +452,7 @@ export function OrgDetailClient({
                                             <div className="text-sm font-medium text-[#1d1d1f]">
                                                 {name}
                                             </div>
-                                            <div className="text-xs font-mono text-[#86868b]">
+                                            <div className="text-xs font-mono text-[#6b6b73]">
                                                 {m.user_id.slice(0, 8)}…
                                             </div>
                                         </div>
@@ -491,7 +491,7 @@ function MiniStat({
 }) {
     return (
         <Card padding="p-4">
-            <div className="text-xs font-medium text-[#86868b]">
+            <div className="text-xs font-medium text-[#6b6b73]">
                 {label}
             </div>
             <div className="text-xl font-semibold mt-1 tracking-tight text-[#1d1d1f] tabular-nums">
@@ -535,7 +535,7 @@ function ActionRow({ action }: { action: AdminAction }) {
                     <div className="text-sm font-medium text-[#1d1d1f]">
                         {humanizeAction(action.action)}
                     </div>
-                    <div className="text-xs text-[#86868b] whitespace-nowrap">
+                    <div className="text-xs text-[#6b6b73] whitespace-nowrap">
                         {new Date(action.created_at).toLocaleString()}
                     </div>
                 </div>

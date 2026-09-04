@@ -99,7 +99,7 @@ export function BroadcastComposer() {
                     {!targetAll && (
                         <div className="space-y-3 pl-7">
                             <div>
-                                <p className="text-[10px] font-black text-[#86868b] uppercase tracking-wider mb-2">Filter by plan</p>
+                                <p className="text-[11px] font-black text-[#6b6b73] uppercase tracking-wider mb-2">Filter by plan</p>
                                 <div className="flex gap-2">
                                     {PLANS.map(p => (
                                         <button
@@ -109,7 +109,7 @@ export function BroadcastComposer() {
                                             className={`px-3 py-1.5 rounded-xl text-[11px] font-black capitalize transition-colors ${
                                                 targetPlans.includes(p)
                                                     ? "bg-brand-blue text-white"
-                                                    : "bg-[#f5f5f7] text-[#86868b] hover:bg-[#e5e5ea]"
+                                                    : "bg-[#f5f5f7] text-[#6b6b73] hover:bg-[#e5e5ea]"
                                             }`}
                                         >
                                             {p}
@@ -148,7 +148,7 @@ export function BroadcastComposer() {
                         </label>
                     ))}
                 </div>
-                <p className="text-[10px] text-[#86868b] mt-2">
+                <p className="text-[11px] text-[#6b6b73] mt-2">
                     In-app creates a notification in each matched user&apos;s inbox.
                 </p>
             </Card>
@@ -174,7 +174,7 @@ export function BroadcastComposer() {
                 <button
                     type="button"
                     onClick={() => router.push("/admin/broadcasts")}
-                    className="px-4 py-2.5 rounded-xl border border-[#e5e5ea] text-sm font-bold text-[#86868b] hover:bg-[#f5f5f7] transition-colors"
+                    className="px-4 py-2.5 rounded-xl border border-[#e5e5ea] text-sm font-bold text-[#6b6b73] hover:bg-[#f5f5f7] transition-colors"
                 >
                     Cancel
                 </button>

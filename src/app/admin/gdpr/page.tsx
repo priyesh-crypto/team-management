@@ -30,11 +30,11 @@ export default async function GdprPage() {
             <Card>
                 <SectionLabel>Request history</SectionLabel>
                 {requests.length === 0 ? (
-                    <p className="text-sm text-[#86868b] text-center py-6">No GDPR requests yet.</p>
+                    <p className="text-sm text-[#6b6b73] text-center py-6">No GDPR requests yet.</p>
                 ) : (
                     <table className="w-full">
                         <thead>
-                            <tr className="text-left text-xs font-medium text-[#86868b] border-b border-[#f0f0f2]">
+                            <tr className="text-left text-xs font-medium text-[#6b6b73] border-b border-[#f0f0f2]">
                                 <th className="pb-2.5 font-medium">Type</th>
                                 <th className="pb-2.5 font-medium">Org</th>
                                 <th className="pb-2.5 font-medium">User ID</th>
@@ -57,15 +57,15 @@ export default async function GdprPage() {
                                         <td className="py-3 text-sm text-[#52525b]">
                                             {r.organizations?.name ?? r.org_id?.slice(0, 8) ?? "—"}
                                         </td>
-                                        <td className="py-3 text-xs font-mono text-[#86868b]">
+                                        <td className="py-3 text-xs font-mono text-[#6b6b73]">
                                             {r.user_id.slice(0, 12)}…
                                         </td>
                                         <td className="py-3 text-center">
-                                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_STYLES[r.status] ?? "bg-[#f5f5f7] text-[#86868b]"}`}>
+                                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_STYLES[r.status] ?? "bg-[#f5f5f7] text-[#6b6b73]"}`}>
                                                 {r.status}
                                             </span>
                                         </td>
-                                        <td className="py-3 text-xs text-[#86868b]">
+                                        <td className="py-3 text-xs text-[#6b6b73]">
                                             {new Date(r.requested_at).toLocaleDateString()}
                                         </td>
                                         <td className="py-3">
@@ -79,7 +79,7 @@ export default async function GdprPage() {
                                                     Download ↗
                                                 </a>
                                             ) : (
-                                                <span className="text-xs text-[#86868b]">—</span>
+                                                <span className="text-xs text-[#6b6b73]">—</span>
                                             )}
                                         </td>
                                     </tr>

@@ -66,7 +66,7 @@ export default async function OrgsListPage({
             <Card padding="p-0">
                 <table className="w-full">
                     <thead>
-                        <tr className="text-left text-xs font-medium text-[#86868b] border-b border-[#f0f0f2]">
+                        <tr className="text-left text-xs font-medium text-[#6b6b73] border-b border-[#f0f0f2]">
                             <th className="px-5 py-3 font-medium">Organization</th>
                             <th className="px-5 py-3 font-medium">Plan</th>
                             <th className="px-5 py-3 font-medium">Status</th>
@@ -90,7 +90,7 @@ export default async function OrgsListPage({
                                         <div className="text-sm font-medium text-[#1d1d1f]">
                                             {o.name}
                                         </div>
-                                        <div className="text-xs text-[#86868b] font-mono mt-0.5 truncate max-w-[200px]">
+                                        <div className="text-xs text-[#6b6b73] font-mono mt-0.5 truncate max-w-[200px]">
                                             {o.id.slice(0, 8)}…
                                         </div>
                                     </td>
@@ -102,7 +102,7 @@ export default async function OrgsListPage({
                                     </td>
                                     <td className="px-5 py-3 text-center text-sm tabular-nums">
                                         <span className="text-[#1d1d1f] font-medium">{usage?.active_seats ?? 0}</span>
-                                        <span className="text-[#86868b]"> / {o.seats_purchased}</span>
+                                        <span className="text-[#6b6b73]"> / {o.seats_purchased}</span>
                                     </td>
                                     <td className="px-5 py-3 text-center text-sm font-medium text-[#1d1d1f] tabular-nums">
                                         {usage?.project_count ?? 0}
@@ -126,7 +126,7 @@ export default async function OrgsListPage({
                         })}
                         {(orgs ?? []).length === 0 && (
                             <tr>
-                                <td colSpan={8} className="py-12 text-center text-sm text-[#86868b]">
+                                <td colSpan={8} className="py-12 text-center text-sm text-[#6b6b73]">
                                     No organizations match your filters.
                                 </td>
                             </tr>

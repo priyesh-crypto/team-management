@@ -6,13 +6,13 @@ const ROLE_COLORS: Record<string, string> = {
     owner: "bg-purple-50 text-purple-700",
     admin: "bg-brand-blue/10 text-brand-blue",
     manager: "bg-emerald-50 text-emerald-700",
-    employee: "bg-[#f5f5f7] text-[#86868b]",
+    employee: "bg-[#f5f5f7] text-[#6b6b73]",
 };
 
 const PLAN_COLORS: Record<string, string> = {
     business: "bg-[#1d1d1f] text-white",
     pro: "bg-brand-blue text-white",
-    free: "bg-[#f5f5f7] text-[#86868b]",
+    free: "bg-[#f5f5f7] text-[#6b6b73]",
 };
 
 export default async function UsersPage({
@@ -49,12 +49,12 @@ export default async function UsersPage({
             </form>
 
             {q && results === null && (
-                <p className="text-sm text-[#86868b]">Enter at least 2 characters to search.</p>
+                <p className="text-sm text-[#6b6b73]">Enter at least 2 characters to search.</p>
             )}
 
             {results !== null && results.length === 0 && (
                 <Card>
-                    <p className="text-sm text-[#86868b] text-center py-6">
+                    <p className="text-sm text-[#6b6b73] text-center py-6">
                         No users found matching <strong>&ldquo;{q}&rdquo;</strong>.
                     </p>
                 </Card>
@@ -62,7 +62,7 @@ export default async function UsersPage({
 
             {results && results.length > 0 && (
                 <div className="space-y-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#86868b]">
+                    <p className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73]">
                         {results.length} user{results.length !== 1 ? "s" : ""} found
                     </p>
                     {results.map(user => (
@@ -73,9 +73,9 @@ export default async function UsersPage({
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="text-sm font-black text-[#1d1d1f]">
-                                        {user.name ?? <span className="text-[#86868b]">No name</span>}
+                                        {user.name ?? <span className="text-[#6b6b73]">No name</span>}
                                     </div>
-                                    <div className="text-[10px] font-mono text-[#86868b] mt-0.5">
+                                    <div className="text-[11px] font-mono text-[#6b6b73] mt-0.5">
                                         {user.userId}
                                     </div>
                                     {user.orgs.length > 0 && (
@@ -88,10 +88,10 @@ export default async function UsersPage({
                                                     >
                                                         {org.name}
                                                     </Link>
-                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${PLAN_COLORS[org.plan] ?? "bg-[#f5f5f7] text-[#86868b]"}`}>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-black uppercase ${PLAN_COLORS[org.plan] ?? "bg-[#f5f5f7] text-[#6b6b73]"}`}>
                                                         {org.plan}
                                                     </span>
-                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${ROLE_COLORS[org.role] ?? "bg-[#f5f5f7] text-[#86868b]"}`}>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-black uppercase ${ROLE_COLORS[org.role] ?? "bg-[#f5f5f7] text-[#6b6b73]"}`}>
                                                         {org.role}
                                                     </span>
                                                 </div>
@@ -99,7 +99,7 @@ export default async function UsersPage({
                                         </div>
                                     )}
                                     {user.orgs.length === 0 && (
-                                        <p className="text-xs text-[#86868b] mt-1">No org memberships found.</p>
+                                        <p className="text-xs text-[#6b6b73] mt-1">No org memberships found.</p>
                                     )}
                                 </div>
                             </div>
@@ -110,7 +110,7 @@ export default async function UsersPage({
 
             {!q && (
                 <Card>
-                    <p className="text-sm text-[#86868b] text-center py-8">
+                    <p className="text-sm text-[#6b6b73] text-center py-8">
                         Search by full name or email address to find a user across all organizations.
                     </p>
                 </Card>

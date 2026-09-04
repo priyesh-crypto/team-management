@@ -13,7 +13,7 @@ import { UpgradeGate } from "@/components/ui/UpgradeGate";
 
 const PRESET_COLORS = [
     "#0051e6", "#34c759", "#ff9500", "#ff3b30",
-    "#af52de", "#5ac8fa", "#ffcc00", "#86868b",
+    "#af52de", "#5ac8fa", "#ffcc00", "#6b6b73",
 ];
 
 interface StatusPickerProps {
@@ -158,10 +158,10 @@ export function CustomStatusPicker({
                                         ))}
                                     </div>
                                     <div className="flex gap-1.5">
-                                        <button type="submit" disabled={pending} className="flex-1 px-2 py-1 rounded-lg bg-brand-blue text-white text-[10px] font-black">
+                                        <button type="submit" disabled={pending} className="flex-1 px-2 py-1 rounded-lg bg-brand-blue text-white text-[11px] font-black">
                                             {pending ? "…" : "Add"}
                                         </button>
-                                        <button type="button" onClick={() => setShowNew(false)} className="px-2 py-1 rounded-lg border border-slate-200 text-[10px] font-bold text-slate-500">
+                                        <button type="button" onClick={() => setShowNew(false)} className="px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-500">
                                             Cancel
                                         </button>
                                     </div>

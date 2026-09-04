@@ -108,7 +108,7 @@ export function BrandingPanel({
                     href={loginPreviewUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#86868b] hover:text-brand-blue transition-colors"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#6b6b73] hover:text-brand-blue transition-colors"
                 >
                     Preview login page
                     <ExternalLink size={11} strokeWidth={2} />
@@ -181,13 +181,13 @@ export function BrandingPanel({
 
             {/* ── Live preview ───────────────────────────────────────── */}
             <div className="mt-5 pt-4 border-t border-[#f0f0f2]">
-                <div className="text-[11px] font-medium text-[#86868b] mb-2">Preview</div>
+                <div className="text-[11px] font-medium text-[#6b6b73] mb-2">Preview</div>
                 <div className="rounded-lg border border-[#e5e5ea] p-4 flex items-center gap-4 flex-wrap">
                     {logoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={logoUrl} alt="" className="h-9 max-w-[150px] object-contain" />
                     ) : (
-                        <div className="flex items-center gap-2 text-[#86868b]">
+                        <div className="flex items-center gap-2 text-[#6b6b73]">
                             <Palette size={16} strokeWidth={2} />
                             <span className="text-sm">No logo</span>
                         </div>
@@ -227,7 +227,7 @@ export function BrandingPanel({
                 >
                     Reset colors
                 </Button>
-                <p className="text-[10px] text-[#86868b] ml-1">
+                <p className="text-[11px] text-[#6b6b73] ml-1">
                     Applies to their dashboard immediately, and to the login page via
                     <code className="mx-1 px-1 rounded bg-[#f5f5f7]">?org=</code>
                     or custom domain.
@@ -267,7 +267,7 @@ function AssetRow({
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={url} alt="" className={`${previewClass} object-contain`} />
                     ) : (
-                        <span className="text-[11px] text-[#86868b]">None</span>
+                        <span className="text-[11px] text-[#6b6b73]">None</span>
                     )}
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -306,7 +306,7 @@ function AssetRow({
                     )}
                 </div>
             </div>
-            <p className="text-[10px] text-[#86868b] mt-1.5">{hint}</p>
+            <p className="text-[11px] text-[#6b6b73] mt-1.5">{hint}</p>
         </div>
     );
 }
@@ -340,7 +340,7 @@ function ColorField({
                 />
             </div>
             {!valid && value.trim() !== "" && (
-                <p className="text-[10px] text-red-600 mt-1">Must be a hex color</p>
+                <p className="text-[11px] text-red-600 mt-1">Must be a hex color</p>
             )}
         </div>
     );

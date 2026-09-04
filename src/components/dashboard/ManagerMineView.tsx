@@ -101,32 +101,32 @@ export function ManagerMineView({
                                     />
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-1 bg-[#f5f5f7] rounded-lg px-2 py-1">
-                                            <span className="text-[8px] font-black text-[#86868b] uppercase">Start</span>
+                                            <span className="text-[8px] font-black text-[#6b6b73] uppercase">Start</span>
                                             <input 
                                                 type="date"
                                                 value={editTaskData.start_date ? new Date(editTaskData.start_date).toISOString().split('T')[0] : ''} 
                                                 onChange={e => setEditTaskData({ ...editTaskData, start_date: e.target.value })}
-                                                className="text-[10px] font-bold text-[#1d1d1f] bg-transparent outline-none cursor-pointer"
+                                                className="text-[11px] font-bold text-[#1d1d1f] bg-transparent outline-none cursor-pointer"
                                             />
                                         </div>
                                         <div className="flex items-center gap-1 bg-[#f5f5f7] rounded-lg px-2 py-1">
-                                            <span className="text-[8px] font-black text-[#86868b] uppercase">End</span>
+                                            <span className="text-[8px] font-black text-[#6b6b73] uppercase">End</span>
                                             <input 
                                                 type="date"
                                                 value={editTaskData.deadline ? new Date(editTaskData.deadline).toISOString().split('T')[0] : ''} 
                                                 onChange={e => setEditTaskData({ ...editTaskData, deadline: e.target.value })}
-                                                className="text-[10px] font-bold text-[#1d1d1f] bg-transparent outline-none cursor-pointer"
+                                                className="text-[11px] font-bold text-[#1d1d1f] bg-transparent outline-none cursor-pointer"
                                             />
                                         </div>
                                         <button 
                                             onClick={() => handleUpdateTask(task.id)}
-                                            className="ml-auto px-3 py-1 bg-brand-blue text-white text-[9px] font-black rounded-lg hover:bg-brand-blue-dark transition-colors shadow-sm"
+                                            className="ml-auto px-3 py-1 bg-brand-blue text-white text-[11px] font-black rounded-lg hover:bg-brand-blue-dark transition-colors shadow-sm"
                                         >
                                             SAVE
                                         </button>
                                         <button 
                                             onClick={() => setEditingTaskId(null)}
-                                            className="px-3 py-1 bg-white text-[#86868b] text-[9px] font-black rounded-lg border border-[#eceef0] hover:bg-[#f5f5f7] transition-colors"
+                                            className="px-3 py-1 bg-white text-[#6b6b73] text-[11px] font-black rounded-lg border border-[#eceef0] hover:bg-[#f5f5f7] transition-colors"
                                         >
                                             CANCEL
                                         </button>
@@ -135,7 +135,7 @@ export function ManagerMineView({
                             ) : (
                                 <h4 className="text-base font-black text-[#1d1d1f] tracking-tight group-hover/task:text-brand-blue transition-colors flex items-center gap-2">
                                     {task.name}
-                                    <button onClick={(e) => { e.stopPropagation(); setEditingTaskId(task.id); setEditTaskData(task); }} className="opacity-0 group-hover/task:opacity-100 text-[#d2d2d7] hover:text-brand-blue transition-all">
+                                    <button onClick={(e) => { e.stopPropagation(); setEditingTaskId(task.id); setEditTaskData(task); }} className="opacity-0 group-hover/task:opacity-100 text-[#d2d2d7] hover:text-brand-blue transition-colors">
                                         <Pencil size={12} />
                                     </button>
                                 </h4>
@@ -145,14 +145,14 @@ export function ManagerMineView({
                             <Badge className={`${task.priority === 'Urgent' ? 'bg-[#ff3b30]/10 text-[#ff3b30]' : task.priority === 'High' ? 'bg-[#ff9500]/10 text-[#ff9500]' : 'bg-brand-blue/10 text-brand-blue'} border-none px-2 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-widest`}>
                                 {task.priority}
                             </Badge>
-                            <Badge className="bg-[#f5f5f7] text-[#86868b] border-none px-2 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-widest">
+                            <Badge className="bg-[#f5f5f7] text-[#6b6b73] border-none px-2 py-0.5 rounded-md font-bold text-[8px] uppercase tracking-widest">
                                 {task.status}
                             </Badge>
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-[#f5f5f7] rounded-md text-[8px] font-bold text-[#86868b] uppercase tracking-widest">
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-[#f5f5f7] rounded-md text-[8px] font-bold text-[#6b6b73] uppercase tracking-widest">
                                 <Calendar size={10} />
                                 <span>{new Date(task.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {new Date(task.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 ml-2 text-[9px] font-black text-[#86868b]">
+                            <div className="flex items-center gap-1.5 ml-2 text-[11px] font-black text-[#6b6b73]">
                                 <span>⏱️</span>
                                 <span className="tabular-nums">{(task.hours_spent || 0).toFixed(2)} HRS LOGGED</span>
                             </div>
@@ -161,7 +161,7 @@ export function ManagerMineView({
                     <div className="flex items-center gap-2">
                         <button 
                             onClick={() => setSelectedTask({ task, subtasks: subtasksMap[task.id] || [] })}
-                            className="p-2.5 rounded-2xl bg-[#f5f5f7] text-[#1d1d1f] hover:bg-brand-blue hover:text-white transition-all shadow-sm"
+                            className="p-2.5 rounded-2xl bg-[#f5f5f7] text-[#1d1d1f] hover:bg-brand-blue hover:text-white transition-colors shadow-sm"
                         >
                             <Menu size={16} strokeWidth={2.5} />
                         </button>
@@ -170,21 +170,21 @@ export function ManagerMineView({
 
                 {/* Work Log / Subtasks Section */}
                 <div className="space-y-4">
-                    <h5 className="text-[9px] font-black text-[#86868b] uppercase tracking-widest flex items-center gap-2">
+                    <h5 className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-brand-blue"></div>
                         Work History & Daily Logs
                     </h5>
                     
                     <div className="space-y-2">
                         {(subtasksMap[task.id] || []).map(subtask => (
-                            <div key={subtask.id} className="group/sub relative flex items-center justify-between p-4 bg-[#f5f5f7]/50 hover:bg-[#f5f5f7] rounded-2xl transition-all border border-transparent hover:border-[#eceef0]">
+                            <div key={subtask.id} className="group/sub relative flex items-center justify-between p-4 bg-[#f5f5f7]/50 hover:bg-[#f5f5f7] rounded-2xl transition-colors border border-transparent hover:border-[#eceef0]">
                                 <div className="flex items-center gap-4 flex-1">
                                     <input 
                                         type="checkbox"
                                         id={`subtask-${subtask.id}`}
                                         checked={subtask.is_completed}
                                         onChange={(e) => handleToggleSubtask(task.id, subtask.id, e.target.checked)}
-                                        className="w-5 h-5 rounded-lg border-2 border-[#d2d2d7] text-[#34c759] focus:ring-[#34c759] transition-all cursor-pointer accent-[#34c759]"
+                                        className="w-5 h-5 rounded-lg border-2 border-[#d2d2d7] text-[#34c759] focus:ring-[#34c759] transition-colors cursor-pointer accent-[#34c759]"
                                     />
                                     <div className="flex-1">
                                         {editingSubtaskId === subtask.id ? (
@@ -197,7 +197,7 @@ export function ManagerMineView({
                                                 />
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex-1 flex flex-col items-center bg-[#f5f5f7] px-2 py-1 rounded-lg">
-                                                        <span className="text-[8px] font-black text-[#86868b] uppercase">Hours</span>
+                                                        <span className="text-[8px] font-black text-[#6b6b73] uppercase">Hours</span>
                                                         <input 
                                                             type="number"
                                                             step="0.25"
@@ -208,13 +208,13 @@ export function ManagerMineView({
                                                     </div>
                                                     <button 
                                                         onClick={() => handleSaveSubtaskEdit(task.id)} 
-                                                        className="px-4 py-2 bg-brand-blue text-white text-[9px] font-black rounded-lg hover:bg-brand-blue-dark transition-colors"
+                                                        className="px-4 py-2 bg-brand-blue text-white text-[11px] font-black rounded-lg hover:bg-brand-blue-dark transition-colors"
                                                     >
                                                         SAVE
                                                     </button>
                                                     <button 
                                                         onClick={() => setEditingSubtaskId(null)}
-                                                        className="px-4 py-2 bg-[#f5f5f7] text-[#1d1d1f] text-[9px] font-black rounded-lg hover:bg-[#e5e5ea] transition-colors"
+                                                        className="px-4 py-2 bg-[#f5f5f7] text-[#1d1d1f] text-[11px] font-black rounded-lg hover:bg-[#e5e5ea] transition-colors"
                                                     >
                                                         X
                                                     </button>
@@ -222,16 +222,16 @@ export function ManagerMineView({
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-3">
-                                                <span className={`text-[11px] font-bold ${subtask.is_completed ? 'text-[#86868b] line-through decoration-2' : 'text-[#1d1d1f]'}`}>
+                                                <span className={`text-[11px] font-bold ${subtask.is_completed ? 'text-[#6b6b73] line-through decoration-2' : 'text-[#1d1d1f]'}`}>
                                                     {subtask.name}
                                                 </span>
                                                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/80 rounded-md border border-[#eceef0] shadow-sm">
-                                                    <span className="text-[10px] font-black text-brand-blue">{subtask.hours_spent}h</span>
+                                                    <span className="text-[11px] font-black text-brand-blue">{subtask.hours_spent}h</span>
                                                     <div className="w-[1px] h-2 bg-[#eceef0]"></div>
-                                                    <span className="text-[9px] font-bold text-[#86868b] uppercase tabular-nums">{mounted && subtask.date_logged ? new Date(subtask.date_logged).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '...'}</span>
+                                                    <span className="text-[11px] font-bold text-[#6b6b73] uppercase tabular-nums">{mounted && subtask.date_logged ? new Date(subtask.date_logged).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '...'}</span>
                                                 </div>
                                                 {subtask.start_time && (
-                                                    <span className="text-[9px] font-bold text-[#86868b] opacity-40 tabular-nums">
+                                                    <span className="text-[11px] font-bold text-[#6b6b73] opacity-40 tabular-nums">
                                                         {subtask.start_time} - {subtask.end_time}
                                                     </span>
                                                 )}
@@ -244,7 +244,7 @@ export function ManagerMineView({
                                     {activeTimers[subtask.id] ? (
                                         <button 
                                             onClick={() => handleStopTimer(subtask.id, task.id)}
-                                            className="flex items-center gap-2 px-3 py-1.5 bg-[#ff3b30] text-white rounded-xl text-[9px] font-black animate-pulse shadow-lg shadow-[#ff3b30]/20"
+                                            className="flex items-center gap-2 px-3 py-1.5 bg-[#ff3b30] text-white rounded-xl text-[11px] font-black animate-pulse shadow-lg shadow-[#ff3b30]/20"
                                         >
                                             <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></div>
                                             {formatElapsed(activeTimers[subtask.id])}
@@ -252,7 +252,7 @@ export function ManagerMineView({
                                     ) : (
                                         <button 
                                             onClick={() => handleStartTimer(subtask.id, task.id)}
-                                            className="opacity-0 group-hover/sub:opacity-100 text-[#86868b] hover:text-brand-blue transition-all p-1"
+                                            className="opacity-0 group-hover/sub:opacity-100 text-[#6b6b73] hover:text-brand-blue transition-colors p-1"
                                             title="Start Timer"
                                         >
                                             <Clock size={14} strokeWidth={2.5} />
@@ -260,13 +260,13 @@ export function ManagerMineView({
                                     )}
                                     <button 
                                         onClick={() => { setEditingSubtaskId(subtask.id); setEditSubtaskData(subtask); }}
-                                        className="opacity-0 group-hover/sub:opacity-100 text-[#86868b] hover:text-brand-blue transition-all p-1"
+                                        className="opacity-0 group-hover/sub:opacity-100 text-[#6b6b73] hover:text-brand-blue transition-colors p-1"
                                     >
                                         <Pencil size={12} />
                                     </button>
                                     <button 
                                         onClick={() => handleDeleteSubtask(task.id, subtask.id, subtask.name)}
-                                        className="opacity-0 group-hover/sub:opacity-100 text-[#86868b] hover:text-[#ff3b30] transition-all p-1"
+                                        className="opacity-0 group-hover/sub:opacity-100 text-[#6b6b73] hover:text-[#ff3b30] transition-colors p-1"
                                     >
                                         <Trash2 size={12} />
                                     </button>
@@ -316,7 +316,7 @@ export function ManagerMineView({
                                                     }
                                                 }));
                                             }}
-                                            className="h-10 text-[10px] font-bold w-full bg-white border-none shadow-none ring-1 ring-[#eceef0]"
+                                            className="h-10 text-[11px] font-bold w-full bg-white border-none shadow-none ring-1 ring-[#eceef0]"
                                         />
                                     </div>
                                 </div>
@@ -324,7 +324,7 @@ export function ManagerMineView({
                                 <div className="flex flex-col sm:flex-row items-center gap-3">
                                     <div className="flex-1 w-full flex items-center gap-3 bg-white px-4 py-1.5 rounded-xl border border-[#eceef0]">
                                         <div className="flex-1 flex flex-col min-w-0">
-                                            <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest">Start Time</span>
+                                            <span className="text-[8px] font-black text-[#6b6b73] uppercase tracking-widest">Start Time</span>
                                             <Input 
                                                 type="time"
                                                 value={newSubtaskData[task.id]?.start_time || '09:00'}
@@ -344,7 +344,7 @@ export function ManagerMineView({
                                         </div>
                                         <div className="text-[#eceef0]">→</div>
                                         <div className="flex-1 flex flex-col min-w-0">
-                                            <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest">End Time</span>
+                                            <span className="text-[8px] font-black text-[#6b6b73] uppercase tracking-widest">End Time</span>
                                             <Input 
                                                 type="time"
                                                 value={newSubtaskData[task.id]?.end_time || '17:00'}
@@ -366,7 +366,7 @@ export function ManagerMineView({
 
                                     <div className="flex items-center gap-3 bg-white px-4 rounded-xl border border-[#eceef0] h-12 w-full sm:w-auto">
                                         <div className="flex flex-col items-center">
-                                            <span className="text-[8px] font-black text-[#86868b] uppercase tracking-widest">LOGGED</span>
+                                            <span className="text-[8px] font-black text-[#6b6b73] uppercase tracking-widest">LOGGED</span>
                                             <div className="text-sm font-black text-brand-blue tabular-nums">
                                                 {newSubtaskData[task.id]?.hours || 0}
                                                 <span className="ml-1 text-[8px] uppercase">Hrs</span>
@@ -375,7 +375,7 @@ export function ManagerMineView({
                                         {activeTimers[`new-${task.id}`] ? (
                                             <button 
                                                 onClick={() => handleStopTimer(`new-${task.id}`, task.id)}
-                                                className="h-8 px-4 bg-[#ff3b30] text-white text-[9px] font-black rounded-lg hover:bg-[#e03126] transition-all flex items-center gap-2 animate-pulse shadow-lg shadow-[#ff3b30]/20"
+                                                className="h-8 px-4 bg-[#ff3b30] text-white text-[11px] font-black rounded-lg hover:bg-[#e03126] transition-colors flex items-center gap-2 animate-pulse shadow-lg shadow-[#ff3b30]/20"
                                             >
                                                 <div className="w-1 h-1 bg-white rounded-full animate-ping"></div>
                                                 STOP ({formatElapsed(activeTimers[`new-${task.id}`])})
@@ -383,7 +383,7 @@ export function ManagerMineView({
                                         ) : (
                                             <button 
                                                 onClick={() => handleStartTimer(`new-${task.id}`, task.id)}
-                                                className="h-8 px-4 bg-[#f5f5f7] text-[#1d1d1f] text-[9px] font-black rounded-lg hover:bg-[#e5e5ea] transition-all flex items-center gap-2"
+                                                className="h-8 px-4 bg-[#f5f5f7] text-[#1d1d1f] text-[11px] font-black rounded-lg hover:bg-[#e5e5ea] transition-colors flex items-center gap-2"
                                             >
                                                 <Clock size={12} />
                                                 TIMER
@@ -391,7 +391,7 @@ export function ManagerMineView({
                                         )}
                                         <button 
                                             onClick={() => handleAddSubtask(task.id)}
-                                            className="h-8 px-4 bg-brand-blue text-white text-[9px] font-black rounded-lg hover:bg-brand-blue-dark transition-all shadow-sm hover:shadow-lg shadow-brand-blue/20"
+                                            className="h-8 px-4 bg-brand-blue text-white text-[11px] font-black rounded-lg hover:bg-brand-blue-dark transition-colors shadow-sm hover:shadow-lg shadow-brand-blue/20"
                                         >
                                             LOG WORK
                                         </button>
@@ -416,14 +416,14 @@ export function ManagerMineView({
                             <div className="w-12 h-12 rounded-2xl bg-brand-blue/10 flex items-center justify-center text-brand-blue mb-3">
                                 <Zap size={24} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1">Efficiency</span>
+                            <span className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest mb-1">Efficiency</span>
                             <span className="text-2xl font-black text-[#1d1d1f]">{Math.round((myCompletedTasks.length / (myActiveTasks.length + myCompletedTasks.length || 1)) * 100)}%</span>
                         </Card>
                         <Card className="p-6 rounded-[32px] border-[#eceef0] bg-white shadow-sm flex flex-col items-center justify-center text-center">
                             <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 mb-3">
                                 <Plus size={24} strokeWidth={2.5} />
                             </div>
-                            <span className="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1">Done Today</span>
+                            <span className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest mb-1">Done Today</span>
                             <span className="text-2xl font-black text-[#1d1d1f]">{myCompletedTasks.length}</span>
                         </Card>
                     </div>
@@ -436,28 +436,28 @@ export function ManagerMineView({
                         </div>
                         <div>
                             <h3 className="text-lg font-black text-[#1d1d1f] tracking-tight">Quick Log</h3>
-                            <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest leading-none mt-1">Instant work tracking</p>
+                            <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-widest leading-none mt-1">Instant work tracking</p>
                         </div>
                     </div>
 
                     <form onSubmit={handleLogSubmit} className="space-y-6">
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Activity Description</label>
+                            <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Activity Description</label>
                             <input 
                                 required 
                                 value={logForm.name} 
                                 onChange={e => setLogForm({ ...logForm, name: e.target.value })} 
                                 placeholder="What are you working on?" 
-                                className="w-full h-14 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[13px] font-bold outline-none focus:ring-2 ring-brand-blue/20 transition-all placeholder:text-[#86868b]/50" 
+                                className="w-full h-14 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[13px] font-bold outline-none focus:ring-2 ring-brand-blue/20 transition-colors placeholder:text-[#6b6b73]/50" 
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Project Context</label>
+                            <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Project Context</label>
                             <Select 
                                 value={logForm.project_id} 
                                 onChange={e => setLogForm({ ...logForm, project_id: e.target.value })} 
-                                className="w-full h-14 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[11px] font-bold outline-none transition-all"
+                                className="w-full h-14 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[11px] font-bold outline-none transition-colors"
                             >
                                 <option value="">Select Project (Optional)</option>
                                 {projects.map(p => (
@@ -468,11 +468,11 @@ export function ManagerMineView({
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Priority</label>
+                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Priority</label>
                                 <Select 
                                     value={logForm.priority} 
                                     onChange={e => setLogForm({ ...logForm, priority: e.target.value as Priority })} 
-                                    className="w-full h-14 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[11px] font-bold outline-none transition-all"
+                                    className="w-full h-14 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[11px] font-bold outline-none transition-colors"
                                 >
                                     <option value="Low">Low</option>
                                     <option value="Medium">Medium</option>
@@ -481,11 +481,11 @@ export function ManagerMineView({
                                 </Select>
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Status</label>
+                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Status</label>
                                 <Select 
                                     value={logForm.status} 
                                     onChange={e => setLogForm({ ...logForm, status: e.target.value as Status })} 
-                                    className="w-full h-14 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[11px] font-bold outline-none transition-all"
+                                    className="w-full h-14 rounded-2xl bg-[#f5f5f7] border-none px-6 text-[11px] font-bold outline-none transition-colors"
                                 >
                                     <option value="To Do">To Do</option>
                                     <option value="In Progress">In Progress</option>
@@ -498,21 +498,21 @@ export function ManagerMineView({
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Notes</label>
+                            <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Notes</label>
                             <textarea 
                                 value={logForm.notes} 
                                 onChange={e => setLogForm({ ...logForm, notes: e.target.value })} 
                                 placeholder="Add some details..." 
-                                className="w-full h-24 rounded-2xl bg-[#f5f5f7] border-none p-5 text-[11px] font-bold outline-none focus:ring-2 ring-brand-blue/20 transition-all resize-none placeholder:text-[#86868b]/50" 
+                                className="w-full h-24 rounded-2xl bg-[#f5f5f7] border-none p-5 text-[11px] font-bold outline-none focus:ring-2 ring-brand-blue/20 transition-colors resize-none placeholder:text-[#6b6b73]/50" 
                             />
                         </div>
 
-                        {logError && <p className="text-[10px] font-bold text-[#ff3b30] px-4">{logError}</p>}
+                        {logError && <p className="text-[11px] font-bold text-[#ff3b30] px-4">{logError}</p>}
                         
                         <button 
                             type="submit" 
                             disabled={isSavingLog} 
-                            className="w-full h-12 rounded-2xl bg-[#1d1d1f] text-white font-black tracking-[0.1em] text-[10px] shadow-xl shadow-black/10 hover:translate-y-[-2px] hover:shadow-2xl hover:shadow-black/20 transition-all active:translate-y-0 disabled:opacity-50"
+                            className="w-full h-12 rounded-2xl bg-[#1d1d1f] text-white font-black tracking-[0.1em] text-[11px] shadow-xl shadow-black/10 hover:translate-y-[-2px] hover:shadow-2xl hover:shadow-black/20 transition-[transform,opacity,color,background-color,border-color,box-shadow] active:translate-y-0 disabled:opacity-50"
                         >
                             {isSavingLog ? 'LOGGING...' : 'CREATE & LOG ACTIVITY'}
                         </button>
@@ -527,7 +527,7 @@ export function ManagerMineView({
                     <div className="flex items-center justify-between mb-6 px-4">
                         <div className="flex items-center gap-3">
                             <h3 className="text-sm font-black text-[#1d1d1f] uppercase tracking-widest">Active Workspace</h3>
-                            <Badge className="bg-brand-blue/10 text-brand-blue border-none px-2.5 rounded-full font-bold text-[9px]">
+                            <Badge className="bg-brand-blue/10 text-brand-blue border-none px-2.5 rounded-full font-bold text-[11px]">
                                 {myActiveTasks.length} ACTIVE
                             </Badge>
                         </div>
@@ -536,7 +536,7 @@ export function ManagerMineView({
                         {myActiveTasks.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[32px] border-2 border-dashed border-[#eceef0]">
                                 <div className="text-4xl mb-4">🎈</div>
-                                <p className="text-[11px] font-black text-[#86868b] uppercase tracking-widest">No active tasks found</p>
+                                <p className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest">No active tasks found</p>
                             </div>
                         ) : (
                             myActiveTasks.map(renderTaskCard)
@@ -549,13 +549,13 @@ export function ManagerMineView({
                     <div className="pt-10 border-t border-[#eceef0]">
                         <div className="flex items-center justify-between mb-6 px-4">
                             <div className="flex items-center gap-3">
-                                <h3 className="text-sm font-black text-[#86868b] uppercase tracking-widest">Completion History</h3>
-                                <Badge className="bg-[#f5f5f7] text-[#86868b] border-none px-2.5 rounded-full font-bold text-[9px]">
+                                <h3 className="text-sm font-black text-[#6b6b73] uppercase tracking-widest">Completion History</h3>
+                                <Badge className="bg-[#f5f5f7] text-[#6b6b73] border-none px-2.5 rounded-full font-bold text-[11px]">
                                     {myCompletedTasks.length} DONE
                                 </Badge>
                             </div>
                         </div>
-                        <div className="opacity-75 grayscale-[0.2] hover:opacity-100 hover:grayscale-0 transition-all duration-500 space-y-4">
+                        <div className="opacity-75 grayscale-[0.2] hover:opacity-100 hover:grayscale-0 transition-[transform,opacity,color,background-color,border-color,box-shadow] duration-500 space-y-4">
                             {myCompletedTasks.map(renderTaskCard)}
                         </div>
                     </div>

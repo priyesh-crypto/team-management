@@ -9,6 +9,7 @@ import { ImpersonationBanner } from '@/components/admin/ImpersonationBanner';
 import { getOrgBranding } from '@/lib/branding-server';
 import { BrandingProvider } from '@/context/BrandingContext';
 import { BrandingStyle } from '@/components/branding/BrandingStyle';
+import { Lock } from 'lucide-react';
 
 // All queries below are wrapped in try/catch and degrade gracefully when their
 // underlying migrations have not been applied. This prevents the entire
@@ -139,9 +140,9 @@ export default async function DashboardLayout({
       <div className="min-h-screen flex items-center justify-center bg-[#f5f5f7] p-6">
         <BrandingStyle branding={branding} />
         <div className="bg-white rounded-3xl shadow-sm border border-[#e5e5ea] p-10 max-w-md text-center space-y-4">
-          <div className="text-4xl">🔒</div>
+          <Lock size={40} strokeWidth={1.5} className="mx-auto text-[#6b6b73]" aria-hidden="true" />
           <h1 className="text-xl font-black text-[#1d1d1f]">Account suspended</h1>
-          <p className="text-sm text-[#86868b]">
+          <p className="text-sm text-[#6b6b73]">
             {orgData.suspended_reason
               ? `Reason: ${orgData.suspended_reason}`
               : 'Your organization has been suspended. Please contact support.'}

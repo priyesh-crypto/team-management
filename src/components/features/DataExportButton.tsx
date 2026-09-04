@@ -55,7 +55,7 @@ export function DataExportButton() {
 
                 <div className="px-6 py-5 space-y-4">
                     <div>
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Export type</div>
+                        <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">Export type</div>
                         <div className="grid grid-cols-2 gap-2">
                             {EXPORT_TYPES.map(t => (
                                 <button key={t.value} type="button" onClick={() => setType(t.value)}
@@ -67,7 +67,7 @@ export function DataExportButton() {
                     </div>
 
                     <div>
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Format</div>
+                        <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">Format</div>
                         <div className="flex gap-2">
                             <button type="button" onClick={() => setFormat("csv")}
                                 className={`flex items-center gap-2 flex-1 px-3 py-2.5 rounded-xl border text-sm font-black transition-colors ${format === "csv" ? "border-brand-blue bg-brand-blue/5 text-brand-blue" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>

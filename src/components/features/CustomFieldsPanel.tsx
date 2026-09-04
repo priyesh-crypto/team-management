@@ -179,7 +179,7 @@ export function CustomFieldsPanel({ taskId, fieldDefs, fieldValues, isManager }:
                     {isManager && (
                         <button
                             onClick={() => setShowAddField(s => !s)}
-                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black text-brand-blue hover:bg-brand-blue/10 transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-black text-brand-blue hover:bg-brand-blue/10 transition-colors"
                         >
                             <Plus size={10} /> Add field
                         </button>
@@ -189,12 +189,12 @@ export function CustomFieldsPanel({ taskId, fieldDefs, fieldValues, isManager }:
                 {showAddField && (
                     <form onSubmit={handleAddField} className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase">Field name</label>
+                            <label className="text-[11px] font-black text-slate-400 uppercase">Field name</label>
                             <input value={newField.name} onChange={e => setNewField(f => ({ ...f, name: e.target.value }))}
                                 className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold focus:outline-none" required placeholder="e.g. Client name" />
                         </div>
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase">Type</label>
+                            <label className="text-[11px] font-black text-slate-400 uppercase">Type</label>
                             <select value={newField.field_type} onChange={e => setNewField(f => ({ ...f, field_type: e.target.value as CustomFieldDef["field_type"] }))}
                                 className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold focus:outline-none">
                                 {["text", "number", "date", "select", "multi_select", "checkbox", "url"].map(t => <option key={t} value={t}>{t}</option>)}
@@ -202,7 +202,7 @@ export function CustomFieldsPanel({ taskId, fieldDefs, fieldValues, isManager }:
                         </div>
                         {["select", "multi_select"].includes(newField.field_type) && (
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase">Options (comma-separated)</label>
+                                <label className="text-[11px] font-black text-slate-400 uppercase">Options (comma-separated)</label>
                                 <input value={newField.options} onChange={e => setNewField(f => ({ ...f, options: e.target.value }))}
                                     className="mt-1 w-full px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold focus:outline-none" placeholder="Option A, Option B, Option C" />
                             </div>
@@ -224,13 +224,13 @@ export function CustomFieldsPanel({ taskId, fieldDefs, fieldValues, isManager }:
                     {fieldDefs.map(def => (
                         <div key={def.id} className="space-y-1 group">
                             <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                                <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">
                                     {def.name}
                                     {def.is_required && <span className="text-[#ff3b30] ml-0.5">*</span>}
                                 </label>
                                 {isManager && (
                                     <button onClick={() => handleDeleteField(def.id)}
-                                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-300 hover:text-[#ff3b30] transition-all">
+                                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-300 hover:text-[#ff3b30] transition-colors">
                                         <Trash2 size={10} />
                                     </button>
                                 )}

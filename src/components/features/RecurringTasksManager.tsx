@@ -62,7 +62,7 @@ function NewTemplateForm({
     return (
         <form onSubmit={handleSubmit} className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
             <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Task name</label>
+                <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Task name</label>
                 <input
                     value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -73,7 +73,7 @@ function NewTemplateForm({
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Frequency</label>
+                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Frequency</label>
                     <select
                         value={form.frequency}
                         onChange={e => setForm(f => ({ ...f, frequency: e.target.value as "daily" | "weekly" | "monthly" }))}
@@ -85,7 +85,7 @@ function NewTemplateForm({
                     </select>
                 </div>
                 <div>
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Every N</label>
+                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Every N</label>
                     <input
                         type="number"
                         min={1}
@@ -97,7 +97,7 @@ function NewTemplateForm({
                 </div>
             </div>
             <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Priority</label>
+                <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Priority</label>
                 <select
                     value={form.priority}
                     onChange={e => setForm(f => ({ ...f, priority: e.target.value }))}
@@ -155,7 +155,7 @@ export function RecurringTasksManager({ templates, workspaceId, projectId }: Pro
                     <div className="flex items-center gap-2">
                         <RefreshCw size={16} className="text-brand-blue" />
                         <h3 className="text-sm font-black text-[#1d1d1f]">Recurring Tasks</h3>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue font-black">{templates.length}</span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue font-black">{templates.length}</span>
                     </div>
                     <button
                         onClick={() => setShowForm(true)}
@@ -188,7 +188,7 @@ export function RecurringTasksManager({ templates, workspaceId, projectId }: Pro
                         >
                             <div>
                                 <div className="text-sm font-black text-[#1d1d1f]">{t.name}</div>
-                                <div className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                <div className="text-[11px] font-bold text-slate-400 mt-0.5">
                                     Every {t.interval} {FREQ_LABELS[t.frequency].toLowerCase()}{t.interval > 1 ? "s" : ""} · {t.priority}
                                     {t.next_run_at && ` · Next: ${new Date(t.next_run_at).toLocaleDateString()}`}
                                 </div>

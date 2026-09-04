@@ -64,8 +64,8 @@ export function TaskDetailsModal({
                 {/* Close Button */}
                 <button 
                     onClick={onClose}
-                    className="absolute top-8 right-8 w-11 h-11 rounded-xl bg-white/80 backdrop-blur-md border border-slate-100 shadow-sm hover:shadow-md flex items-center justify-center transition-all text-slate-400 hover:text-red-500 z-30 group"
-                >
+                    className="absolute top-8 right-8 w-11 h-11 rounded-xl bg-white/80 backdrop-blur-md border border-slate-100 shadow-sm hover:shadow-md flex items-center justify-center transition-colors text-slate-400 hover:text-red-500 z-30 group"
+                 aria-label="Close">
                     <X size={18} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
                 </button>
  
@@ -95,12 +95,12 @@ export function TaskDetailsModal({
                 <div className="px-10 py-6 border-t border-slate-50 bg-white flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-1.5 h-1.5 rounded-full bg-[#34c759] shadow-[0_0_8px_rgba(52,199,89,0.5)]"></div>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Live synchronization active</span>
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Live synchronization active</span>
                     </div>
                     <Button 
                         onClick={onClose}
                         variant="ghost"
-                        className="h-11 px-8 rounded-xl font-bold text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all"
+                        className="h-11 px-8 rounded-xl font-bold text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-colors"
                     >
                         Close Portal
                     </Button>

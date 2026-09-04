@@ -166,7 +166,7 @@ function DarkTooltip({
     return (
         <div className="bg-[#1d1d1f] text-white p-3 rounded-xl shadow-2xl text-[11px] min-w-[160px] pointer-events-none">
             {labelStr && (
-                <p className="font-bold uppercase tracking-widest opacity-50 mb-2 text-[9px]">{labelStr}</p>
+                <p className="font-bold uppercase tracking-widest opacity-50 mb-2 text-[11px]">{labelStr}</p>
             )}
             {items.map((r, i) => (
                 <div key={i} className="flex items-center justify-between gap-6 mb-0.5 last:mb-0">
@@ -213,7 +213,7 @@ function SectionCard({
         <div className={cn("bg-white rounded-[20px] p-6 border border-[#e5e5ea]", className)}>
             <div className="mb-5">
                 <h3 className="text-[13px] font-bold text-[#1d1d1f]">{title}</h3>
-                {subtitle && <p className="text-[10px] text-[#86868b] mt-0.5">{subtitle}</p>}
+                {subtitle && <p className="text-[11px] text-[#6b6b73] mt-0.5">{subtitle}</p>}
             </div>
             {children}
         </div>
@@ -224,7 +224,7 @@ function PriorityBadge({ priority }: { priority: string }) {
     const color = PRIORITY_COLORS[priority] || "#8e8e93";
     return (
         <span
-            className="text-[9px] font-bold px-2 py-0.5 rounded-full"
+            className="text-[11px] font-bold px-2 py-0.5 rounded-full"
             style={{ backgroundColor: color + "20", color }}
         >
             {priority}
@@ -325,7 +325,7 @@ function OverviewTab({ stats, byStatus, weeklyTrend, funnelData }: Pick<Props, "
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.04 }}
-                        className="bg-white rounded-[16px] p-4 border border-[#e5e5ea] hover:border-brand-blue/30 hover:shadow-md transition-all group cursor-default"
+                        className="bg-white rounded-[16px] p-4 border border-[#e5e5ea] hover:border-brand-blue/30 hover:shadow-md transition-colors group cursor-default"
                     >
                         <div className="flex items-center justify-between mb-2">
                             <div
@@ -339,7 +339,7 @@ function OverviewTab({ stats, byStatus, weeklyTrend, funnelData }: Pick<Props, "
                             </div>
                             {card.delta !== 0 && (
                                 <span
-                                    className="text-[9px] font-bold flex items-center gap-0.5"
+                                    className="text-[11px] font-bold flex items-center gap-0.5"
                                     style={{
                                         color: card.delta > 0
                                             ? card.label === "Overdue" ? BRAND_RED : BRAND_GREEN
@@ -351,7 +351,7 @@ function OverviewTab({ stats, byStatus, weeklyTrend, funnelData }: Pick<Props, "
                                 </span>
                             )}
                         </div>
-                        <p className="text-[9px] font-bold text-[#86868b] uppercase tracking-tight mb-0.5">
+                        <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-tight mb-0.5">
                             {card.label}
                         </p>
                         <h4 className="text-lg font-bold text-[#1d1d1f] tracking-tight leading-none mb-2">
@@ -389,13 +389,13 @@ function OverviewTab({ stats, byStatus, weeklyTrend, funnelData }: Pick<Props, "
                                     dataKey="label"
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }}
+                                    tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }}
                                     dy={8}
                                 />
                                 <YAxis
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }}
+                                    tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }}
                                 />
                                 <Tooltip
                                     content={({ active, payload, label }) => (
@@ -473,7 +473,7 @@ function OverviewTab({ stats, byStatus, weeklyTrend, funnelData }: Pick<Props, "
                         </ResponsiveContainer>
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                             <span className="text-2xl font-bold text-[#1d1d1f]">{stats.completionRate}%</span>
-                            <span className="text-[9px] font-bold text-[#86868b] uppercase tracking-widest">Done</span>
+                            <span className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-widest">Done</span>
                         </div>
                     </div>
                     <div className="mt-3 space-y-1.5">
@@ -481,9 +481,9 @@ function OverviewTab({ stats, byStatus, weeklyTrend, funnelData }: Pick<Props, "
                             <div key={s.status} className="flex items-center justify-between group/row hover:bg-[#f5f5f7] rounded-lg px-2 py-0.5 transition-colors cursor-default">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[s.status] }} />
-                                    <span className="text-[10px] font-semibold text-[#86868b]">{s.status}</span>
+                                    <span className="text-[11px] font-semibold text-[#6b6b73]">{s.status}</span>
                                 </div>
-                                <span className="text-[10px] font-bold text-[#1d1d1f]">{s.count}</span>
+                                <span className="text-[11px] font-bold text-[#1d1d1f]">{s.count}</span>
                             </div>
                         ))}
                     </div>
@@ -509,17 +509,17 @@ function OverviewTab({ stats, byStatus, weeklyTrend, funnelData }: Pick<Props, "
                                 return (
                                     <div key={stage.name} className="group/funnel cursor-default">
                                         <div className="flex items-center justify-between mb-1">
-                                            <span className="text-[10px] font-bold text-[#86868b] uppercase tracking-tight">{stage.name}</span>
+                                            <span className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-tight">{stage.name}</span>
                                             <div className="flex items-center gap-3">
                                                 {convPct !== null && (
-                                                    <span className="text-[9px] font-semibold text-[#86868b] opacity-0 group-hover/funnel:opacity-100 transition-opacity">
+                                                    <span className="text-[11px] font-semibold text-[#6b6b73] opacity-0 group-hover/funnel:opacity-100 transition-opacity">
                                                         {convPct}% conversion from prev
                                                     </span>
                                                 )}
                                                 <span className="text-[11px] font-bold" style={{ color: stage.fill }}>
                                                     {stage.value} tasks
                                                 </span>
-                                                <span className="text-[10px] font-semibold text-[#86868b] w-8 text-right">{sharePct}%</span>
+                                                <span className="text-[11px] font-semibold text-[#6b6b73] w-8 text-right">{sharePct}%</span>
                                             </div>
                                         </div>
                                         <div className="h-6 bg-[#f5f5f7] rounded-lg overflow-hidden">
@@ -534,7 +534,7 @@ function OverviewTab({ stats, byStatus, weeklyTrend, funnelData }: Pick<Props, "
                                     </div>
                                 );
                             })}
-                            <p className="text-[10px] text-[#86868b] pt-1">
+                            <p className="text-[11px] text-[#6b6b73] pt-1">
                                 Total pipeline: <span className="font-bold text-[#1d1d1f]">{total} tasks</span>
                             </p>
                         </div>
@@ -560,8 +560,8 @@ function FlowTab({ weeklyTrend, cycleTimeBuckets, agingBuckets, byPriority }: Pi
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={weeklyTrend} barGap={3}>
                                 <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f0f0f2" />
-                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} dy={8} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} />
+                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} dy={8} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} />
                                 <Tooltip
                                     content={({ active, payload, label }) => (
                                         <DarkTooltip
@@ -594,8 +594,8 @@ function FlowTab({ weeklyTrend, cycleTimeBuckets, agingBuckets, byPriority }: Pi
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={cycleTimeBuckets}>
                                 <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f0f0f2" />
-                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} dy={8} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} />
+                                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} dy={8} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} />
                                 <Tooltip
                                     content={({ active, payload, label }) => (
                                         <DarkTooltip
@@ -629,12 +629,12 @@ function FlowTab({ weeklyTrend, cycleTimeBuckets, agingBuckets, byPriority }: Pi
                     {agingBuckets.map(b => (
                         <div
                             key={b.label}
-                            className="rounded-2xl p-4 border border-[#e5e5ea] hover:shadow-md transition-all cursor-default group"
+                            className="rounded-2xl p-4 border border-[#e5e5ea] hover:shadow-md transition-colors cursor-default group"
                             style={{ borderLeftWidth: "3px", borderLeftColor: b.color }}
                         >
-                            <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-tight">{b.label}</p>
+                            <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-tight">{b.label}</p>
                             <p className="text-2xl font-bold mt-1" style={{ color: b.color }}>{b.count}</p>
-                            <p className="text-[9px] text-[#86868b] mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <p className="text-[11px] text-[#6b6b73] mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                 {totalAging > 0 ? Math.round((b.count / totalAging) * 100) : 0}% of active
                             </p>
                         </div>
@@ -654,7 +654,7 @@ function FlowTab({ weeklyTrend, cycleTimeBuckets, agingBuckets, byPriority }: Pi
                                 title={`${b.label}: ${b.count} tasks (${Math.round(pct)}%)`}
                             >
                                 {pct > 8 && (
-                                    <span className="text-[9px] font-bold text-white">{Math.round(pct)}%</span>
+                                    <span className="text-[11px] font-bold text-white">{Math.round(pct)}%</span>
                                 )}
                             </motion.div>
                         ) : null;
@@ -664,7 +664,7 @@ function FlowTab({ weeklyTrend, cycleTimeBuckets, agingBuckets, byPriority }: Pi
                     {agingBuckets.map(b => (
                         <div key={b.label} className="flex items-center gap-1.5">
                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: b.color }} />
-                            <span className="text-[10px] font-semibold text-[#86868b]">{b.label}</span>
+                            <span className="text-[11px] font-semibold text-[#6b6b73]">{b.label}</span>
                         </div>
                     ))}
                 </div>
@@ -676,8 +676,8 @@ function FlowTab({ weeklyTrend, cycleTimeBuckets, agingBuckets, byPriority }: Pi
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={byPriority} layout="vertical">
                             <CartesianGrid strokeDasharray="4 4" horizontal={false} stroke="#f0f0f2" />
-                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} />
-                            <YAxis type="category" dataKey="priority" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} width={55} />
+                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} />
+                            <YAxis type="category" dataKey="priority" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} width={55} />
                             <Tooltip
                                 content={({ active, payload, label }) => (
                                     <DarkTooltip
@@ -718,14 +718,14 @@ function TeamTab({ byMember, memberEfficiency }: Pick<Props, "byMember" | "membe
                         <div key={m.user_id} className="group/row cursor-default">
                             <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-full bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center text-[9px] font-bold text-[#1d1d1f]">
+                                    <div className="w-6 h-6 rounded-full bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center text-[11px] font-bold text-[#1d1d1f]">
                                         {m.name.charAt(0).toUpperCase()}
                                     </div>
                                     <span className="text-[11px] font-semibold text-[#1d1d1f]">{m.name}</span>
-                                    <span className="text-[9px] text-[#86868b]">{m.role}</span>
+                                    <span className="text-[11px] text-[#6b6b73]">{m.role}</span>
                                 </div>
-                                <div className="flex items-center gap-3 text-[10px]">
-                                    <span className="text-[#86868b] opacity-0 group-hover/row:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-3 text-[11px]">
+                                    <span className="text-[#6b6b73] opacity-0 group-hover/row:opacity-100 transition-opacity">
                                         {m.completed}/{m.total} done · {m.overdue > 0 ? <span className="text-[#ff3b30]">{m.overdue} overdue</span> : "0 overdue"} · {m.hours}h
                                     </span>
                                     <span className="font-bold text-[#1d1d1f]">{m.total}</span>
@@ -760,8 +760,8 @@ function TeamTab({ byMember, memberEfficiency }: Pick<Props, "byMember" | "membe
                                     name="Tasks Completed"
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }}
-                                    label={{ value: "Tasks Completed", position: "insideBottom", offset: -4, style: { fontSize: 9, fill: "#86868b", fontWeight: 600 } }}
+                                    tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }}
+                                    label={{ value: "Tasks Completed", position: "insideBottom", offset: -4, style: { fontSize: 9, fill: "#6b6b73", fontWeight: 600 } }}
                                 />
                                 <YAxis
                                     type="number"
@@ -769,8 +769,8 @@ function TeamTab({ byMember, memberEfficiency }: Pick<Props, "byMember" | "membe
                                     name="Hours"
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }}
-                                    label={{ value: "Hours", angle: -90, position: "insideLeft", style: { fontSize: 9, fill: "#86868b", fontWeight: 600 } }}
+                                    tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }}
+                                    label={{ value: "Hours", angle: -90, position: "insideLeft", style: { fontSize: 9, fill: "#6b6b73", fontWeight: 600 } }}
                                 />
                                 <ZAxis range={[50, 200]} />
                                 <Tooltip
@@ -811,7 +811,7 @@ function TeamTab({ byMember, memberEfficiency }: Pick<Props, "byMember" | "membe
                                 key={m.user_id}
                                 className="flex items-center gap-3 group/contributor hover:bg-[#f5f5f7] rounded-xl p-2 -mx-2 transition-colors cursor-default"
                             >
-                                <div className="w-5 text-[10px] font-bold text-[#86868b] text-center">{i + 1}</div>
+                                <div className="w-5 text-[11px] font-bold text-[#6b6b73] text-center">{i + 1}</div>
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-[#5e5ce6] flex items-center justify-center text-[11px] font-bold text-white shrink-0">
                                     {m.name.charAt(0).toUpperCase()}
                                 </div>
@@ -824,12 +824,12 @@ function TeamTab({ byMember, memberEfficiency }: Pick<Props, "byMember" | "membe
                                                 style={{ width: `${m.completionRate}%` }}
                                             />
                                         </div>
-                                        <span className="text-[9px] font-bold text-[#22be66]">{m.completionRate}%</span>
+                                        <span className="text-[11px] font-bold text-[#22be66]">{m.completionRate}%</span>
                                     </div>
                                 </div>
                                 <div className="text-right shrink-0">
                                     <div className="text-[12px] font-bold text-[#1d1d1f]">{m.completed}</div>
-                                    <div className="text-[9px] text-[#86868b] group-hover/contributor:text-brand-blue transition-colors">
+                                    <div className="text-[11px] text-[#6b6b73] group-hover/contributor:text-brand-blue transition-colors">
                                         {m.hours}h logged
                                     </div>
                                 </div>
@@ -849,7 +849,7 @@ function ProjectsTab({ byProject, byWorkspace }: Pick<Props, "byProject" | "byWo
         <div className="space-y-6">
             <SectionCard title="Project Completion" subtitle="Tasks and completion rates per project">
                 {byProject.length === 0 ? (
-                    <p className="text-[11px] text-[#86868b] py-8 text-center">No projects found in this period.</p>
+                    <p className="text-[11px] text-[#6b6b73] py-8 text-center">No projects found in this period.</p>
                 ) : (
                     <div className="space-y-3">
                         {byProject.map(p => (
@@ -859,8 +859,8 @@ function ProjectsTab({ byProject, byWorkspace }: Pick<Props, "byProject" | "byWo
                                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: p.color }} />
                                         <span className="text-[12px] font-semibold text-[#1d1d1f]">{p.name}</span>
                                     </div>
-                                    <div className="flex items-center gap-3 text-[10px]">
-                                        <span className="text-[#86868b] opacity-0 group-hover/proj:opacity-100 transition-opacity">
+                                    <div className="flex items-center gap-3 text-[11px]">
+                                        <span className="text-[#6b6b73] opacity-0 group-hover/proj:opacity-100 transition-opacity">
                                             {p.completed}/{p.total} tasks · {p.overdue > 0 ? `${p.overdue} overdue` : "no overdue"}
                                         </span>
                                         <span className="font-bold" style={{ color: p.color }}>{p.completionRate}%</span>
@@ -887,8 +887,8 @@ function ProjectsTab({ byProject, byWorkspace }: Pick<Props, "byProject" | "byWo
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={byWorkspace} layout="vertical">
                                 <CartesianGrid strokeDasharray="4 4" horizontal={false} stroke="#f0f0f2" />
-                                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} />
-                                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} width={90} />
+                                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} />
+                                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} width={90} />
                                 <Tooltip
                                     content={({ active, payload, label }) => (
                                         <DarkTooltip
@@ -949,7 +949,7 @@ function RiskTab({ priorityStatusMatrix, overdueList, byMember }: Pick<Props, "p
                                     </div>
                                     <div>
                                         <h4 className="text-[12px] font-bold text-[#1d1d1f]">{m.name}</h4>
-                                        <p className="text-[9px] text-[#86868b] uppercase font-black tracking-widest">{m.burnoutRisk} Risk</p>
+                                        <p className="text-[11px] text-[#6b6b73] uppercase font-black tracking-widest">{m.burnoutRisk} Risk</p>
                                     </div>
                                 </div>
                                 <div className="text-right flex flex-col items-end gap-2">
@@ -958,10 +958,10 @@ function RiskTab({ priorityStatusMatrix, overdueList, byMember }: Pick<Props, "p
                                             <AlertTriangle size={12} />
                                             <span className="text-[11px] font-bold">{m.overdue} Overdue</span>
                                         </div>
-                                        <p className="text-[10px] text-[#86868b]">{m.total} Active Tasks</p>
+                                        <p className="text-[11px] text-[#6b6b73]">{m.total} Active Tasks</p>
                                     </div>
                                     <button 
-                                        className="px-3 py-1.5 bg-brand-blue text-white rounded-lg text-[10px] font-bold hover:bg-[#0041b3] transition-all flex items-center gap-1.5"
+                                        className="px-3 py-1.5 bg-brand-blue text-white rounded-lg text-[11px] font-bold hover:bg-[#0041b3] transition-colors flex items-center gap-1.5"
                                         onClick={() => {
                                             // Dispatch custom event or callback to parent
                                             window.dispatchEvent(new CustomEvent('open-rebalancer', { detail: { memberId: m.user_id, name: m.name } }));
@@ -977,7 +977,7 @@ function RiskTab({ priorityStatusMatrix, overdueList, byMember }: Pick<Props, "p
                         <div className="col-span-full py-8 text-center bg-[#f5f5f7] rounded-2xl">
                             <Shield className="mx-auto mb-2 text-[#22be66]" size={24} />
                             <p className="text-[11px] font-bold text-[#1d1d1f]">All clear! No burnout risks detected.</p>
-                            <p className="text-[9px] text-[#86868b]">Team velocity and workload are within healthy limits.</p>
+                            <p className="text-[11px] text-[#6b6b73]">Team velocity and workload are within healthy limits.</p>
                         </div>
                     )}
                 </div>
@@ -987,12 +987,12 @@ function RiskTab({ priorityStatusMatrix, overdueList, byMember }: Pick<Props, "p
                 {/* Priority × Status Matrix */}
                 <SectionCard title="Priority × Status Matrix" subtitle="Task count at each intersection — hover for details">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-[10px]">
+                        <table className="w-full text-[11px]">
                             <thead>
                                 <tr>
-                                    <th className="text-left font-bold text-[#86868b] pb-2 pr-3 uppercase tracking-tight w-16" />
+                                    <th className="text-left font-bold text-[#6b6b73] pb-2 pr-3 uppercase tracking-tight w-16" />
                                     {statuses.map(s => (
-                                        <th key={s} className="text-center font-bold text-[#86868b] pb-2 uppercase tracking-tight text-[9px] px-1">
+                                        <th key={s} className="text-center font-bold text-[#6b6b73] pb-2 uppercase tracking-tight text-[11px] px-1">
                                             {s === "In Progress" ? "In Prog." : s === "In Review" ? "Review" : s}
                                         </th>
                                     ))}
@@ -1022,7 +1022,7 @@ function RiskTab({ priorityStatusMatrix, overdueList, byMember }: Pick<Props, "p
                                                     >
                                                         <span
                                                             className="font-bold"
-                                                            style={{ color: intensity > 0.5 ? "white" : count > 0 ? baseColor : "#86868b" }}
+                                                            style={{ color: intensity > 0.5 ? "white" : count > 0 ? baseColor : "#6b6b73" }}
                                                         >
                                                             {count}
                                                         </span>
@@ -1043,8 +1043,8 @@ function RiskTab({ priorityStatusMatrix, overdueList, byMember }: Pick<Props, "p
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={overdueByPriority}>
                                 <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f0f0f2" />
-                                <XAxis dataKey="priority" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} dy={8} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} />
+                                <XAxis dataKey="priority" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} dy={8} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} />
                                 <Tooltip
                                     content={({ active, payload, label }) => (
                                         <DarkTooltip
@@ -1077,7 +1077,7 @@ function RiskTab({ priorityStatusMatrix, overdueList, byMember }: Pick<Props, "p
                 {overdueList.length === 0 ? (
                     <div className="flex items-center gap-3 py-6 justify-center">
                         <CheckCircle2 size={20} className="text-[#22be66]" />
-                        <p className="text-[12px] font-semibold text-[#86868b]">No overdue tasks. Great work!</p>
+                        <p className="text-[12px] font-semibold text-[#6b6b73]">No overdue tasks. Great work!</p>
                     </div>
                 ) : (
                     <div className="space-y-1">
@@ -1097,10 +1097,10 @@ function RiskTab({ priorityStatusMatrix, overdueList, byMember }: Pick<Props, "p
                                         <PriorityBadge priority={t.priority} />
                                     </div>
                                     <div className="flex items-center gap-4 shrink-0 ml-3">
-                                        <span className="text-[10px] text-[#86868b] opacity-0 group-hover/overdue:opacity-100 transition-opacity">
+                                        <span className="text-[11px] text-[#6b6b73] opacity-0 group-hover/overdue:opacity-100 transition-opacity">
                                             {t.assignee}
                                         </span>
-                                        <span className="text-[10px] font-bold" style={{ color: severityColor }}>
+                                        <span className="text-[11px] font-bold" style={{ color: severityColor }}>
                                             {t.daysOverdue}d late
                                         </span>
                                     </div>
@@ -1162,15 +1162,15 @@ function ActivityHeatmap({ dailyActivity }: { dailyActivity: { date: string; cou
             <div className="flex gap-4 mb-4 flex-wrap">
                 <div className="flex items-center gap-2 bg-[#f5f5f7] rounded-xl px-3 py-2">
                     <div className="w-2 h-2 rounded-full bg-[#22be66]" />
-                    <span className="text-[10px] font-bold text-[#1d1d1f]">{totalTasks} total tasks</span>
+                    <span className="text-[11px] font-bold text-[#1d1d1f]">{totalTasks} total tasks</span>
                 </div>
                 <div className="flex items-center gap-2 bg-[#f5f5f7] rounded-xl px-3 py-2">
                     <div className="w-2 h-2 rounded-full bg-brand-blue" />
-                    <span className="text-[10px] font-bold text-[#1d1d1f]">{activeDays} active days</span>
+                    <span className="text-[11px] font-bold text-[#1d1d1f]">{activeDays} active days</span>
                 </div>
                 <div className="flex items-center gap-2 bg-[#f5f5f7] rounded-xl px-3 py-2">
                     <div className="w-2 h-2 rounded-full bg-[#5e5ce6]" />
-                    <span className="text-[10px] font-bold text-[#1d1d1f]">peak: {maxCount} tasks/day</span>
+                    <span className="text-[11px] font-bold text-[#1d1d1f]">peak: {maxCount} tasks/day</span>
                 </div>
             </div>
 
@@ -1180,7 +1180,7 @@ function ActivityHeatmap({ dailyActivity }: { dailyActivity: { date: string; cou
                     {weeks.map((_, col) => {
                         const label = monthLabels.find(m => m.col === col);
                         return (
-                            <div key={col} className="text-[9px] font-bold text-[#86868b]" style={{ width: 16, flexShrink: 0 }}>
+                            <div key={col} className="text-[11px] font-bold text-[#6b6b73]" style={{ width: 16, flexShrink: 0 }}>
                                 {label?.month ?? ""}
                             </div>
                         );
@@ -1191,7 +1191,7 @@ function ActivityHeatmap({ dailyActivity }: { dailyActivity: { date: string; cou
                     {/* Day labels */}
                     <div className="flex flex-col mr-1" style={{ gap: "3px" }}>
                         {DAY_LABELS.map((d, i) => (
-                            <div key={i} className="text-[8px] font-semibold text-[#86868b] flex items-center" style={{ height: 16, width: 28 }}>
+                            <div key={i} className="text-[8px] font-semibold text-[#6b6b73] flex items-center" style={{ height: 16, width: 28 }}>
                                 {i % 2 === 1 ? d : ""}
                             </div>
                         ))}
@@ -1224,17 +1224,17 @@ function ActivityHeatmap({ dailyActivity }: { dailyActivity: { date: string; cou
                     style={{ left: hoveredCell.x + 20, top: hoveredCell.y - 40 }}
                 >
                     <p className="font-bold">{hoveredCell.count} task{hoveredCell.count !== 1 ? "s" : ""} created</p>
-                    <p className="opacity-60 text-[9px] mt-0.5">{new Date(hoveredCell.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</p>
+                    <p className="opacity-60 text-[11px] mt-0.5">{new Date(hoveredCell.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</p>
                 </div>
             )}
 
             {/* Legend */}
             <div className="flex items-center gap-2 mt-4">
-                <span className="text-[9px] font-bold text-[#86868b] uppercase tracking-wider">Less</span>
+                <span className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-wider">Less</span>
                 {["#e5e5ea", "#93b4f5", "#4d86f0", "#1a5fd9", BRAND_BLUE].map((c, i) => (
                     <div key={i} className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: c }} />
                 ))}
-                <span className="text-[9px] font-bold text-[#86868b] uppercase tracking-wider">More</span>
+                <span className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-wider">More</span>
             </div>
         </SectionCard>
     );
@@ -1261,16 +1261,16 @@ function ActivityTab({ dailyActivity, activityByType }: Pick<Props, "dailyActivi
                     {activityByType.length === 0 ? (
                         <div className="py-10 flex flex-col items-center gap-2">
                             <Activity size={24} className="text-[#e5e5ea]" />
-                            <p className="text-[11px] text-[#86868b]">No activity logs found for this period.</p>
-                            <p className="text-[10px] text-[#86868b] opacity-70">Activity is recorded when tasks are created, updated, commented on, or assigned.</p>
+                            <p className="text-[11px] text-[#6b6b73]">No activity logs found for this period.</p>
+                            <p className="text-[11px] text-[#6b6b73] opacity-70">Activity is recorded when tasks are created, updated, commented on, or assigned.</p>
                         </div>
                     ) : (
                         <div className="h-64">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={activityByType} layout="vertical">
                                     <CartesianGrid strokeDasharray="4 4" horizontal={false} stroke="#f0f0f2" />
-                                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} />
-                                    <YAxis type="category" dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} width={100} />
+                                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} />
+                                    <YAxis type="category" dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} width={100} />
                                     <Tooltip
                                         content={({ active, payload, label }) => (
                                             <DarkTooltip
@@ -1307,8 +1307,8 @@ function ActivityTab({ dailyActivity, activityByType }: Pick<Props, "dailyActivi
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f0f0f2" />
-                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} dy={8} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#86868b" }} />
+                                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} dy={8} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 600, fill: "#6b6b73" }} />
                                 <Tooltip
                                     content={({ active, payload, label }) => (
                                         <DarkTooltip
@@ -1412,10 +1412,10 @@ export function ReportsDashboard(props: Props) {
                             <h4 className="text-3xl font-black text-[#1d1d1f] tracking-tighter">
                                 ${roi.projectedLoss.toLocaleString()}
                             </h4>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Projected Loss</p>
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Projected Loss</p>
                         </div>
                         <div className="space-y-2 mt-4">
-                            <div className="flex items-center justify-between text-[10px]">
+                            <div className="flex items-center justify-between text-[11px]">
                                 <span className="font-bold text-slate-500">Based on Hourly Rate</span>
                                 <span className="font-black text-slate-900">$50/hr</span>
                             </div>
@@ -1437,10 +1437,10 @@ export function ReportsDashboard(props: Props) {
                             <h4 className="text-3xl font-black text-[#1d1d1f] tracking-tighter">
                                 {Math.round(roi.velocityScore)}/100
                             </h4>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Efficiency Index</p>
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Efficiency Index</p>
                         </div>
                         <div className="space-y-2 mt-4">
-                            <div className="flex items-center justify-between text-[10px]">
+                            <div className="flex items-center justify-between text-[11px]">
                                 <span className="font-bold text-slate-500">Relative to Capacity</span>
                                 <span className="font-black text-slate-900">{Math.round(roi.velocityScore)}%</span>
                             </div>
@@ -1462,10 +1462,10 @@ export function ReportsDashboard(props: Props) {
                             <h4 className="text-3xl font-black text-[#1d1d1f] tracking-tighter">
                                 {Math.round(roi.teamPredictability)}%
                             </h4>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Confidence Score</p>
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-1">Confidence Score</p>
                         </div>
                         <div className="space-y-2 mt-4">
-                            <div className="flex items-center justify-between text-[10px]">
+                            <div className="flex items-center justify-between text-[11px]">
                                 <span className="font-bold text-slate-500">Deadline Adherence</span>
                                 <span className="font-black text-slate-900">{Math.round(roi.teamPredictability)}%</span>
                             </div>
@@ -1483,7 +1483,7 @@ export function ReportsDashboard(props: Props) {
                 <SectionCard title="Delivery Projection" subtitle="Estimated days until full project completion">
                     <div className="h-64 flex flex-col items-center justify-center bg-[#f5f5f7]/30 rounded-[32px]">
                         <div className="text-center space-y-2">
-                            <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Predicted Buffer</h5>
+                            <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Predicted Buffer</h5>
                             <p className="text-7xl font-black text-brand-blue tracking-tighter">
                                 {roi.estimatedCompletionDate} Days
                             </p>
@@ -1503,10 +1503,10 @@ export function ReportsDashboard(props: Props) {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#f0f0f2] pb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-[#1d1d1f] tracking-tight">Reports & Intelligence</h1>
-                    <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider mt-1 flex items-center gap-2">
+                    <p className="text-[11px] font-semibold text-[#6b6b73] uppercase tracking-wider mt-1 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#22be66] animate-pulse" />
                         {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-                        {loading && <span className="text-[9px] text-brand-blue animate-pulse">Updating…</span>}
+                        {loading && <span className="text-[11px] text-brand-blue animate-pulse">Updating…</span>}
                     </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1518,10 +1518,10 @@ export function ReportsDashboard(props: Props) {
                                 onClick={() => handleRangeChange(r.value)}
                                 disabled={loading}
                                 className={cn(
-                                    "px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all",
+                                    "px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors",
                                     activeRange === r.value
                                         ? "bg-white text-[#1d1d1f] shadow-sm"
-                                        : "text-[#86868b] hover:text-[#1d1d1f]",
+                                        : "text-[#6b6b73] hover:text-[#1d1d1f]",
                                     loading && "opacity-50 cursor-not-allowed"
                                 )}
                             >
@@ -1531,7 +1531,7 @@ export function ReportsDashboard(props: Props) {
                     </div>
                     <button 
                         onClick={handleExport}
-                        className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-xl text-[11px] font-bold hover:bg-[#0041b3] transition-all"
+                        className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-xl text-[11px] font-bold hover:bg-[#0041b3] transition-colors"
                     >
                         <Download size={13} /> Export
                     </button>
@@ -1548,16 +1548,16 @@ export function ReportsDashboard(props: Props) {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={cn(
-                                "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all",
+                                "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-colors",
                                 isActive
                                     ? "bg-brand-blue text-white"
-                                    : "text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
+                                    : "text-[#6b6b73] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
                             )}
                         >
                             <Icon size={13} />
                             {tab.label}
                             {tab.id === "risk" && overdueList.length > 0 && (
-                                <span className="bg-[#ff3b30] text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                                <span className="bg-[#ff3b30] text-white text-[11px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                                     {overdueList.length > 9 ? "9+" : overdueList.length}
                                 </span>
                             )}

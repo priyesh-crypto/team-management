@@ -76,7 +76,7 @@ export function BrandingSettings({ orgId, branding }: Props) {
 
                     {/* Preview */}
                     <div className="rounded-xl border border-slate-100 p-4">
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3">Preview</div>
+                        <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-3">Preview</div>
                         <div className="flex items-center gap-3">
                             {form.logo_url
                                 ? <img src={form.logo_url} alt="logo" className="h-8 w-8 rounded-lg object-contain border border-slate-100" />
@@ -105,7 +105,7 @@ export function BrandingSettings({ orgId, branding }: Props) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <div>
-            <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">{title}</div>
+            <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">{title}</div>
             <div className="space-y-3">{children}</div>
         </div>
     );

@@ -1,6 +1,8 @@
 import { createClient } from '@/utils/supabase/server';
-import { Card, Button, Input } from '@/components/ui/components';
+import { Card, Input } from '@/components/ui/components';
 import Logo from '@/components/ui/Logo';
+import { SubmitButton } from '@/components/ui/SubmitButton';
+import { SignOutLink } from '@/components/ui/SignOutLink';
 import UrlToaster from '@/components/ui/UrlToaster';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
@@ -156,7 +158,12 @@ export default async function Home({
               <div className="flex justify-end">
                 <a href="/auth/password-reset" className="text-xs font-bold text-brand-blue hover:underline">Forgot password?</a>
               </div>
-              <Button type="submit" className="w-full h-12 text-md font-bold mt-2 bg-gradient-to-r from-brand-blue to-brand-accent hover:brightness-110 transition-all shadow-md shadow-brand-blue/20">Sign In</Button>
+              <SubmitButton
+                pendingText="Signing in…"
+                className="w-full h-12 text-md font-bold mt-2 bg-gradient-to-r from-brand-blue to-brand-accent hover:brightness-110 transition-[filter,transform] shadow-md shadow-brand-blue/20"
+              >
+                Sign In
+              </SubmitButton>
             </form>
 
             <p className="mt-6 text-center text-xs text-[#52525b] font-medium">
@@ -186,11 +193,16 @@ export default async function Home({
                 <label className="block text-xs font-black uppercase tracking-widest text-[#52525b] mb-3 ml-2">Company Name</label>
                 <Input name="orgName" required placeholder="Acme Corp" className="w-full h-14 text-lg font-bold px-6 rounded-2xl bg-[#f5f5f7] border-none" />
               </div>
-              <Button type="submit" className="w-full h-14 text-lg font-black tracking-wide rounded-2xl mt-4 bg-gradient-to-r from-brand-blue to-brand-accent hover:brightness-110 transition-all shadow-lg shadow-brand-blue/30">Launch Workspace</Button>
+              <SubmitButton
+                pendingText="Creating workspace…"
+                className="w-full h-14 text-lg font-black tracking-wide rounded-2xl mt-4 bg-gradient-to-r from-brand-blue to-brand-accent hover:brightness-110 transition-[filter,transform] shadow-lg shadow-brand-blue/30"
+              >
+                Launch Workspace
+              </SubmitButton>
             </form>
 
             <form action={logout} className="mt-6 text-center">
-              <button type="submit" className="text-xs font-bold text-[#52525b] hover:text-[#1d1d1f] transition-colors">Sign out instead</button>
+              <SignOutLink />
             </form>
           </Card>
         </div>

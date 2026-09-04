@@ -18,7 +18,7 @@ export default function BillingError({
         <div className="p-6">
             <Card className="p-8 text-center max-w-md mx-auto">
                 <h2 className="text-lg font-black text-[#1d1d1f] mb-2">Billing failed to load</h2>
-                <p className="text-sm font-medium text-[#86868b] mb-6">
+                <p className="text-sm font-medium text-[#6b6b73] mb-6">
                     We couldn&apos;t load your billing information. No changes were made to your subscription.
                 </p>
                 <Button onClick={() => reset()}>Try again</Button>

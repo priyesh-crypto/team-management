@@ -26,7 +26,7 @@ export default async function OrgUsagePage({
             <div>
                 <Link
                     href={`/admin/orgs/${orgId}`}
-                    className="text-[10px] font-black uppercase tracking-widest text-[#86868b] hover:text-brand-blue transition"
+                    className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] hover:text-brand-blue transition"
                 >
                     ← Back to org
                 </Link>
@@ -42,7 +42,7 @@ export default async function OrgUsagePage({
                         className={`px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-colors ${
                             days === d
                                 ? "bg-brand-blue text-white"
-                                : "bg-[#f5f5f7] text-[#86868b] hover:bg-[#e5e5ea]"
+                                : "bg-[#f5f5f7] text-[#6b6b73] hover:bg-[#e5e5ea]"
                         }`}
                     >
                         {d}d
@@ -58,7 +58,7 @@ export default async function OrgUsagePage({
                     { label: "Members", value: activity.totalMembers },
                 ].map(({ label, value }) => (
                     <div key={label} className="bg-white rounded-2xl border border-[#e5e5ea] p-5">
-                        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[#86868b]">{label}</div>
+                        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-[#6b6b73]">{label}</div>
                         <div className="text-3xl font-black mt-1.5 tracking-tight text-[#1d1d1f]">{value}</div>
                     </div>
                 ))}
@@ -66,11 +66,11 @@ export default async function OrgUsagePage({
 
             {/* Activity chart */}
             <div className="bg-white rounded-2xl border border-[#e5e5ea] p-6">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#86868b] mb-4">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] mb-4">
                     Daily task creation — last {days} days
                 </p>
                 {dates.length === 0 ? (
-                    <p className="text-sm text-[#86868b] py-8 text-center">No activity in this period.</p>
+                    <p className="text-sm text-[#6b6b73] py-8 text-center">No activity in this period.</p>
                 ) : (
                     <div className="flex items-end gap-1 h-32 overflow-x-auto pb-1">
                         {dates.map(d => {
@@ -85,7 +85,7 @@ export default async function OrgUsagePage({
                                         <div className="w-full bg-brand-blue/20 flex-1" />
                                         <div className="w-full bg-brand-blue" style={{ height: `${completedPct}%` }} />
                                     </div>
-                                    <span className="text-[8px] text-[#86868b] rotate-45 origin-left mt-1">
+                                    <span className="text-[8px] text-[#6b6b73] rotate-45 origin-left mt-1">
                                         {fmtDay(d).split(" ")[1]}
                                     </span>
                                 </div>
@@ -96,11 +96,11 @@ export default async function OrgUsagePage({
                 <div className="flex gap-4 mt-4">
                     <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-sm bg-brand-blue/20" />
-                        <span className="text-[10px] text-[#86868b]">Created</span>
+                        <span className="text-[11px] text-[#6b6b73]">Created</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-sm bg-brand-blue" />
-                        <span className="text-[10px] text-[#86868b]">Completed</span>
+                        <span className="text-[11px] text-[#6b6b73]">Completed</span>
                     </div>
                 </div>
             </div>
@@ -108,7 +108,7 @@ export default async function OrgUsagePage({
             {/* Priority breakdown */}
             {Object.keys(activity.priorityCounts).length > 0 && (
                 <div className="bg-white rounded-2xl border border-[#e5e5ea] p-6">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#86868b] mb-4">
+                    <p className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] mb-4">
                         Tasks by priority
                     </p>
                     <div className="space-y-2">
@@ -132,7 +132,7 @@ export default async function OrgUsagePage({
                                                 style={{ width: `${pct}%` }}
                                             />
                                         </div>
-                                        <span className="text-[11px] text-[#86868b] w-12 text-right">{count} ({pct}%)</span>
+                                        <span className="text-[11px] text-[#6b6b73] w-12 text-right">{count} ({pct}%)</span>
                                     </div>
                                 );
                             })}

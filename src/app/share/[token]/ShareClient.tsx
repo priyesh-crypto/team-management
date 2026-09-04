@@ -81,7 +81,7 @@ export function ShareClient({
                         </div>
                         <div>
                             <h1 className="text-base font-black tracking-tight leading-none">Knotless <span className="text-brand-blue">Portal</span></h1>
-                            <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">External Project View</p>
+                            <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-widest mt-1">External Project View</p>
                         </div>
                     </div>
                     
@@ -108,10 +108,10 @@ export function ShareClient({
                             
                             <div className="relative z-10">
                                 <div className="flex items-center gap-2 mb-6">
-                                    <Badge className="bg-brand-blue/10 text-brand-blue border-none text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                                    <Badge className="bg-brand-blue/10 text-brand-blue border-none text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
                                         {isProject ? 'Project' : 'Task'}
                                     </Badge>
-                                    <Badge className="bg-[#f1f2f4] text-[#86868b] border-none text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                                    <Badge className="bg-[#f1f2f4] text-[#6b6b73] border-none text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
                                         Read Only
                                     </Badge>
                                 </div>
@@ -120,14 +120,14 @@ export function ShareClient({
                                     {resource.name}
                                 </h2>
                                 
-                                <p className="text-sm font-medium text-[#86868b] leading-relaxed mb-8">
+                                <p className="text-sm font-medium text-[#6b6b73] leading-relaxed mb-8">
                                     {resource.description || resource.notes || 'No overview provided for this project.'}
                                 </p>
 
                                 <div className="space-y-6">
                                     <div className="space-y-3">
                                         <div className="flex justify-between items-end">
-                                            <span className="text-[11px] font-black uppercase tracking-widest text-[#86868b]">Overall Completion</span>
+                                            <span className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73]">Overall Completion</span>
                                             <span className="text-2xl font-black text-brand-blue tabular-nums">{progress}%</span>
                                         </div>
                                         <div className="h-3 w-full bg-[#f1f2f4] rounded-full overflow-hidden">
@@ -142,11 +142,11 @@ export function ShareClient({
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="bg-[#f8f9fb] p-4 rounded-[24px] border border-[#eceef0]">
-                                            <div className="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1">Total Tasks</div>
+                                            <div className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest mb-1">Total Tasks</div>
                                             <div className="text-xl font-black">{tasks.length}</div>
                                         </div>
                                         <div className="bg-[#f8f9fb] p-4 rounded-[24px] border border-[#eceef0]">
-                                            <div className="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1">In Progress</div>
+                                            <div className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest mb-1">In Progress</div>
                                             <div className="text-xl font-black text-brand-blue">{activeTasks}</div>
                                         </div>
                                     </div>
@@ -161,7 +161,7 @@ export function ShareClient({
                             transition={{ delay: 0.1 }}
                             className="bg-white rounded-[32px] p-8 border border-[#eceef0] shadow-sm"
                         >
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#86868b] mb-6">Delivery Timeline</h3>
+                            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#6b6b73] mb-6">Delivery Timeline</h3>
                             
                             <div className="space-y-6">
                                 {tasks.filter(t => t.deadline).slice(0, 3).map((t, idx) => (
@@ -174,7 +174,7 @@ export function ShareClient({
                                             {idx < 2 && <div className="w-0.5 flex-1 bg-[#eceef0] my-1" />}
                                         </div>
                                         <div>
-                                            <div className="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-0.5">
+                                            <div className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest mb-0.5">
                                                 {new Date(t.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                             </div>
                                             <div className="text-sm font-bold text-[#1d1d1f] line-clamp-1">{t.name}</div>
@@ -182,7 +182,7 @@ export function ShareClient({
                                     </div>
                                 ))}
                                 {tasks.filter(t => t.deadline).length === 0 && (
-                                    <div className="text-sm font-medium text-[#86868b] italic">No deadlines set.</div>
+                                    <div className="text-sm font-medium text-[#6b6b73] italic">No deadlines set.</div>
                                 )}
                             </div>
                         </motion.div>
@@ -194,24 +194,24 @@ export function ShareClient({
                             transition={{ delay: 0.2 }}
                             className="bg-white rounded-[32px] p-8 border border-[#eceef0] shadow-sm"
                         >
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#86868b] mb-6">Expert Team</h3>
+                            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#6b6b73] mb-6">Expert Team</h3>
                             <div className="flex flex-wrap gap-3">
                                 {employees.map(emp => (
-                                    <div key={emp.id} className="group flex items-center gap-3 bg-[#f8f9fb] pr-4 py-2 pl-2 rounded-2xl border border-[#eceef0] transition-all hover:border-brand-blue/30">
+                                    <div key={emp.id} className="group flex items-center gap-3 bg-[#f8f9fb] pr-4 py-2 pl-2 rounded-2xl border border-[#eceef0] transition-colors hover:border-brand-blue/30">
                                         <UserAvatar 
                                             name={emp.name} 
                                             avatarUrl={emp.avatar_url}
                                             className="w-8 h-8 rounded-xl shadow-sm"
-                                            textClassName="text-[10px] font-black"
+                                            textClassName="text-[11px] font-black"
                                         />
                                         <div>
                                             <div className="text-[11px] font-black text-[#1d1d1f]">{emp.name}</div>
-                                            <div className="text-[8px] font-bold text-[#86868b] uppercase tracking-widest">Contributor</div>
+                                            <div className="text-[8px] font-bold text-[#6b6b73] uppercase tracking-widest">Contributor</div>
                                         </div>
                                     </div>
                                 ))}
                                 {employees.length === 0 && (
-                                    <div className="text-sm font-medium text-[#86868b] italic">No team data available.</div>
+                                    <div className="text-sm font-medium text-[#6b6b73] italic">No team data available.</div>
                                 )}
                             </div>
                         </motion.div>
@@ -222,13 +222,13 @@ export function ShareClient({
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h3 className="text-2xl font-black tracking-tight">Active Roadmap</h3>
-                                <p className="text-sm font-medium text-[#86868b]">Tracking {tasks.length} deliverables in real-time.</p>
+                                <p className="text-sm font-medium text-[#6b6b73]">Tracking {tasks.length} deliverables in real-time.</p>
                             </div>
                             
                             <div className="flex items-center gap-3">
                                 <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white rounded-2xl border border-[#eceef0] shadow-sm">
-                                    <Search size={14} className="text-[#86868b]" />
-                                    <span className="text-[11px] font-bold text-[#86868b]">Search tasks...</span>
+                                    <Search size={14} className="text-[#6b6b73]" />
+                                    <span className="text-[11px] font-bold text-[#6b6b73]">Search tasks...</span>
                                 </div>
                             </div>
                         </div>
@@ -245,7 +245,7 @@ export function ShareClient({
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: idx * 0.05 }}
-                                        className="group bg-white rounded-[28px] p-6 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-brand-blue/5 transition-all duration-500"
+                                        className="group bg-white rounded-[28px] p-6 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-brand-blue/5 transition-colors duration-500"
                                     >
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                             <div className="flex items-start gap-4">
@@ -275,13 +275,13 @@ export function ShareClient({
                                                     <h4 className="text-base font-black text-[#1d1d1f] tracking-tight">{task.name}</h4>
                                                     <div className="flex flex-wrap items-center gap-4 mt-2">
                                                         {task.deadline && (
-                                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#86868b] uppercase tracking-wider">
+                                                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#6b6b73] uppercase tracking-wider">
                                                                 <Calendar size={12} />
                                                                 {new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                                             </div>
                                                         )}
                                                         {hasSubtasks && (
-                                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#86868b] uppercase tracking-wider">
+                                                            <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#6b6b73] uppercase tracking-wider">
                                                                 <Layers size={12} />
                                                                 {doneSubtasks}/{subtasks.length} Checkpoints
                                                             </div>
@@ -292,7 +292,7 @@ export function ShareClient({
                                             
                                             <div className="flex items-center justify-between sm:justify-end gap-6 sm:pl-6 sm:border-l border-[#eceef0]">
                                                 <div className="text-right">
-                                                    <div className="text-[9px] font-black text-[#86868b] uppercase tracking-widest mb-1">Status</div>
+                                                    <div className="text-[11px] font-black text-[#6b6b73] uppercase tracking-widest mb-1">Status</div>
                                                     <div className={cn(
                                                         "text-[12px] font-black uppercase tracking-wider",
                                                         task.status === 'Completed' ? "text-[#34c759]" : 
@@ -301,7 +301,7 @@ export function ShareClient({
                                                         {task.status}
                                                     </div>
                                                 </div>
-                                                <div className="w-8 h-8 rounded-full border border-[#eceef0] flex items-center justify-center text-[#86868b] group-hover:bg-brand-blue group-hover:text-white transition-all">
+                                                <div className="w-8 h-8 rounded-full border border-[#eceef0] flex items-center justify-center text-[#6b6b73] group-hover:bg-brand-blue group-hover:text-white transition-colors">
                                                     <ArrowUpRight size={14} />
                                                 </div>
                                             </div>
@@ -312,11 +312,11 @@ export function ShareClient({
 
                             {tasks.length === 0 && (
                                 <div className="py-20 text-center">
-                                    <div className="w-16 h-16 rounded-[24px] bg-[#f1f2f4] flex items-center justify-center mx-auto mb-4 text-[#86868b]">
+                                    <div className="w-16 h-16 rounded-[24px] bg-[#f1f2f4] flex items-center justify-center mx-auto mb-4 text-[#6b6b73]">
                                         <Layers size={32} />
                                     </div>
                                     <h4 className="text-lg font-black tracking-tight text-[#1d1d1f]">No tasks visible</h4>
-                                    <p className="text-sm font-medium text-[#86868b] max-w-xs mx-auto mt-2">The team hasn&apos;t shared any specific milestones for this project link yet.</p>
+                                    <p className="text-sm font-medium text-[#6b6b73] max-w-xs mx-auto mt-2">The team hasn&apos;t shared any specific milestones for this project link yet.</p>
                                 </div>
                             )}
                         </div>
@@ -327,15 +327,15 @@ export function ShareClient({
             <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-[#eceef0]">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em]">Powered by</span>
+                        <span className="text-[11px] font-black text-[#6b6b73] uppercase tracking-[0.2em]">Powered by</span>
                         <span className="text-[11px] font-black text-brand-blue uppercase tracking-[0.2em]">Knotless AI</span>
                     </div>
                     
-                    <div className="text-[11px] font-bold text-[#86868b]">
+                    <div className="text-[11px] font-bold text-[#6b6b73]">
                         This is a secure, read-only view of the project for authorized stakeholders.
                     </div>
                     
-                    <div className="flex items-center gap-4 text-[#86868b]">
+                    <div className="flex items-center gap-4 text-[#6b6b73]">
                         <Share2 size={16} className="cursor-pointer hover:text-brand-blue transition-colors" />
                         <ExternalLink size={16} className="cursor-pointer hover:text-brand-blue transition-colors" />
                     </div>

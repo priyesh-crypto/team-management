@@ -20,7 +20,7 @@ const STATUS_STYLES: Record<string, string> = {
     open:        "bg-emerald-50 text-emerald-700 border-emerald-200",
     in_progress: "bg-brand-blue/10 text-brand-blue border-brand-blue/20",
     resolved:    "bg-slate-100 text-slate-500 border-slate-200",
-    closed:      "bg-[#f5f5f7] text-[#86868b] border-[#e5e5ea]",
+    closed:      "bg-[#f5f5f7] text-[#6b6b73] border-[#e5e5ea]",
 };
 
 export function TicketClient({
@@ -77,17 +77,17 @@ export function TicketClient({
         <div className="space-y-5">
             {/* Status control */}
             <div className="bg-white rounded-2xl border border-[#e5e5ea] p-4 flex items-center gap-3">
-                <span className="text-[10px] font-black uppercase tracking-wider text-[#86868b]">Status</span>
+                <span className="text-[11px] font-black uppercase tracking-wider text-[#6b6b73]">Status</span>
                 <div className="flex gap-2">
                     {STATUSES.map(s => (
                         <button
                             key={s}
                             disabled={pending}
                             onClick={() => handleStatusChange(s)}
-                            className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-colors ${
+                            className={`px-3 py-1 rounded-xl text-[11px] font-black uppercase tracking-wider border transition-colors ${
                                 status === s
                                     ? STATUS_STYLES[s]
-                                    : "bg-[#f5f5f7] text-[#86868b] border-transparent hover:border-[#e5e5ea]"
+                                    : "bg-[#f5f5f7] text-[#6b6b73] border-transparent hover:border-[#e5e5ea]"
                             }`}
                         >
                             {s.replace("_", " ")}
@@ -107,17 +107,17 @@ export function TicketClient({
                         }`}>
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-full bg-brand-blue/10 text-brand-blue text-[9px] font-black flex items-center justify-center">
+                                <div className="w-6 h-6 rounded-full bg-brand-blue/10 text-brand-blue text-[11px] font-black flex items-center justify-center">
                                     A
                                 </div>
-                                <span className="text-[10px] font-black text-[#86868b]">Admin</span>
+                                <span className="text-[11px] font-black text-[#6b6b73]">Admin</span>
                                 {msg.is_internal && (
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 font-black uppercase">
+                                    <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 font-black uppercase">
                                         Internal note
                                     </span>
                                 )}
                             </div>
-                            <span className="text-[10px] text-[#86868b]">
+                            <span className="text-[11px] text-[#6b6b73]">
                                 {new Date(msg.created_at).toLocaleString()}
                             </span>
                         </div>
@@ -129,7 +129,7 @@ export function TicketClient({
             {/* Reply form */}
             {status !== "closed" && (
                 <form onSubmit={handleReply} className="bg-white rounded-2xl border border-[#e5e5ea] p-5 space-y-3">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-[#86868b]">Reply</div>
+                    <div className="text-[11px] font-black uppercase tracking-wider text-[#6b6b73]">Reply</div>
                     <textarea
                         value={body}
                         onChange={e => setBody(e.target.value)}
@@ -145,7 +145,7 @@ export function TicketClient({
                                 onChange={e => setIsInternal(e.target.checked)}
                                 className="w-4 h-4 rounded accent-amber-500"
                             />
-                            <span className="text-xs font-bold text-[#86868b]">Internal note (admin only)</span>
+                            <span className="text-xs font-bold text-[#6b6b73]">Internal note (admin only)</span>
                         </label>
                         <Button type="submit" disabled={pending || !body.trim()}>
                             {pending ? "Sending…" : isInternal ? "Add note" : "Send reply"}

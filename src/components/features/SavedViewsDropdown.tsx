@@ -63,7 +63,7 @@ export function SavedViewsDropdown({ views, currentViewState, onLoadView }: Prop
                             <span className="text-[11px] font-black text-slate-700 uppercase tracking-wider">Saved views</span>
                             <button
                                 onClick={() => setShowSave(s => !s)}
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-brand-blue text-white text-[10px] font-black"
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-brand-blue text-white text-[11px] font-black"
                             >
                                 <Plus size={10} /> Save current
                             </button>
@@ -113,14 +113,14 @@ export function SavedViewsDropdown({ views, currentViewState, onLoadView }: Prop
                                     >
                                         <div>
                                             <div className="text-sm font-black text-[#1d1d1f] group-hover:text-brand-blue">{v.name}</div>
-                                            <div className="text-[10px] text-slate-400 mt-0.5">
+                                            <div className="text-[11px] text-slate-400 mt-0.5">
                                                 {v.is_shared ? "Shared · " : "Private · "}
                                                 {new Date(v.created_at).toLocaleDateString()}
                                             </div>
                                         </div>
                                         <button
                                             onClick={e => handleDelete(e, v.id)}
-                                            className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-300 hover:text-[#ff3b30] transition-all"
+                                            className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-300 hover:text-[#ff3b30] transition-colors"
                                         >
                                             <Trash2 size={12} />
                                         </button>

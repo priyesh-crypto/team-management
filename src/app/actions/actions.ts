@@ -1379,7 +1379,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
 
     const html = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e5ea; border-radius: 16px; overflow: hidden; background-color: #ffffff; color: #1d1d1f;">
-            <div style="padding: 12px 24px; background-color: #f5f5f7; border-bottom: 1px solid #e5e5ea; color: #86868b; font-size: 12px; text-align: center;">
+            <div style="padding: 12px 24px; background-color: #f5f5f7; border-bottom: 1px solid #e5e5ea; color: #6b6b73; font-size: 12px; text-align: center;">
                 ===== WRITE YOUR REPLY ABOVE THIS LINE =====
             </div>
             
@@ -1388,7 +1388,7 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
                 ${isLastSubtask ? '<p style="margin: 0 0 24px 0; font-size: 14px; color: #0051e6; font-weight: 600;">You are now able to complete the parent task</p>' : ''}
                 
                 <div style="margin-bottom: 32px;">
-                    <div style="font-size: 12px; font-weight: 700; color: #86868b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Parent Task</div>
+                    <div style="font-size: 12px; font-weight: 700; color: #6b6b73; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Parent Task</div>
                     <div style="font-size: 20px; font-weight: 800; color: #1d1d1f;">${task.name}</div>
                 </div>
 
@@ -1396,26 +1396,26 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
                     <h3 style="margin: 0 0 16px 0; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Sub-Task Details</h3>
                     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                         <tr>
-                            <td style="padding: 6px 0; color: #86868b; width: 120px; font-weight: 600;">Completed</td>
+                            <td style="padding: 6px 0; color: #6b6b73; width: 120px; font-weight: 600;">Completed</td>
                             <td style="padding: 6px 0; color: #1d1d1f; font-weight: 700;">${currentSubtask?.name}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 6px 0; color: #86868b; font-weight: 600;">Progress</td>
+                            <td style="padding: 6px 0; color: #6b6b73; font-weight: 600;">Progress</td>
                             <td style="padding: 6px 0;">
                                 <span style="color: #0051e6; font-weight: 800;">${progress}%</span>
-                                <span style="font-size: 11px; color: #86868b; margin-left: 4px;">(${completedCount}/${totalCount} sub-tasks)</span>
+                                <span style="font-size: 11px; color: #6b6b73; margin-left: 4px;">(${completedCount}/${totalCount} sub-tasks)</span>
                             </td>
                         </tr>
                         <tr>
-                            <td style="padding: 6px 0; color: #86868b; font-weight: 600;">Assigned To</td>
+                            <td style="padding: 6px 0; color: #6b6b73; font-weight: 600;">Assigned To</td>
                             <td style="padding: 6px 0; color: #1d1d1f; font-weight: 600;">${assigneeNames}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 6px 0; color: #86868b; font-weight: 600;">Priority</td>
+                            <td style="padding: 6px 0; color: #6b6b73; font-weight: 600;">Priority</td>
                             <td style="padding: 6px 0;"><span style="background-color: ${task.priority === 'Urgent' ? '#ff3b30' : task.priority === 'High' ? '#ff9500' : '#0051e6'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase;">${task.priority}</span></td>
                         </tr>
                         <tr>
-                            <td style="padding: 12px 0 6px 0; color: #86868b; font-weight: 600;" colspan="2">Timeline</td>
+                            <td style="padding: 12px 0 6px 0; color: #6b6b73; font-weight: 600;" colspan="2">Timeline</td>
                         </tr>
                         <tr>
                             <td style="padding: 0 0 12px 0; font-weight: 700; color: #1d1d1f;" colspan="2">${task.start_date} - ${task.deadline}</td>
@@ -1425,14 +1425,14 @@ async function sendSubtaskCompletionEmail(subtaskId: string, taskId: string) {
                     <a href="${dashboardUrl}" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background-color: #0051e6; color: white; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 700;">View Task in Dashboard</a>
                 </div>
 
-                <div style="border-top: 1px solid #e5e5ea; padding-top: 24px; font-size: 12px; color: #86868b; line-height: 1.5;">
+                <div style="border-top: 1px solid #e5e5ea; padding-top: 24px; font-size: 12px; color: #6b6b73; line-height: 1.5;">
                     <div style="font-weight: 700; color: #1d1d1f; margin-bottom: 4px;">Project Details</div>
                     <div>Project: Task Management</div>
                     <div>Company: Knotless AI</div>
                 </div>
             </div>
             
-            <div style="padding: 24px; background-color: #f5f5f7; font-size: 11px; color: #86868b; text-align: center;">
+            <div style="padding: 24px; background-color: #f5f5f7; font-size: 11px; color: #6b6b73; text-align: center;">
                 This is an automated notification from your Task Management System.
             </div>
         </div>
@@ -2299,7 +2299,7 @@ export async function sendAlert(userId: string | 'all', message: string, type: '
                         <h2 style="color: #1d1d1f;">System Alert</h2>
                         <p style="font-size: 16px; color: #424245; line-height: 1.6;">${message}</p>
                         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                        <p style="font-size: 12px; color: #86868b;">This is an automated message from your Task Management Dashboard.</p>
+                        <p style="font-size: 12px; color: #6b6b73;">This is an automated message from your Task Management Dashboard.</p>
                     </div>
                 `
             });

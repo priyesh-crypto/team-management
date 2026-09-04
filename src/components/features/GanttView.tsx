@@ -68,7 +68,7 @@ function Avatar({ name, avatarUrl, className }: { name: string; avatarUrl?: stri
         );
     }
     return (
-        <div className={`rounded-full bg-white text-[#1d1d1f] flex items-center justify-center text-[9px] font-black border-2 border-transparent shadow-sm ${className || "w-6 h-6"}`}>
+        <div className={`rounded-full bg-white text-[#1d1d1f] flex items-center justify-center text-[11px] font-black border-2 border-transparent shadow-sm ${className || "w-6 h-6"}`}>
             {initials}
         </div>
     );
@@ -195,13 +195,13 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                     <div className="flex items-center gap-6">
                         {/* Team members (real data) */}
                         <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl">
-                            <span className="text-[10px] font-black uppercase text-slate-400">Team:</span>
+                            <span className="text-[11px] font-black uppercase text-slate-400">Team:</span>
                             <div className="flex -space-x-2">
                                 {profiles.slice(0, 4).map(p => (
                                     <Avatar key={p.id} name={p.name} avatarUrl={p.avatar_url} className="w-6 h-6 border-2 border-slate-50" />
                                 ))}
                                 {profiles.length > 4 && (
-                                    <div className="w-6 h-6 rounded-full bg-white text-slate-500 flex items-center justify-center border-2 border-slate-50 text-[9px] font-black">
+                                    <div className="w-6 h-6 rounded-full bg-white text-slate-500 flex items-center justify-center border-2 border-slate-50 text-[11px] font-black">
                                         +{profiles.length - 4}
                                     </div>
                                 )}
@@ -209,18 +209,18 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                         </div>
                         
                         <div className="flex items-center gap-2 bg-slate-50 rounded-2xl p-1 shadow-inner">
-                            <button onClick={() => shift(-1)} className="p-2 rounded-xl hover:bg-white hover:shadow-sm text-slate-400 transition-all">
+                            <button onClick={() => shift(-1)} className="p-2 rounded-xl hover:bg-white hover:shadow-sm text-slate-400 transition-colors">
                                 <ChevronLeft size={16} />
                             </button>
                             <span className="text-xs font-black text-[#1d1d1f] min-w-[100px] text-center">{headerMonth}</span>
-                            <button onClick={() => shift(1)} className="p-2 rounded-xl hover:bg-white hover:shadow-sm text-slate-400 transition-all">
+                            <button onClick={() => shift(1)} className="p-2 rounded-xl hover:bg-white hover:shadow-sm text-slate-400 transition-colors">
                                 <ChevronRight size={16} />
                             </button>
                         </div>
 
                         <button 
                             onClick={() => setIsAutoSprintEnabled(!isAutoSprintEnabled)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${isAutoSprintEnabled ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/20' : 'bg-slate-100 text-slate-400'}`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-colors ${isAutoSprintEnabled ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/20' : 'bg-slate-100 text-slate-400'}`}
                         >
                             {isAutoSprintEnabled ? <Zap size={14} fill="currentColor" /> : <ZapOff size={14} />}
                             Auto-Sprint: {isAutoSprintEnabled ? 'Active' : 'Off'}
@@ -239,7 +239,7 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                                 const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                                 return (
                                     <div key={i} style={{ width: cellW }} className={`h-full border-r border-slate-100 flex flex-col items-center pt-2 ${isWeekend ? "bg-slate-50/50" : ""}`}>
-                                        <div className={`text-[10px] font-black tracking-widest uppercase mb-1 ${isToday ? "text-brand-blue" : "text-slate-400"}`}>
+                                        <div className={`text-[11px] font-black tracking-widest uppercase mb-1 ${isToday ? "text-brand-blue" : "text-slate-400"}`}>
                                             {d.toLocaleDateString("en-US", { weekday: "short" })}
                                         </div>
                                         <div className={`text-sm font-black ${isToday ? "text-brand-blue" : "text-[#1d1d1f]"}`}>
@@ -253,7 +253,7 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                         {/* Current Time Line */}
                         {todayInView && (
                             <div className="absolute top-0 bottom-0 z-30 w-px bg-red-400" style={{ left: todayLineOffset }}>
-                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-red-50 text-red-500 text-[9px] font-black px-2 py-1 rounded-full whitespace-nowrap shadow-sm">
+                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-red-50 text-red-500 text-[11px] font-black px-2 py-1 rounded-full whitespace-nowrap shadow-sm">
                                     {currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </div>
                                 <div className="absolute top-12 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-red-500 shadow-sm shadow-red-500/50" />
@@ -285,7 +285,7 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                                 return (
                                     <div key={task.id} className="relative h-[60px] mb-3 group cursor-pointer" onClick={() => handleTaskClick(task)}>
                                         <div
-                                            className={`absolute top-1/2 -translate-y-1/2 h-10 rounded-full flex items-center px-2 transition-all duration-300 overflow-hidden
+                                            className={`absolute top-1/2 -translate-y-1/2 h-10 rounded-full flex items-center px-2 transition-[transform,opacity,color,background-color,border-color,box-shadow] duration-300 overflow-hidden
                                                 ${colorClass} 
                                                 ${isActive ? "ring-4 ring-offset-2 ring-brand-blue/20 shadow-lg scale-[1.02] z-20" : "shadow-sm hover:shadow-md hover:brightness-105 z-10"}`}
                                             style={{
@@ -315,7 +315,7 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                 {/* FAB */}
                 <button className="absolute bottom-8 right-8 w-14 h-14 bg-brand-blue rounded-full flex items-center justify-center shadow-xl shadow-brand-blue/30 hover:scale-105 transition-transform z-30 group">
                     <Plus className="text-white group-hover:rotate-90 transition-transform duration-300" size={24} />
-                    <span className="absolute -top-6 text-[10px] font-black text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Add new</span>
+                    <span className="absolute -top-6 text-[11px] font-black text-brand-blue opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Add new</span>
                 </button>
             </div>
 
@@ -324,11 +324,11 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                 <div className="flex items-center justify-between">
                     <div>
                         <h3 className="text-lg font-black text-[#1d1d1f]">Task Details</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mt-1">
                             {currentTime.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
                         </p>
                     </div>
-                    <button className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-white hover:text-slate-700 transition-colors bg-white">
+                    <button className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-white hover:text-slate-700 transition-colors bg-white" aria-label="More options">
                         <MoreHorizontal size={14} />
                     </button>
                 </div>
@@ -342,17 +342,17 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                         <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-5">
                             {/* Task name + priority */}
                             <div className={`border-l-[3px] ${priorityBorder} pl-3`}>
-                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{activeTask.priority} Priority</div>
+                                <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{activeTask.priority} Priority</div>
                                 <div className="text-sm font-black text-[#1d1d1f] mt-0.5 leading-tight">{activeTask.name}</div>
                             </div>
 
                             {/* Status badge */}
                             <div className="flex items-center gap-2">
-                                <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${statusStyle.bg} ${statusStyle.text}`}>
+                                <span className={`text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${statusStyle.bg} ${statusStyle.text}`}>
                                     {activeTask.status}
                                 </span>
                                 {activeTask.hours_spent > 0 && (
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded-lg">
+                                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded-lg">
                                         {activeTask.hours_spent}h logged
                                     </span>
                                 )}
@@ -360,13 +360,13 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
 
                             {/* Assigned to (owner) */}
                             <div>
-                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assigned to:</div>
+                                <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Assigned to:</div>
                                 {ownerProfile ? (
                                     <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                                         <Avatar name={ownerProfile.name} avatarUrl={ownerProfile.avatar_url} className="w-8 h-8 text-xs border border-slate-100 bg-white" />
                                         <div>
                                             <div className="text-[11px] font-black text-[#1d1d1f]">{ownerProfile.name}</div>
-                                            <div className="text-[9px] text-slate-400 font-medium">{ownerProfile.role}</div>
+                                            <div className="text-[11px] text-slate-400 font-medium">{ownerProfile.role}</div>
                                         </div>
                                     </div>
                                 ) : (
@@ -380,12 +380,12 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                             {/* Collaborators */}
                             {activeTaskParticipants.length > 1 && (
                                 <div>
-                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Collaborators:</div>
+                                    <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Collaborators:</div>
                                     <div className="flex flex-wrap gap-2">
                                         {activeTaskParticipants.filter(p => p.id !== activeTask.employee_id).map(p => (
                                             <div key={p.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-100">
                                                 <Avatar name={p.name} avatarUrl={p.avatar_url} className="w-5 h-5 text-[8px] border border-slate-100 bg-white" />
-                                                <span className="text-[10px] font-bold text-slate-600">{p.name}</span>
+                                                <span className="text-[11px] font-bold text-slate-600">{p.name}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -394,7 +394,7 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
 
                             {/* Dates */}
                             <div>
-                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Schedule:</div>
+                                <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2">Schedule:</div>
                                 <div className="grid grid-cols-2 gap-2">
                                     <div className="relative group/date">
                                         <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-50/50 border border-emerald-100 h-full">
@@ -405,7 +405,7 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                                                     type="date" 
                                                     value={activeTask.start_date.split('T')[0]}
                                                     onChange={(e) => handleDateChange(activeTask.id, 'start_date', e.target.value)}
-                                                    className="bg-transparent border-none p-0 text-[10px] font-bold text-emerald-700 w-full focus:ring-0 cursor-pointer"
+                                                    className="bg-transparent border-none p-0 text-[11px] font-bold text-emerald-700 w-full focus:ring-0 cursor-pointer"
                                                 />
                                             </div>
                                         </div>
@@ -419,14 +419,14 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                                                     type="date" 
                                                     value={activeTask.deadline.split('T')[0]}
                                                     onChange={(e) => handleDateChange(activeTask.id, 'deadline', e.target.value)}
-                                                    className="bg-transparent border-none p-0 text-[10px] font-bold text-rose-700 w-full focus:ring-0 cursor-pointer"
+                                                    className="bg-transparent border-none p-0 text-[11px] font-bold text-rose-700 w-full focus:ring-0 cursor-pointer"
                                                 />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 {isSaving && (
-                                    <div className="flex items-center gap-1.5 mt-2 text-[9px] font-black text-brand-blue uppercase tracking-widest animate-pulse">
+                                    <div className="flex items-center gap-1.5 mt-2 text-[11px] font-black text-brand-blue uppercase tracking-widest animate-pulse">
                                         <Loader2 size={10} className="animate-spin" /> Updating schedule...
                                     </div>
                                 )}
@@ -434,7 +434,7 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
 
                             {/* Subtasks */}
                             <div>
-                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Subtasks:</div>
+                                <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">Subtasks:</div>
                                 <div className="space-y-2">
                                     {isLoadingSubtasks ? (
                                         <div className="text-xs font-bold text-slate-400 text-center py-4">Loading...</div>
@@ -473,16 +473,16 @@ export function GanttView({ tasks, profiles, onTaskClick }: Props) {
                         <div className="text-4xl font-black text-brand-blue tracking-tighter">
                             {completedCount}<span className="text-2xl text-slate-300">/{tasks.length}</span>
                         </div>
-                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Tasks completed</div>
+                        <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-1">Tasks completed</div>
                     </div>
                     
                     <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden relative">
                         <div 
-                            className="absolute top-0 bottom-0 left-0 bg-brand-blue rounded-full transition-all duration-1000 ease-out"
+                            className="absolute top-0 bottom-0 left-0 bg-brand-blue rounded-full transition-colors duration-1000 ease-out"
                             style={{ width: `${progress}%` }}
                         />
                     </div>
-                    <div className="text-right mt-2 text-[9px] font-black text-brand-blue">{Math.round(progress)}%</div>
+                    <div className="text-right mt-2 text-[11px] font-black text-brand-blue">{Math.round(progress)}%</div>
                 </div>
             </div>
         </div>

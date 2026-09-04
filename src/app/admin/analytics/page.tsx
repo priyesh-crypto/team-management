@@ -29,9 +29,9 @@ export default async function AnalyticsPage() {
                     { label: "Churned", value: funnel.canceled, sub: `${pct(funnel.canceled, funnel.total)}%`, color: "bg-red-50", text: "text-red-700" },
                 ].map(({ label, value, sub, color, text }) => (
                     <div key={label} className={`rounded-2xl border border-[#e5e5ea] ${color} p-5`}>
-                        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[#86868b]">{label}</div>
+                        <div className="text-[11px] font-black uppercase tracking-[0.2em] text-[#6b6b73]">{label}</div>
                         <div className={`text-3xl font-black mt-1.5 ${text}`}>{value}</div>
-                        {sub && <div className="text-[10px] font-bold text-[#86868b] mt-1">{sub} of total</div>}
+                        {sub && <div className="text-[11px] font-bold text-[#6b6b73] mt-1">{sub} of total</div>}
                     </div>
                 ))}
             </div>
@@ -42,7 +42,7 @@ export default async function AnalyticsPage() {
                     <SectionLabel>Trial → Paid conversion</SectionLabel>
                     <div className="flex items-end gap-4 mt-2">
                         <div className="text-5xl font-black text-brand-blue">{funnel.trialToActiveRate}%</div>
-                        <div className="text-sm text-[#86868b] pb-1">
+                        <div className="text-sm text-[#6b6b73] pb-1">
                             {funnel.active} paid of {funnel.trialing + funnel.active} ever-trialed
                         </div>
                     </div>
@@ -54,7 +54,7 @@ export default async function AnalyticsPage() {
                     <SectionLabel>Churn rate (ever-paid)</SectionLabel>
                     <div className="flex items-end gap-4 mt-2">
                         <div className="text-5xl font-black text-red-500">{funnel.churnRate}%</div>
-                        <div className="text-sm text-[#86868b] pb-1">
+                        <div className="text-sm text-[#6b6b73] pb-1">
                             {funnel.canceled} churned of {funnel.active + funnel.canceled} ever-paid
                         </div>
                     </div>
@@ -68,7 +68,7 @@ export default async function AnalyticsPage() {
             <Card>
                 <SectionLabel>New signups — last 30 days</SectionLabel>
                 {signupDays.length === 0 ? (
-                    <p className="text-sm text-[#86868b] py-6 text-center">No signups in the last 30 days.</p>
+                    <p className="text-sm text-[#6b6b73] py-6 text-center">No signups in the last 30 days.</p>
                 ) : (
                     <div className="flex items-end gap-1.5 h-28 mt-4 overflow-x-auto">
                         {signupDays.map(d => {
@@ -77,9 +77,9 @@ export default async function AnalyticsPage() {
                             return (
                                 <div key={d} className="flex flex-col items-center gap-1 flex-shrink-0" style={{ minWidth: 24 }}
                                     title={`${d}: ${count} signups`}>
-                                    <span className="text-[9px] font-bold text-brand-blue">{count > 0 ? count : ""}</span>
+                                    <span className="text-[11px] font-bold text-brand-blue">{count > 0 ? count : ""}</span>
                                     <div className="w-4 rounded-t bg-brand-blue/80" style={{ height: `${h}%` }} />
-                                    <span className="text-[8px] text-[#86868b]">{new Date(d + "T00:00:00").getDate()}</span>
+                                    <span className="text-[8px] text-[#6b6b73]">{new Date(d + "T00:00:00").getDate()}</span>
                                 </div>
                             );
                         })}
@@ -90,11 +90,11 @@ export default async function AnalyticsPage() {
             {/* Cohort retention */}
             <Card>
                 <SectionLabel>Cohort retention — by signup month</SectionLabel>
-                <p className="text-[10px] text-[#86868b] mb-4">
+                <p className="text-[11px] text-[#6b6b73] mb-4">
                     % of orgs from each signup cohort currently on an active paid plan.
                 </p>
                 {cohorts.length === 0 ? (
-                    <p className="text-sm text-[#86868b] py-4 text-center">No data yet.</p>
+                    <p className="text-sm text-[#6b6b73] py-4 text-center">No data yet.</p>
                 ) : (
                     <div className="space-y-2">
                         {cohorts.slice(-12).map(c => {
@@ -111,12 +111,12 @@ export default async function AnalyticsPage() {
                                         <div className={`h-full rounded-full ${activeColor}`}
                                             style={{ width: `${c.activeRate}%` }} />
                                     </div>
-                                    <div className="text-[10px] text-[#86868b] w-32 text-right flex-shrink-0">
+                                    <div className="text-[11px] text-[#6b6b73] w-32 text-right flex-shrink-0">
                                         <span className="font-black text-[#1d1d1f]">{c.active}</span> paid ·{" "}
                                         <span className="font-black text-amber-600">{c.trialing}</span> trial ·{" "}
                                         <span className="text-red-400 font-bold">{c.canceled}</span> churned
                                     </div>
-                                    <span className={`text-[10px] font-black w-10 text-right ${
+                                    <span className={`text-[11px] font-black w-10 text-right ${
                                         c.activeRate >= 60 ? "text-emerald-600" :
                                         c.activeRate >= 30 ? "text-amber-600" : "text-red-500"
                                     }`}>

@@ -20,7 +20,7 @@ export default async function TermsPage() {
 
     return (
         <main className="max-w-2xl mx-auto py-16 px-6">
-            <p className="text-xs text-[#86868b] mb-6">
+            <p className="text-xs text-[#6b6b73] mb-6">
                 Last updated: {new Date(page.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
             </p>
             <article

@@ -55,7 +55,7 @@ export async function createProjectStatus(input: {
         org_id: orgId,
         project_id: input.project_id,
         name: input.name,
-        color: input.color ?? "#86868b",
+        color: input.color ?? "#6b6b73",
         sort_order: input.sort_order ?? 0,
         is_done: input.is_done ?? false,
     });

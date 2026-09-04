@@ -25,7 +25,7 @@ export function BroadcastDeleteButton({ broadcastId }: { broadcastId: string }) 
                     }
                 });
             }}
-            className="p-2 rounded-md text-[#86868b] hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+            className="p-2 rounded-md text-[#6b6b73] hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
             title="Delete broadcast"
         >
             <Trash2 size={14} strokeWidth={2} />

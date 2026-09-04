@@ -64,11 +64,11 @@ export function CustomRolesManager({ orgId, roles: initialRoles }: Props) {
                                     <div className="flex items-center gap-2">
                                         <div className="text-sm font-black text-[#1d1d1f]">{role.name}</div>
                                         {role.is_system && (
-                                            <span className="text-[9px] px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-black uppercase">System</span>
+                                            <span className="text-[11px] px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 font-black uppercase">System</span>
                                         )}
                                     </div>
                                     {role.description && <div className="text-xs text-slate-400 mt-0.5">{role.description}</div>}
-                                    <div className="text-[10px] text-slate-400 mt-0.5">
+                                    <div className="text-[11px] text-slate-400 mt-0.5">
                                         {Object.values(role.permissions).filter(Boolean).length} / {ALL_PERMISSIONS.length} permissions
                                     </div>
                                 </div>
@@ -158,12 +158,12 @@ function RoleForm({ orgId, existing, onSave, onCancel, readOnly = false }: {
             {!readOnly && (
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Role name</label>
+                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">Role name</label>
                         <input value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Read-only Auditor"
                             className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none bg-white" />
                     </div>
                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Description</label>
+                        <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">Description</label>
                         <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional"
                             className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none bg-white" />
                     </div>
@@ -171,7 +171,7 @@ function RoleForm({ orgId, existing, onSave, onCancel, readOnly = false }: {
             )}
 
             <div>
-                <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Permissions</div>
+                <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">Permissions</div>
                 <div className="space-y-3">
                     {PERMISSION_GROUPS.map(group => {
                         const allOn = group.keys.every(k => selected.includes(k));
@@ -179,7 +179,7 @@ function RoleForm({ orgId, existing, onSave, onCancel, readOnly = false }: {
                             <div key={group.label}>
                                 <div className="flex items-center gap-2 mb-1.5">
                                     <button type="button" onClick={() => !readOnly && toggleGroup(group.keys, allOn)}
-                                        className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded transition-colors ${allOn ? "bg-brand-blue/10 text-brand-blue" : "text-slate-400 hover:text-slate-600"}`}>
+                                        className={`text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded transition-colors ${allOn ? "bg-brand-blue/10 text-brand-blue" : "text-slate-400 hover:text-slate-600"}`}>
                                         {group.label}
                                     </button>
                                 </div>

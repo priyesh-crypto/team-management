@@ -42,7 +42,7 @@ export function PortalClient({ orgName, tasks }: Props) {
             <header className="bg-white border-b border-slate-200 px-6 py-4">
                 <div className="max-w-3xl mx-auto flex items-center justify-between">
                     <div>
-                        <div className="text-[10px] font-black text-brand-blue uppercase tracking-wider">Client Portal</div>
+                        <div className="text-[11px] font-black text-brand-blue uppercase tracking-wider">Client Portal</div>
                         <div className="text-lg font-black text-[#1d1d1f]">{orgName}</div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -93,7 +93,7 @@ function TaskCard({ task }: { task: PortalTask }) {
             <div className="flex items-start gap-3">
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black ${PRIORITY_COLORS[task.priority] ?? "bg-slate-100 text-slate-500"}`}>
+                        <span className={`px-2 py-0.5 rounded-lg text-[11px] font-black ${PRIORITY_COLORS[task.priority] ?? "bg-slate-100 text-slate-500"}`}>
                             <Flag size={9} className="inline mr-0.5" />
                             {task.priority}
                         </span>
@@ -101,7 +101,7 @@ function TaskCard({ task }: { task: PortalTask }) {
                             {task.status}
                         </span>
                         {isOverdue && (
-                            <span className="text-[10px] font-black text-[#ff3b30] px-2 py-0.5 rounded-lg bg-[#ff3b30]/10">
+                            <span className="text-[11px] font-black text-[#ff3b30] px-2 py-0.5 rounded-lg bg-[#ff3b30]/10">
                                 OVERDUE
                             </span>
                         )}

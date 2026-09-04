@@ -8,14 +8,14 @@ const STATUS_STYLES: Record<string, string> = {
     open:        "bg-emerald-50 text-emerald-700",
     in_progress: "bg-brand-blue/10 text-brand-blue",
     resolved:    "bg-slate-100 text-slate-500",
-    closed:      "bg-[#f5f5f7] text-[#86868b]",
+    closed:      "bg-[#f5f5f7] text-[#6b6b73]",
 };
 
 const PRIORITY_STYLES: Record<string, string> = {
     urgent: "bg-red-50 text-red-700",
     high:   "bg-orange-50 text-orange-700",
     normal: "bg-slate-50 text-slate-600",
-    low:    "bg-[#f5f5f7] text-[#86868b]",
+    low:    "bg-[#f5f5f7] text-[#6b6b73]",
 };
 
 export default async function SupportPage({
@@ -51,7 +51,7 @@ export default async function SupportPage({
 
             {tickets.length === 0 ? (
                 <Card>
-                    <p className="text-sm text-[#86868b] text-center py-6">
+                    <p className="text-sm text-[#6b6b73] text-center py-6">
                         No {status !== "all" ? status.replace("_", " ") : ""} tickets.
                     </p>
                 </Card>
@@ -66,14 +66,14 @@ export default async function SupportPage({
                                         <h3 className="text-sm font-medium text-[#1d1d1f] group-hover:text-brand-blue transition-colors">
                                             {t.subject}
                                         </h3>
-                                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_STYLES[t.status] ?? "bg-[#f5f5f7] text-[#86868b]"}`}>
+                                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_STYLES[t.status] ?? "bg-[#f5f5f7] text-[#6b6b73]"}`}>
                                             {t.status.replace("_", " ")}
                                         </span>
                                         <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${PRIORITY_STYLES[t.priority] ?? ""}`}>
                                             {t.priority}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-3 mt-1.5 text-xs text-[#86868b]">
+                                    <div className="flex items-center gap-3 mt-1.5 text-xs text-[#6b6b73]">
                                         {t.organizations && (
                                             <span className="inline-flex items-center gap-1">
                                                 <Building2 size={12} strokeWidth={2} />
@@ -84,7 +84,7 @@ export default async function SupportPage({
                                         <span>Updated {new Date(t.updated_at).toLocaleDateString()}</span>
                                     </div>
                                 </div>
-                                <span className="text-[#86868b]">→</span>
+                                <span className="text-[#6b6b73]">→</span>
                             </div>
                         </Link>
                     ))}

@@ -153,23 +153,23 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
     return (
         <div className="flex flex-col h-full bg-slate-50/50 p-6 rounded-[32px] gap-6 overflow-y-auto custom-scrollbar">
             {/* Header Controls */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm transition-all duration-300">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm transition-colors duration-300">
                 <div className="flex items-center gap-8">
                     <div className="space-y-1">
                         <h2 className="text-xl font-bold text-slate-900 tracking-tight">Timeline</h2>
                         <div className="flex items-center gap-4">
-                            <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest">
+                            <p className="text-slate-400 font-bold text-[11px] uppercase tracking-widest">
                                 {mounted ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '...'}
                             </p>
                             <div className="h-3 w-px bg-slate-100" />
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-1.5 h-1.5 rounded-full bg-slate-900" />
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tasks.length} Total</span>
+                                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{tasks.length} Total</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-1.5 h-1.5 rounded-full bg-[#34c759]" />
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{tasks.filter(t => t.status === 'Completed').length} Done</span>
+                                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{tasks.filter(t => t.status === 'Completed').length} Done</span>
                                 </div>
                             </div>
                         </div>
@@ -178,13 +178,13 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                     <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
                         <button 
                             onClick={() => setViewMode('week')}
-                            className={`px-5 py-1.5 rounded-lg text-[9px] font-bold tracking-widest transition-all duration-300 ${viewMode === 'week' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`px-5 py-1.5 rounded-lg text-[11px] font-bold tracking-widest transition-colors duration-300 ${viewMode === 'week' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             WEEK
                         </button>
                         <button 
                             onClick={() => setViewMode('month')}
-                            className={`px-5 py-1.5 rounded-lg text-[9px] font-bold tracking-widest transition-all duration-300 ${viewMode === 'month' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`px-5 py-1.5 rounded-lg text-[11px] font-bold tracking-widest transition-colors duration-300 ${viewMode === 'month' ? 'bg-white text-slate-900 shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             MONTH
                         </button>
@@ -199,20 +199,20 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                             placeholder="Find member or task..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-10 pl-10 pr-4 rounded-xl bg-slate-50/50 border border-slate-100 text-[11px] font-medium outline-none focus:bg-white focus:border-brand-blue/30 transition-all w-full sm:w-48 lg:w-64"
+                            className="h-10 pl-10 pr-4 rounded-xl bg-slate-50/50 border border-slate-100 text-[11px] font-medium outline-none focus:bg-white focus:border-brand-blue/30 transition-colors w-full sm:w-48 lg:w-64"
                         />
                     </div>
                     <div className="flex gap-2">
                         <button 
                             onClick={() => setCurrentDate(new Date())}
-                            className="h-10 px-4 rounded-xl bg-white border border-slate-100 hover:border-slate-300 transition-all text-[9px] font-bold uppercase tracking-widest text-slate-500"
+                            className="h-10 px-4 rounded-xl bg-white border border-slate-100 hover:border-slate-300 transition-colors text-[11px] font-bold uppercase tracking-widest text-slate-500"
                         >
                             Today
                         </button>
-                        <button onClick={() => navigate('prev')} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 hover:border-slate-300 transition-all text-slate-500">
+                        <button onClick={() => navigate('prev')} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 hover:border-slate-300 transition-colors text-slate-500">
                             <ChevronLeft size={16} />
                         </button>
-                        <button onClick={() => navigate('next')} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 hover:border-slate-300 transition-all text-slate-500">
+                        <button onClick={() => navigate('next')} className="h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-slate-100 hover:border-slate-300 transition-colors text-slate-500">
                             <ChevronRight size={16} />
                         </button>
                     </div>
@@ -234,7 +234,7 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                     {/* Horizontal Date Header */}
                     <div className="flex bg-white sticky top-0 z-30 border-b border-slate-50 min-w-max">
                         <div className="w-[var(--sticky-width)] border-r border-slate-50 shrink-0 p-5 sticky left-0 bg-white z-40 flex items-center">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Team Availability</span>
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Team Availability</span>
                         </div>
                         <div className="flex">
                             {timelineData.days.map((date, i) => {
@@ -242,7 +242,7 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                                 return (
                                     <div 
                                         key={i} 
-                                        className={`w-[var(--col-width)] py-4 text-center border-l first:border-l-0 border-slate-50 transition-all relative ${active ? 'bg-slate-50/50 today-column' : ''}`}
+                                        className={`w-[var(--col-width)] py-4 text-center border-l first:border-l-0 border-slate-50 transition-colors relative ${active ? 'bg-slate-50/50 today-column' : ''}`}
                                     >
                                         <p className={`text-[8px] font-bold uppercase tracking-widest mb-1 ${active ? 'text-brand-blue' : 'text-slate-400'}`}>
                                             {mounted ? date.toLocaleDateString('en-US', { weekday: 'short' }) : '...'}
@@ -267,7 +267,7 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                             {employees.filter(e => e.name.toLowerCase().includes(searchQuery.toLowerCase())).map((emp, empIdx) => (
                                 <div key={emp.id} className="flex min-h-[90px] border-b border-slate-50 group transition-colors hover:bg-slate-50/30">
                                     {/* Sticky Profile Column */}
-                                    <div className="w-[var(--sticky-width)] border-r border-slate-50 shrink-0 p-5 flex items-center gap-4 sticky left-0 bg-white group-hover:bg-slate-50/30 z-20 transition-all">
+                                    <div className="w-[var(--sticky-width)] border-r border-slate-50 shrink-0 p-5 flex items-center gap-4 sticky left-0 bg-white group-hover:bg-slate-50/30 z-20 transition-colors">
                                         <UserAvatar
                                             name={emp.name}
                                             avatarUrl={emp.avatar_url}
@@ -352,7 +352,7 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                                                     <div
                                                         key={task.id}
                                                         onClick={() => onTaskClick(task)}
-                                                        className={`absolute h-8 rounded-lg border px-3 flex items-center gap-2 transition-all duration-300 hover:z-10 hover:shadow-md cursor-pointer group/task ${getBaseClasses()}`}
+                                                        className={`absolute h-8 rounded-lg border px-3 flex items-center gap-2 transition-colors duration-300 hover:z-10 hover:shadow-md cursor-pointer group/task ${getBaseClasses()}`}
                                                         style={{
                                                             left: `${left + 6}px`,
                                                             width: `${width - 12}px`,
@@ -361,7 +361,7 @@ export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmpl
                                                         }}
                                                     >
                                                         <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getAccentClasses()}`} />
-                                                        <span className="text-[10px] font-bold truncate overflow-hidden">{task.name}</span>
+                                                        <span className="text-[11px] font-bold truncate overflow-hidden">{task.name}</span>
                                                     </div>
                                                 );
                                             });

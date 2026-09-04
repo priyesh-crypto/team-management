@@ -44,7 +44,7 @@ export function RequestExportButton() {
 
     if (initialising) {
         return (
-            <div className="flex items-center gap-2 text-[11px] text-[#86868b]">
+            <div className="flex items-center gap-2 text-[11px] text-[#6b6b73]">
                 <Loader2 size={14} className="animate-spin" />
                 <span>Checking export status…</span>
             </div>
@@ -61,7 +61,7 @@ export function RequestExportButton() {
                     <button
                         onClick={handleRequest}
                         disabled={loading}
-                        className="text-[10px] font-black uppercase tracking-widest text-brand-blue hover:underline disabled:opacity-50 flex items-center gap-1"
+                        className="text-[11px] font-black uppercase tracking-widest text-brand-blue hover:underline disabled:opacity-50 flex items-center gap-1"
                     >
                         {loading ? <><Loader2 size={12} className="animate-spin" /> Preparing…</> : 'Request a new export'}
                     </button>
@@ -74,7 +74,7 @@ export function RequestExportButton() {
         <button
             onClick={handleRequest}
             disabled={loading}
-            className="flex items-center gap-2 h-10 px-5 rounded-xl bg-[#f5f5f7] border border-[#e5e5ea] text-[10px] font-black uppercase tracking-widest text-[#1d1d1f] hover:bg-[#e5e5ea] transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 h-10 px-5 rounded-xl bg-[#f5f5f7] border border-[#e5e5ea] text-[11px] font-black uppercase tracking-widest text-[#1d1d1f] hover:bg-[#e5e5ea] transition-colors disabled:opacity-50"
         >
             {loading ? (
                 <><Loader2 size={14} className="animate-spin" /> Preparing…</>
@@ -109,12 +109,12 @@ function ExportStatusCard({ request }: { request: GdprRequest }) {
                 <p className={`text-[11px] font-black uppercase tracking-widest ${cfg.color}`}>
                     {cfg.label}
                 </p>
-                <p className="text-[11px] text-[#86868b] mt-0.5">Requested {date}</p>
+                <p className="text-[11px] text-[#6b6b73] mt-0.5">Requested {date}</p>
                 {request.status === 'completed' && request.download_url && (
                     <a
                         href={request.download_url}
                         download={`my-data-export.json`}
-                        className="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest text-brand-blue hover:underline"
+                        className="inline-flex items-center gap-1 mt-2 text-[11px] font-black uppercase tracking-widest text-brand-blue hover:underline"
                     >
                         <Download size={12} /> Download JSON
                     </a>
@@ -174,7 +174,7 @@ export function RequestDeletionButton() {
         <>
             <button
                 onClick={() => setModalOpen(true)}
-                className="flex items-center gap-2 h-10 px-5 rounded-xl bg-red-50 border border-red-100 text-[10px] font-black uppercase tracking-widest text-[#ff3b30] hover:bg-red-100 transition-colors"
+                className="flex items-center gap-2 h-10 px-5 rounded-xl bg-red-50 border border-red-100 text-[11px] font-black uppercase tracking-widest text-[#ff3b30] hover:bg-red-100 transition-colors"
             >
                 <Trash2 size={14} /> Delete my account
             </button>

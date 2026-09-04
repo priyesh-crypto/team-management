@@ -56,21 +56,21 @@ export default async function OrgAuditPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="text-sm font-black text-[#1d1d1f]">{log.action.replace(/_/g, " ")}</div>
-                            <div className="text-[10px] font-bold text-slate-400 mt-0.5">
+                            <div className="text-[11px] font-bold text-slate-400 mt-0.5">
                                 {log.actor_email ?? log.actor_id?.slice(0, 8) ?? "system"}
                                 {log.resource_type && ` · ${log.resource_type}`}
                             </div>
                             {log.payload && Object.keys(log.payload).length > 0 && (
                                 <div className="flex flex-wrap gap-1.5 mt-1.5">
                                     {Object.entries(log.payload as Record<string, unknown>).slice(0, 4).map(([k, v]) => (
-                                        <span key={k} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-bold">
+                                        <span key={k} className="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-bold">
                                             {k}: {String(v).slice(0, 30)}
                                         </span>
                                     ))}
                                 </div>
                             )}
                         </div>
-                        <div className="text-[10px] font-bold text-slate-400 whitespace-nowrap flex-shrink-0">
+                        <div className="text-[11px] font-bold text-slate-400 whitespace-nowrap flex-shrink-0">
                             {new Date(log.created_at).toLocaleString()}
                         </div>
                     </div>

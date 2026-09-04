@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { Card, Button, Input } from '@/components/ui/components';
+import { Card, Input } from '@/components/ui/components';
 import Logo from '@/components/ui/Logo';
+import { SubmitButton } from '@/components/ui/SubmitButton';
 import { requestPasswordReset } from '@/app/actions/actions';
 import { redirect } from 'next/navigation';
 import { validateEmail, sanitizeString } from '@/utils/security';
@@ -25,15 +26,15 @@ export default function PasswordResetPage() {
             <div className="w-full max-w-md text-center">
                 <Logo className="mb-4 mx-auto" />
                 <h1 className="text-2xl font-black text-[#1d1d1f] mb-2">Reset Password</h1>
-                <p className="text-[#86868b] text-sm font-medium mb-8">Enter your email and we&apos;ll send you a link to reset your password.</p>
+                <p className="text-[#6b6b73] text-sm font-medium mb-8">Enter your email and we&apos;ll send you a link to reset your password.</p>
                 
                 <Card className="p-8 text-left">
                     <form action={handleReset} className="space-y-4">
                         <Input name="email" type="email" required placeholder="Email Address" className="w-full h-12" />
-                        <Button type="submit" className="w-full h-12 text-md font-bold mt-2">Send Reset Link</Button>
+                        <SubmitButton pendingText="Sending…" className="w-full h-12 text-md font-bold mt-2">Send Reset Link</SubmitButton>
                     </form>
                     <div className="mt-6 text-center">
-                        <Link href="/" className="text-xs font-bold text-[#86868b] hover:text-[#1d1d1f]">Back to Login</Link>
+                        <Link href="/" className="text-xs font-bold text-[#6b6b73] hover:text-[#1d1d1f]">Back to Login</Link>
                     </div>
                 </Card>
             </div>

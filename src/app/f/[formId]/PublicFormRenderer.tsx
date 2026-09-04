@@ -125,7 +125,7 @@ export function PublicFormRenderer({ form }: Props) {
             {/* Submitter info */}
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">Your name</label>
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">Your name</label>
                     <input
                         value={submitterName}
                         onChange={e => setSubmitterName(e.target.value)}
@@ -134,7 +134,7 @@ export function PublicFormRenderer({ form }: Props) {
                     />
                 </div>
                 <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">Your email</label>
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">Your email</label>
                     <input
                         type="email"
                         value={submitterEmail}
@@ -148,7 +148,7 @@ export function PublicFormRenderer({ form }: Props) {
             {/* Custom fields */}
             {form.fields.map(field => (
                 <div key={field.id}>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">
                         {field.label}
                         {field.required && <span className="text-[#ff3b30] ml-0.5">*</span>}
                     </label>
@@ -171,7 +171,7 @@ export function PublicFormRenderer({ form }: Props) {
                 {submitting ? "Submitting…" : "Submit request"}
             </button>
 
-            <p className="text-center text-[10px] text-slate-400">
+            <p className="text-center text-[11px] text-slate-400">
                 Powered by <span className="font-black text-brand-blue">TaskFlow</span>
             </p>
         </form>

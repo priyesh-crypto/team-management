@@ -91,7 +91,7 @@ export function SSOConfigForm({ orgId, config }: Props) {
                             <Field label="IdP Entity ID" value={fields.idp_entity_id} onChange={v => set("idp_entity_id", v)} placeholder="https://idp.example.com/entity" />
                             <Field label="IdP SSO URL" value={fields.idp_sso_url} onChange={v => set("idp_sso_url", v)} placeholder="https://idp.example.com/sso" />
                             <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">IdP Certificate (PEM)</label>
+                                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">IdP Certificate (PEM)</label>
                                 <textarea
                                     value={fields.idp_certificate}
                                     onChange={e => set("idp_certificate", e.target.value)}
@@ -113,7 +113,7 @@ export function SSOConfigForm({ orgId, config }: Props) {
 
                     <div className="pt-2 border-t border-slate-100">
                         <div className="bg-slate-50 rounded-xl p-4 mb-4">
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">ACS / Callback URL</div>
+                            <div className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">ACS / Callback URL</div>
                             <code className="text-xs font-mono text-slate-700">
                                 {typeof window !== "undefined" ? window.location.origin : "https://app.taskflow.io"}/api/auth/sso/callback
                             </code>
@@ -134,7 +134,7 @@ function Field({ label, value, onChange, placeholder, type = "text" }: {
 }) {
     return (
         <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">{label}</label>
+            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">{label}</label>
             <input
                 type={type}
                 value={value}

@@ -654,7 +654,7 @@ export default function EmployeeDashboard({
                                         <h4 className={`text-[13px] font-bold ${burnoutRisk === 'High' ? 'text-[#ff3b30]' : 'text-[#f5a623]'}`}>
                                             {burnoutRisk === 'High' ? 'High Workload Warning' : 'Approaching Capacity'}
                                         </h4>
-                                        <p className="text-[11px] text-[#86868b]">
+                                        <p className="text-[11px] text-[#6b6b73]">
                                             {burnoutRisk === 'High' 
                                                 ? "You have a high volume of urgent and overdue tasks. Consider rebalancing with your manager."
                                                 : "Your task load is increasing. Take a breath and prioritize your most important work."}
@@ -662,7 +662,7 @@ export default function EmployeeDashboard({
                                     </div>
                                 </div>
                                 <button 
-                                    className="px-4 py-2 bg-white rounded-xl border border-[#e5e5ea] text-[11px] font-bold hover:shadow-sm transition-all"
+                                    className="px-4 py-2 bg-white rounded-xl border border-[#e5e5ea] text-[11px] font-bold hover:shadow-sm transition-colors"
                                     onClick={() => setActiveTab('mine')}
                                 >
                                     Review My Tasks
@@ -748,7 +748,7 @@ export default function EmployeeDashboard({
                             <div className="flex flex-col items-center text-center">
                                 <div className="w-16 h-16 bg-[#ff3b30]/10 rounded-full flex items-center justify-center mb-6"><Trash2 size={32} color="#ff3b30" /></div>
                                 <h3 className="text-xl font-black mb-2">Delete Task?</h3>
-                                <p className="text-sm text-[#86868b] mb-8">Permanently remove "{taskToDelete?.name}"?</p>
+                                <p className="text-sm text-[#6b6b73] mb-8">Permanently remove "{taskToDelete?.name}"?</p>
                                 <div className="flex gap-3 w-full">
                                     <Button variant="secondary" className="flex-1" onClick={cancelDelete} disabled={isDeletingTask}>Cancel</Button>
                                     <Button className="flex-1 bg-[#ff3b30] hover:bg-[#ff3b30]/90" onClick={confirmDelete} disabled={isDeletingTask}>{isDeletingTask ? 'Deleting...' : 'Delete Task'}</Button>
@@ -764,7 +764,7 @@ export default function EmployeeDashboard({
                             <div className="flex flex-col items-center text-center">
                                 <div className="w-14 h-14 bg-[#ff3b30]/10 rounded-2xl flex items-center justify-center mb-6"><Trash2 size={24} color="#ff3b30" /></div>
                                 <h3 className="text-lg font-black mb-2 uppercase tracking-widest text-[11px]">Confirm Delete Log</h3>
-                                <p className="text-[13px] text-[#86868b] mb-8">Delete log "{subtaskToDelete.subtaskName}"?</p>
+                                <p className="text-[13px] text-[#6b6b73] mb-8">Delete log "{subtaskToDelete.subtaskName}"?</p>
                                 <div className="grid grid-cols-2 gap-3 w-full">
                                     <Button variant="secondary" onClick={cancelDeleteSubtask} disabled={isDeletingSubtask}>Cancel</Button>
                                     <Button className="bg-[#ff3b30] hover:bg-[#e03126]" onClick={confirmDeleteSubtask} disabled={isDeletingSubtask}>{isDeletingSubtask ? 'Deleting...' : 'Delete'}</Button>

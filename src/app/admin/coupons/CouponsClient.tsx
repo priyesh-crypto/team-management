@@ -87,7 +87,7 @@ export function CouponsClient({ initialCoupons }: { initialCoupons: Coupon[] }) 
                         </Field>
 
                         <div>
-                            <p className="text-[10px] font-black text-[#86868b] uppercase tracking-wider mb-2">Discount type</p>
+                            <p className="text-[11px] font-black text-[#6b6b73] uppercase tracking-wider mb-2">Discount type</p>
                             <div className="flex gap-3">
                                 {(["percent", "amount"] as const).map(t => (
                                     <label key={t} className="flex items-center gap-2 cursor-pointer">
@@ -127,11 +127,11 @@ export function CouponsClient({ initialCoupons }: { initialCoupons: Coupon[] }) 
             <Card>
                 <SectionLabel>All coupons</SectionLabel>
                 {coupons.length === 0 ? (
-                    <p className="text-sm text-[#86868b] py-6 text-center">No coupons yet.</p>
+                    <p className="text-sm text-[#6b6b73] py-6 text-center">No coupons yet.</p>
                 ) : (
                     <table className="w-full">
                         <thead>
-                            <tr className="text-left text-[9px] font-black uppercase tracking-[0.15em] text-[#86868b] border-b border-[#f5f5f7]">
+                            <tr className="text-left text-[11px] font-black uppercase tracking-[0.15em] text-[#6b6b73] border-b border-[#f5f5f7]">
                                 <th className="pb-3">Code</th>
                                 <th className="pb-3 text-center">Discount</th>
                                 <th className="pb-3 text-center">Redemptions</th>
@@ -147,14 +147,14 @@ export function CouponsClient({ initialCoupons }: { initialCoupons: Coupon[] }) 
                                     <td className="py-3 text-center text-sm font-bold text-[#1d1d1f]">
                                         {c.percent_off ? `${c.percent_off}%` : `$${((c.amount_off_cents ?? 0) / 100).toFixed(2)}`}
                                     </td>
-                                    <td className="py-3 text-center text-sm text-[#86868b]">
+                                    <td className="py-3 text-center text-sm text-[#6b6b73]">
                                         {c.redemptions}{c.max_redemptions ? ` / ${c.max_redemptions}` : ""}
                                     </td>
-                                    <td className="py-3 text-center text-[11px] text-[#86868b]">
+                                    <td className="py-3 text-center text-[11px] text-[#6b6b73]">
                                         {c.valid_until ? new Date(c.valid_until).toLocaleDateString() : "—"}
                                     </td>
                                     <td className="py-3 text-center">
-                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-black uppercase ${
                                             c.is_active ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"
                                         }`}>
                                             {c.is_active ? "Active" : "Inactive"}
@@ -165,7 +165,7 @@ export function CouponsClient({ initialCoupons }: { initialCoupons: Coupon[] }) 
                                             <button
                                                 disabled={pending}
                                                 onClick={() => handleDeactivate(c.code)}
-                                                className="text-[10px] font-black text-[#86868b] hover:text-red-500 transition-colors"
+                                                className="text-[11px] font-black text-[#6b6b73] hover:text-red-500 transition-colors"
                                             >
                                                 Deactivate
                                             </button>

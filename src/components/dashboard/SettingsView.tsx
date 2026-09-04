@@ -8,7 +8,7 @@ import { updateProfile, changePassword, uploadAvatar } from '@/app/actions/actio
 import { DataSummaryTable } from '@/components/dashboard/DataSummaryTable';
 import { RequestExportButton, RequestDeletionButton } from '@/components/dashboard/GdprControls';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import { CreditCard, Palette, Shield, Users as UsersIcon, Plug, FileText, Download, ChevronRight } from 'lucide-react';
+import { CreditCard, Palette, Shield, Users as UsersIcon, Plug, FileText, Download, ChevronRight, Lock } from 'lucide-react';
 
 const DigestSettings = dynamic(() => import('@/components/DigestSettings').then(m => ({ default: m.DigestSettings })), { 
     ssr: false,
@@ -114,7 +114,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                         title="Change photo"
                     >
                         {isUploadingAvatar
-                            ? <span className="text-white text-[10px] font-black">...</span>
+                            ? <span className="text-white text-[11px] font-black">...</span>
                             : <span className="text-white text-lg">📷</span>
                         }
                     </button>
@@ -122,14 +122,14 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                 </div>
                 <div>
                     <h2 className="text-xl font-black text-[#1d1d1f] tracking-tight">{profileName || userName}</h2>
-                    <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest leading-none mt-1">
+                    <p className="text-[11px] font-bold text-[#6b6b73] uppercase tracking-widest leading-none mt-1">
                         {isManager ? 'Workspace Admin' : 'Team Member'}
                     </p>
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploadingAvatar}
-                        className="mt-2 text-[9px] font-black uppercase tracking-widest text-brand-blue hover:underline disabled:opacity-50"
+                        className="mt-2 text-[11px] font-black uppercase tracking-widest text-brand-blue hover:underline disabled:opacity-50"
                     >
                         {isUploadingAvatar ? 'Uploading...' : 'Change photo'}
                     </button>
@@ -146,21 +146,21 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
 
             <div className="grid grid-cols-1 gap-12">
                 <section>
-                    <h3 className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.3em] mb-6">Task Digest</h3>
+                    <h3 className="text-[11px] font-black text-[#6b6b73] uppercase tracking-[0.3em] mb-6">Task Digest</h3>
                     <DigestSettings />
                 </section>
 
                 {/* ── Privacy & Data ─────────────────────────────── */}
                 <section>
-                    <h3 className="text-[10px] font-black text-[#86868b] uppercase tracking-[0.3em] mb-6">Privacy &amp; Data</h3>
+                    <h3 className="text-[11px] font-black text-[#6b6b73] uppercase tracking-[0.3em] mb-6">Privacy &amp; Data</h3>
                     <div className="space-y-4">
 
                         <Card className="p-6 rounded-2xl border-[#eceef0]">
-                            <h4 className="text-[10px] font-black mb-1 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                            <h4 className="text-[11px] font-black mb-1 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
                                 <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">📦</span>
                                 Download your data
                             </h4>
-                            <p className="text-[11px] text-[#86868b] mb-4 leading-relaxed">
+                            <p className="text-[11px] text-[#6b6b73] mb-4 leading-relaxed">
                                 Get a copy of everything we hold about you — tasks, comments, audit
                                 activity, and preferences — as a JSON file.
                             </p>
@@ -168,11 +168,11 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                         </Card>
 
                         <Card className="p-6 rounded-2xl border-[#eceef0]">
-                            <h4 className="text-[10px] font-black mb-1 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                            <h4 className="text-[11px] font-black mb-1 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
                                 <span className="w-6 h-6 rounded-lg bg-red-50 flex items-center justify-center text-xs">🗑</span>
                                 Delete your account
                             </h4>
-                            <p className="text-[11px] text-[#86868b] mb-4 leading-relaxed">
+                            <p className="text-[11px] text-[#6b6b73] mb-4 leading-relaxed">
                                 Your personal details will be anonymised immediately. Tasks you
                                 created stay visible to your team, attributed to &ldquo;Deleted User&rdquo;.
                                 This cannot be undone.
@@ -181,7 +181,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                         </Card>
 
                         <Card className="p-6 rounded-2xl border-[#eceef0] bg-[#fafafa]">
-                            <h4 className="text-[10px] font-black mb-4 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                            <h4 className="text-[11px] font-black mb-4 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
                                 <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">🔍</span>
                                 What we store about you
                             </h4>
@@ -193,7 +193,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
 
                 {isManager && (
                     <Card className="p-6 rounded-2xl border-[#eceef0]">
-                        <h3 className="text-[10px] font-black mb-4 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                        <h3 className="text-[11px] font-black mb-4 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
                             <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">⚙️</span>
                             Workspace Administration
                         </h3>
@@ -217,9 +217,9 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-xs font-black text-[#1d1d1f] truncate">{item.label}</div>
-                                        <div className="text-[10px] text-[#86868b] truncate">{item.desc}</div>
+                                        <div className="text-[11px] text-[#6b6b73] truncate">{item.desc}</div>
                                     </div>
-                                    <ChevronRight size={14} className="text-[#86868b] group-hover:text-brand-blue flex-shrink-0" />
+                                    <ChevronRight size={14} className="text-[#6b6b73] group-hover:text-brand-blue flex-shrink-0" />
                                 </Link>
                             ))}
                         </div>
@@ -227,13 +227,13 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                 )}
 
                 <Card className="p-6 rounded-2xl border-[#eceef0]">
-                    <h3 className="text-[10px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                    <h3 className="text-[11px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
                         <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">👤</span>
                         Profile Details
                     </h3>
                     <form onSubmit={handleUpdateProfile} className="space-y-4">
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Full Name</label>
+                            <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Full Name</label>
                             <input 
                                 value={profileName} 
                                 onChange={e => setProfileName(e.target.value)} 
@@ -243,7 +243,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                         <button 
                             type="submit" 
                             disabled={isUpdatingProfile} 
-                            className="w-full h-10 rounded-xl bg-[#1d1d1f] text-white font-black tracking-widest text-[10px] mt-2 hover:bg-black transition-colors disabled:opacity-50"
+                            className="w-full h-10 rounded-xl bg-[#1d1d1f] text-white font-black tracking-widest text-[11px] mt-2 hover:bg-black transition-colors disabled:opacity-50"
                         >
                             {isUpdatingProfile ? 'UPDATING...' : 'SAVE CHANGES'}
                         </button>
@@ -251,14 +251,14 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                 </Card>
 
                 <Card className="p-6 rounded-2xl border-[#eceef0]">
-                    <h3 className="text-[10px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center text-xs">🔒</span>
+                    <h3 className="text-[11px] font-black mb-6 text-[#1d1d1f] uppercase tracking-widest flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-[#f5f5f7] flex items-center justify-center"><Lock size={12} strokeWidth={2} aria-hidden="true" /></span>
                         Security
                     </h3>
                     <form onSubmit={handleChangePassword} className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">New Password</label>
+                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">New Password</label>
                                 <input 
                                     type="password" 
                                     value={passwords.new} 
@@ -268,7 +268,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-[#86868b] ml-4">Confirm</label>
+                                <label className="text-[11px] font-black uppercase tracking-widest text-[#6b6b73] ml-4">Confirm</label>
                                 <input 
                                     type="password" 
                                     value={passwords.confirm} 
@@ -281,7 +281,7 @@ export function SettingsView({ userId, userName, initialProfileName, initialAvat
                         <button 
                             type="submit" 
                             disabled={isUpdatingPassword} 
-                            className="w-full h-10 rounded-xl bg-[#f5f5f7] text-[#1d1d1f] font-black tracking-widest text-[10px] border border-[#e5e5ea] hover:bg-[#e5e5ea] transition-colors mt-2 disabled:opacity-50"
+                            className="w-full h-10 rounded-xl bg-[#f5f5f7] text-[#1d1d1f] font-black tracking-widest text-[11px] border border-[#e5e5ea] hover:bg-[#e5e5ea] transition-colors mt-2 disabled:opacity-50"
                         >
                             {isUpdatingPassword ? 'UPDATING...' : 'CHANGE PASSWORD'}
                         </button>

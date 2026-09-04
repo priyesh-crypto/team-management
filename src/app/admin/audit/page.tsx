@@ -68,7 +68,7 @@ export default async function AuditPage() {
                                                 </Link>
                                             )}
                                         </div>
-                                        <div className="text-xs text-[#86868b] whitespace-nowrap">
+                                        <div className="text-xs text-[#6b6b73] whitespace-nowrap">
                                             {new Date(a.created_at).toLocaleString()}
                                         </div>
                                     </div>
@@ -95,8 +95,8 @@ export default async function AuditPage() {
                     })}
                     {(actions ?? []).length === 0 && (
                         <div className="p-12 text-center">
-                            <ScrollText size={28} strokeWidth={1.5} className="mx-auto mb-2 text-[#86868b]" />
-                            <p className="text-sm text-[#86868b]">No admin actions logged yet.</p>
+                            <ScrollText size={28} strokeWidth={1.5} className="mx-auto mb-2 text-[#6b6b73]" />
+                            <p className="text-sm text-[#6b6b73]">No admin actions logged yet.</p>
                         </div>
                     )}
                 </div>
