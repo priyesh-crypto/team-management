@@ -11,7 +11,7 @@ export function GlobalBanner({ banner }: { banner: Banner | null }) {
     if (!banner || dismissed) return null;
 
     return (
-        <div className="w-full bg-[#0051e6] text-white px-4 py-2.5 flex items-center justify-between gap-4 z-50">
+        <div className="w-full bg-brand-blue text-white px-4 py-2.5 flex items-center justify-between gap-4 z-50">
             <div className="flex items-center gap-2.5 min-w-0">
                 <Megaphone size={14} className="shrink-0 opacity-80" />
                 <p className="text-sm font-medium truncate">

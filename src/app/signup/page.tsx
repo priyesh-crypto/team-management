@@ -7,16 +7,27 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { checkActionRateLimit } from '@/utils/rate-limit';
 import { sanitizeString, validateEmail, validatePasswordStrength } from '@/utils/security';
+import { getPreAuthBranding } from '@/lib/branding-server';
+import { BrandingStyle } from '@/components/branding/BrandingStyle';
 
 export default async function SignupPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { error?: string; msg?: string };
+  // A Promise in the App Router — reading fields off it without awaiting
+  // yields undefined, which is why the error toast never fired here.
+  searchParams: Promise<{ error?: string; msg?: string; org?: string }>;
 }) {
+  const searchParams = await searchParamsPromise;
+
   // Already authenticated — no need to be here
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) redirect('/');
+
+  const branding = await getPreAuthBranding({
+    slug: searchParams.org,
+    host: (await headers()).get('host'),
+  });
 
   const signup = async (formData: FormData) => {
     'use server';
@@ -71,9 +82,10 @@ export default async function SignupPage({
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
+      <BrandingStyle branding={branding} />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Logo className="mb-4 escala-110" />
+          <Logo className="mb-4" branding={branding} />
           <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Create your account</h1>
           <p className="text-[#52525b] text-sm font-medium mt-1">Start managing your team&apos;s work</p>
         </div>
@@ -91,14 +103,14 @@ export default async function SignupPage({
             <Input name="email" type="email" required placeholder="Work Email" className="w-full h-12" />
             <Input name="password" type="password" required placeholder="Choose Password" className="w-full h-12" />
 
-            <Button type="submit" className="w-full h-12 text-md font-bold mt-2 bg-gradient-to-r from-[#0051e6] to-[#22be66] hover:brightness-110 transition-all shadow-md shadow-[#0051e6]/20">
+            <Button type="submit" className="w-full h-12 text-md font-bold mt-2 bg-gradient-to-r from-brand-blue to-brand-accent hover:brightness-110 transition-all shadow-md shadow-brand-blue/20">
               Create Account
             </Button>
           </form>
 
           <p className="mt-6 text-center text-xs text-[#52525b] font-medium">
             Already have an account?{' '}
-            <Link href="/" className="font-black text-[#0051e6] hover:underline">Sign in</Link>
+            <Link href="/" className="font-black text-brand-blue hover:underline">Sign in</Link>
           </p>
         </Card>
       </div>

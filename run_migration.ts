@@ -22,7 +22,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function runMigration() {
-    const filePath = path.resolve(process.cwd(), 'migration_activity_logs.sql');
+    const filePath = path.resolve(process.cwd(), 'sql-migrations/20260314_204325_migration_activity_logs.sql');
     const sql = fs.readFileSync(filePath, 'utf8');
     
     console.log('Executing migration...');

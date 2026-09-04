@@ -43,3 +43,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 claude-skills/
+
+# Demo/sales artifacts — kept local. These contain seeded account passwords
+# and named client data, and this repo is public.
+sql-migrations/demo/
+public/branding/

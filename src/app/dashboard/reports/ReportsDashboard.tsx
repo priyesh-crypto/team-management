@@ -325,7 +325,7 @@ function OverviewTab({ stats, byStatus, weeklyTrend, funnelData }: Pick<Props, "
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.04 }}
-                        className="bg-white rounded-[16px] p-4 border border-[#e5e5ea] hover:border-[#0051e6]/30 hover:shadow-md transition-all group cursor-default"
+                        className="bg-white rounded-[16px] p-4 border border-[#e5e5ea] hover:border-brand-blue/30 hover:shadow-md transition-all group cursor-default"
                     >
                         <div className="flex items-center justify-between mb-2">
                             <div
@@ -812,7 +812,7 @@ function TeamTab({ byMember, memberEfficiency }: Pick<Props, "byMember" | "membe
                                 className="flex items-center gap-3 group/contributor hover:bg-[#f5f5f7] rounded-xl p-2 -mx-2 transition-colors cursor-default"
                             >
                                 <div className="w-5 text-[10px] font-bold text-[#86868b] text-center">{i + 1}</div>
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0051e6] to-[#5e5ce6] flex items-center justify-center text-[11px] font-bold text-white shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-[#5e5ce6] flex items-center justify-center text-[11px] font-bold text-white shrink-0">
                                     {m.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -829,7 +829,7 @@ function TeamTab({ byMember, memberEfficiency }: Pick<Props, "byMember" | "membe
                                 </div>
                                 <div className="text-right shrink-0">
                                     <div className="text-[12px] font-bold text-[#1d1d1f]">{m.completed}</div>
-                                    <div className="text-[9px] text-[#86868b] group-hover/contributor:text-[#0051e6] transition-colors">
+                                    <div className="text-[9px] text-[#86868b] group-hover/contributor:text-brand-blue transition-colors">
                                         {m.hours}h logged
                                     </div>
                                 </div>
@@ -961,7 +961,7 @@ function RiskTab({ priorityStatusMatrix, overdueList, byMember }: Pick<Props, "p
                                         <p className="text-[10px] text-[#86868b]">{m.total} Active Tasks</p>
                                     </div>
                                     <button 
-                                        className="px-3 py-1.5 bg-[#0051e6] text-white rounded-lg text-[10px] font-bold hover:bg-[#0041b3] transition-all flex items-center gap-1.5"
+                                        className="px-3 py-1.5 bg-brand-blue text-white rounded-lg text-[10px] font-bold hover:bg-[#0041b3] transition-all flex items-center gap-1.5"
                                         onClick={() => {
                                             // Dispatch custom event or callback to parent
                                             window.dispatchEvent(new CustomEvent('open-rebalancer', { detail: { memberId: m.user_id, name: m.name } }));
@@ -1165,7 +1165,7 @@ function ActivityHeatmap({ dailyActivity }: { dailyActivity: { date: string; cou
                     <span className="text-[10px] font-bold text-[#1d1d1f]">{totalTasks} total tasks</span>
                 </div>
                 <div className="flex items-center gap-2 bg-[#f5f5f7] rounded-xl px-3 py-2">
-                    <div className="w-2 h-2 rounded-full bg-[#0051e6]" />
+                    <div className="w-2 h-2 rounded-full bg-brand-blue" />
                     <span className="text-[10px] font-bold text-[#1d1d1f]">{activeDays} active days</span>
                 </div>
                 <div className="flex items-center gap-2 bg-[#f5f5f7] rounded-xl px-3 py-2">
@@ -1484,7 +1484,7 @@ export function ReportsDashboard(props: Props) {
                     <div className="h-64 flex flex-col items-center justify-center bg-[#f5f5f7]/30 rounded-[32px]">
                         <div className="text-center space-y-2">
                             <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Predicted Buffer</h5>
-                            <p className="text-7xl font-black text-[#0051e6] tracking-tighter">
+                            <p className="text-7xl font-black text-brand-blue tracking-tighter">
                                 {roi.estimatedCompletionDate} Days
                             </p>
                             <p className="text-[11px] font-bold text-slate-500 max-w-sm mx-auto">
@@ -1506,7 +1506,7 @@ export function ReportsDashboard(props: Props) {
                     <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider mt-1 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#22be66] animate-pulse" />
                         {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-                        {loading && <span className="text-[9px] text-[#0051e6] animate-pulse">Updating…</span>}
+                        {loading && <span className="text-[9px] text-brand-blue animate-pulse">Updating…</span>}
                     </p>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1531,7 +1531,7 @@ export function ReportsDashboard(props: Props) {
                     </div>
                     <button 
                         onClick={handleExport}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#0051e6] text-white rounded-xl text-[11px] font-bold hover:bg-[#0041b3] transition-all"
+                        className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-xl text-[11px] font-bold hover:bg-[#0041b3] transition-all"
                     >
                         <Download size={13} /> Export
                     </button>
@@ -1550,7 +1550,7 @@ export function ReportsDashboard(props: Props) {
                             className={cn(
                                 "flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all",
                                 isActive
-                                    ? "bg-[#0051e6] text-white"
+                                    ? "bg-brand-blue text-white"
                                     : "text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#1d1d1f]"
                             )}
                         >

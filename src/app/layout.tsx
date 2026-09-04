@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from 'sonner';
+import { PLATFORM_BRANDING } from "@/lib/branding";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,10 +17,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Knotless AI",
+  // Platform-level only. Per-tenant titles/favicons come from the dashboard
+  // layout's generateMetadata, which has an org in scope.
+  title: PLATFORM_BRANDING.name,
   description: "Team task and project management platform",
   icons: {
-    icon: "/favicon.svg",
+    icon: PLATFORM_BRANDING.faviconUrl,
   },
 };
 

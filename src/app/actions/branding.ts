@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { PLATFORM_BRANDING } from "@/lib/branding";
 
 export type OrgBranding = {
     id?: string;
@@ -35,8 +36,11 @@ export async function saveBranding(orgId: string, branding: Partial<OrgBranding>
         updated_at: new Date().toISOString(),
         logo_url: branding.logo_url ?? null,
         favicon_url: branding.favicon_url ?? null,
-        primary_color: branding.primary_color ?? "#0051e6",
-        accent_color: branding.accent_color ?? "#34c759",
+        // Fall back to the platform palette rather than separate literals —
+        // the old '#34c759' default here didn't match the theme's accent, so
+        // saving this form silently shifted the org's accent color.
+        primary_color: branding.primary_color ?? PLATFORM_BRANDING.primaryColor,
+        accent_color: branding.accent_color ?? PLATFORM_BRANDING.accentColor,
         org_display_name: branding.org_display_name ?? null,
         custom_domain: branding.custom_domain ?? null,
         support_email: branding.support_email ?? null,

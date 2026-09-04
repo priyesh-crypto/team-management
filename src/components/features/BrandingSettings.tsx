@@ -93,7 +93,7 @@ export function BrandingSettings({ orgId, branding }: Props) {
                     </div>
 
                     <button type="submit" disabled={pending}
-                        className="w-full px-4 py-2.5 rounded-xl bg-[#0051e6] text-white text-sm font-black hover:bg-[#005bb7] transition-colors disabled:opacity-50">
+                        className="w-full px-4 py-2.5 rounded-xl bg-brand-blue text-white text-sm font-black hover:bg-brand-blue-dark transition-colors disabled:opacity-50">
                         {pending ? "Saving…" : "Save branding"}
                     </button>
                 </div>

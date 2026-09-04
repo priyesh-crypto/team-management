@@ -71,16 +71,16 @@ export function ShareClient({
     const activeTasks = tasks.filter(t => t.status !== 'Completed').length;
 
     return (
-        <div className="min-h-screen bg-[#f8f9fb] text-[#1d1d1f] font-sans selection:bg-[#0051e6]/10 selection:text-[#0051e6]">
+        <div className="min-h-screen bg-[#f8f9fb] text-[#1d1d1f] font-sans selection:bg-brand-blue/10 selection:text-brand-blue">
             {/* Navigation / Header */}
             <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#eceef0] px-6 py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0051e6] to-[#00c6ff] flex items-center justify-center shadow-lg shadow-[#0051e6]/20">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-blue to-[#00c6ff] flex items-center justify-center shadow-lg shadow-brand-blue/20">
                             <Layout className="text-white" size={20} strokeWidth={2.5} />
                         </div>
                         <div>
-                            <h1 className="text-base font-black tracking-tight leading-none">Knotless <span className="text-[#0051e6]">Portal</span></h1>
+                            <h1 className="text-base font-black tracking-tight leading-none">Knotless <span className="text-brand-blue">Portal</span></h1>
                             <p className="text-[10px] font-bold text-[#86868b] uppercase tracking-widest mt-1">External Project View</p>
                         </div>
                     </div>
@@ -104,11 +104,11 @@ export function ShareClient({
                             animate={{ opacity: 1, y: 0 }}
                             className="bg-white rounded-[32px] p-8 border border-[#eceef0] shadow-sm relative overflow-hidden"
                         >
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#0051e6]/[0.02] rounded-full -mr-16 -mt-16" />
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-blue/[0.02] rounded-full -mr-16 -mt-16" />
                             
                             <div className="relative z-10">
                                 <div className="flex items-center gap-2 mb-6">
-                                    <Badge className="bg-[#0051e6]/10 text-[#0051e6] border-none text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                                    <Badge className="bg-brand-blue/10 text-brand-blue border-none text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
                                         {isProject ? 'Project' : 'Task'}
                                     </Badge>
                                     <Badge className="bg-[#f1f2f4] text-[#86868b] border-none text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
@@ -128,11 +128,11 @@ export function ShareClient({
                                     <div className="space-y-3">
                                         <div className="flex justify-between items-end">
                                             <span className="text-[11px] font-black uppercase tracking-widest text-[#86868b]">Overall Completion</span>
-                                            <span className="text-2xl font-black text-[#0051e6] tabular-nums">{progress}%</span>
+                                            <span className="text-2xl font-black text-brand-blue tabular-nums">{progress}%</span>
                                         </div>
                                         <div className="h-3 w-full bg-[#f1f2f4] rounded-full overflow-hidden">
                                             <motion.div 
-                                                className="h-full bg-gradient-to-r from-[#0051e6] to-[#00c6ff] rounded-full"
+                                                className="h-full bg-gradient-to-r from-brand-blue to-[#00c6ff] rounded-full"
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${progress}%` }}
                                                 transition={{ duration: 1.5, ease: "easeOut" }}
@@ -147,7 +147,7 @@ export function ShareClient({
                                         </div>
                                         <div className="bg-[#f8f9fb] p-4 rounded-[24px] border border-[#eceef0]">
                                             <div className="text-[10px] font-black text-[#86868b] uppercase tracking-widest mb-1">In Progress</div>
-                                            <div className="text-xl font-black text-[#0051e6]">{activeTasks}</div>
+                                            <div className="text-xl font-black text-brand-blue">{activeTasks}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -169,7 +169,7 @@ export function ShareClient({
                                         <div className="flex flex-col items-center">
                                             <div className={cn(
                                                 "w-3 h-3 rounded-full mt-1.5 border-2 border-white shadow-sm",
-                                                t.status === 'Completed' ? "bg-[#34c759]" : "bg-[#0051e6]"
+                                                t.status === 'Completed' ? "bg-[#34c759]" : "bg-brand-blue"
                                             )} />
                                             {idx < 2 && <div className="w-0.5 flex-1 bg-[#eceef0] my-1" />}
                                         </div>
@@ -197,7 +197,7 @@ export function ShareClient({
                             <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#86868b] mb-6">Expert Team</h3>
                             <div className="flex flex-wrap gap-3">
                                 {employees.map(emp => (
-                                    <div key={emp.id} className="group flex items-center gap-3 bg-[#f8f9fb] pr-4 py-2 pl-2 rounded-2xl border border-[#eceef0] transition-all hover:border-[#0051e6]/30">
+                                    <div key={emp.id} className="group flex items-center gap-3 bg-[#f8f9fb] pr-4 py-2 pl-2 rounded-2xl border border-[#eceef0] transition-all hover:border-brand-blue/30">
                                         <UserAvatar 
                                             name={emp.name} 
                                             avatarUrl={emp.avatar_url}
@@ -245,14 +245,14 @@ export function ShareClient({
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: idx * 0.05 }}
-                                        className="group bg-white rounded-[28px] p-6 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-[#0051e6]/5 transition-all duration-500"
+                                        className="group bg-white rounded-[28px] p-6 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-brand-blue/5 transition-all duration-500"
                                     >
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                             <div className="flex items-start gap-4">
                                                 <div className={cn(
                                                     "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors",
                                                     task.status === 'Completed' ? "bg-[#34c759]/10 text-[#34c759]" : 
-                                                    task.status === 'Blocked' ? "bg-[#ff3b30]/10 text-[#ff3b30]" : "bg-[#0051e6]/10 text-[#0051e6]"
+                                                    task.status === 'Blocked' ? "bg-[#ff3b30]/10 text-[#ff3b30]" : "bg-brand-blue/10 text-brand-blue"
                                                 )}>
                                                     {task.status === 'Completed' ? <CheckCircle2 size={24} /> : <Clock size={24} />}
                                                 </div>
@@ -262,7 +262,7 @@ export function ShareClient({
                                                             "text-[8px] font-black px-2 py-0.5 rounded-lg border-none",
                                                             task.priority === 'Urgent' ? 'bg-[#ff3b30] text-white' : 
                                                             task.priority === 'High' ? 'bg-[#ff9500] text-white' : 
-                                                            task.priority === 'Medium' ? 'bg-[#0051e6] text-white' : 'bg-[#34c759] text-white'
+                                                            task.priority === 'Medium' ? 'bg-brand-blue text-white' : 'bg-[#34c759] text-white'
                                                         )}>
                                                             {task.priority.toUpperCase()}
                                                         </Badge>
@@ -296,12 +296,12 @@ export function ShareClient({
                                                     <div className={cn(
                                                         "text-[12px] font-black uppercase tracking-wider",
                                                         task.status === 'Completed' ? "text-[#34c759]" : 
-                                                        task.status === 'Blocked' ? "text-[#ff3b30]" : "text-[#0051e6]"
+                                                        task.status === 'Blocked' ? "text-[#ff3b30]" : "text-brand-blue"
                                                     )}>
                                                         {task.status}
                                                     </div>
                                                 </div>
-                                                <div className="w-8 h-8 rounded-full border border-[#eceef0] flex items-center justify-center text-[#86868b] group-hover:bg-[#0051e6] group-hover:text-white transition-all">
+                                                <div className="w-8 h-8 rounded-full border border-[#eceef0] flex items-center justify-center text-[#86868b] group-hover:bg-brand-blue group-hover:text-white transition-all">
                                                     <ArrowUpRight size={14} />
                                                 </div>
                                             </div>
@@ -328,7 +328,7 @@ export function ShareClient({
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-2">
                         <span className="text-[11px] font-black text-[#86868b] uppercase tracking-[0.2em]">Powered by</span>
-                        <span className="text-[11px] font-black text-[#0051e6] uppercase tracking-[0.2em]">Knotless AI</span>
+                        <span className="text-[11px] font-black text-brand-blue uppercase tracking-[0.2em]">Knotless AI</span>
                     </div>
                     
                     <div className="text-[11px] font-bold text-[#86868b]">
@@ -336,8 +336,8 @@ export function ShareClient({
                     </div>
                     
                     <div className="flex items-center gap-4 text-[#86868b]">
-                        <Share2 size={16} className="cursor-pointer hover:text-[#0051e6] transition-colors" />
-                        <ExternalLink size={16} className="cursor-pointer hover:text-[#0051e6] transition-colors" />
+                        <Share2 size={16} className="cursor-pointer hover:text-brand-blue transition-colors" />
+                        <ExternalLink size={16} className="cursor-pointer hover:text-brand-blue transition-colors" />
                     </div>
                 </div>
             </footer>

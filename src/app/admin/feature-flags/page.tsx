@@ -36,13 +36,13 @@ export default async function FeatureFlagsPage() {
                                 <div className="flex items-center justify-between mb-3">
                                     <Link
                                         href={`/admin/orgs/${orgId}`}
-                                        className="text-sm font-medium text-[#1d1d1f] hover:text-[#0051e6] transition-colors"
+                                        className="text-sm font-medium text-[#1d1d1f] hover:text-brand-blue transition-colors"
                                     >
                                         {orgName}
                                     </Link>
                                     <Link
                                         href={`/admin/orgs/${orgId}`}
-                                        className="text-xs font-medium text-[#0051e6] hover:underline"
+                                        className="text-xs font-medium text-brand-blue hover:underline"
                                     >
                                         Manage →
                                     </Link>

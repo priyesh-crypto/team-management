@@ -120,7 +120,7 @@ export function CustomStatusPicker({
                                     <span className="flex items-center gap-2">
                                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
                                         {s.name}
-                                        {currentStatusId === s.id && <Check size={10} className="text-[#0051e6]" />}
+                                        {currentStatusId === s.id && <Check size={10} className="text-brand-blue" />}
                                     </span>
                                     <button
                                         onClick={e => handleDelete(e, s.id)}
@@ -158,7 +158,7 @@ export function CustomStatusPicker({
                                         ))}
                                     </div>
                                     <div className="flex gap-1.5">
-                                        <button type="submit" disabled={pending} className="flex-1 px-2 py-1 rounded-lg bg-[#0051e6] text-white text-[10px] font-black">
+                                        <button type="submit" disabled={pending} className="flex-1 px-2 py-1 rounded-lg bg-brand-blue text-white text-[10px] font-black">
                                             {pending ? "…" : "Add"}
                                         </button>
                                         <button type="button" onClick={() => setShowNew(false)} className="px-2 py-1 rounded-lg border border-slate-200 text-[10px] font-bold text-slate-500">
@@ -169,7 +169,7 @@ export function CustomStatusPicker({
                             ) : (
                                 <button
                                     onClick={() => setShowNew(true)}
-                                    className="w-full flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-slate-50 text-[11px] font-black text-[#0051e6]"
+                                    className="w-full flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-slate-50 text-[11px] font-black text-brand-blue"
                                 >
                                     <Plus size={12} /> New status
                                 </button>

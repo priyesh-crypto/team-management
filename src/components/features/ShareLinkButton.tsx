@@ -53,12 +53,12 @@ export function ShareLinkButton({ resourceType, resourceId, existingLinks }: Pro
             <div className="relative">
                 <button
                     onClick={() => setOpen(o => !o)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] font-black text-slate-600 hover:border-[#0051e6]/30 hover:text-[#0051e6] transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] font-black text-slate-600 hover:border-brand-blue/30 hover:text-brand-blue transition-colors shadow-sm"
                 >
                     <Link2 size={12} />
                     Share
                     {links.length > 0 && (
-                        <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-[#0051e6]/10 text-[#0051e6] text-[9px] font-black">
+                        <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue text-[9px] font-black">
                             {links.length}
                         </span>
                     )}
@@ -73,7 +73,7 @@ export function ShareLinkButton({ resourceType, resourceId, existingLinks }: Pro
                             <button
                                 onClick={handleCreate}
                                 disabled={pending}
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0051e6] text-white text-[10px] font-black disabled:opacity-50"
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg bg-brand-blue text-white text-[10px] font-black disabled:opacity-50"
                             >
                                 <Plus size={10} /> New link
                             </button>
@@ -100,7 +100,7 @@ export function ShareLinkButton({ resourceType, resourceId, existingLinks }: Pro
                                             </div>
                                             <button
                                                 onClick={() => handleCopy(t.token)}
-                                                className="p-1.5 rounded-lg text-slate-400 hover:text-[#0051e6] hover:bg-[#0051e6]/10 transition-colors"
+                                                className="p-1.5 rounded-lg text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 transition-colors"
                                                 title="Copy link"
                                             >
                                                 <Copy size={13} />

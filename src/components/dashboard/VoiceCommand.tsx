@@ -139,7 +139,7 @@ export function VoiceCommandModal({ isOpen, onClose, onCommand }: Props) {
                             {/* Header */}
                             <div className="w-full flex justify-between items-center">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-2xl bg-[#0051e6]/10 flex items-center justify-center text-[#0051e6]">
+                                    <div className="w-10 h-10 rounded-2xl bg-brand-blue/10 flex items-center justify-center text-brand-blue">
                                         <Sparkles size={20} />
                                     </div>
                                     <h3 className="text-xs font-black uppercase tracking-widest text-[#1d1d1f]">AI Command Center</h3>
@@ -155,12 +155,12 @@ export function VoiceCommandModal({ isOpen, onClose, onCommand }: Props) {
                                     <motion.div 
                                         animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0.1, 0.4] }}
                                         transition={{ repeat: Infinity, duration: 2 }}
-                                        className="absolute w-32 h-32 bg-[#0051e6]/20 rounded-full blur-xl"
+                                        className="absolute w-32 h-32 bg-brand-blue/20 rounded-full blur-xl"
                                     />
                                 )}
                                 <button 
                                     onClick={toggleListening}
-                                    className={`relative w-28 h-28 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 z-10 ${isListening ? 'bg-red-500 scale-110' : 'bg-[#0051e6] hover:scale-105'}`}
+                                    className={`relative w-28 h-28 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 z-10 ${isListening ? 'bg-red-500 scale-110' : 'bg-brand-blue hover:scale-105'}`}
                                 >
                                     {isListening ? <MicOff size={40} className="text-white" /> : <Mic size={40} className="text-white" />}
                                 </button>
@@ -189,7 +189,7 @@ export function VoiceCommandModal({ isOpen, onClose, onCommand }: Props) {
 
                                             {isListening ? (
                                                 <div className="space-y-2">
-                                                    <p className="text-[10px] font-black text-[#0051e6] uppercase tracking-widest animate-pulse">Assistant is Listening...</p>
+                                                    <p className="text-[10px] font-black text-brand-blue uppercase tracking-widest animate-pulse">Assistant is Listening...</p>
                                                     <p className="text-lg font-bold text-slate-900 italic line-clamp-2 px-4 leading-tight">
                                                         {transcript || "Dictate your command..."}
                                                     </p>
@@ -205,7 +205,7 @@ export function VoiceCommandModal({ isOpen, onClose, onCommand }: Props) {
                                                                 setTranscript(e.target.value);
                                                                 if (permissionError) setPermissionError(false);
                                                             }}
-                                                            className="w-full h-14 bg-slate-50 border-2 border-transparent focus:border-[#0051e6]/10 rounded-2xl px-5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-[#0051e6]/5 transition-all outline-none"
+                                                            className="w-full h-14 bg-slate-50 border-2 border-transparent focus:border-brand-blue/10 rounded-2xl px-5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-brand-blue/5 transition-all outline-none"
                                                         />
                                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                                                             <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest bg-white px-2 py-1 rounded-md border border-slate-100">Keyboard Mode</span>
@@ -228,7 +228,7 @@ export function VoiceCommandModal({ isOpen, onClose, onCommand }: Props) {
                                 <button 
                                     disabled={!transcript || isProcessing || isListening}
                                     onClick={handleSend}
-                                    className="h-14 rounded-2xl bg-[#0051e6] text-white text-[11px] font-black uppercase tracking-widest hover:bg-[#005bb7] transition-all disabled:opacity-20 flex items-center justify-center gap-2"
+                                    className="h-14 rounded-2xl bg-brand-blue text-white text-[11px] font-black uppercase tracking-widest hover:bg-brand-blue-dark transition-all disabled:opacity-20 flex items-center justify-center gap-2"
                                 >
                                     {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                                     {isListening ? "Listening..." : "Execute"}

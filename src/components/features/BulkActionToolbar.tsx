@@ -39,8 +39,8 @@ export function BulkSelectionCheckbox({
                 onClick={e => { e.stopPropagation(); onToggle(taskId); }}
                 className={`w-5 h-5 rounded-md flex items-center justify-center transition-all flex-shrink-0 ${
                     selected
-                        ? "bg-[#0051e6] text-white border border-[#0051e6]"
-                        : "border border-slate-200 text-slate-200 hover:border-[#0051e6]/50 hover:text-[#0051e6]/50"
+                        ? "bg-brand-blue text-white border border-brand-blue"
+                        : "border border-slate-200 text-slate-200 hover:border-brand-blue/50 hover:text-brand-blue/50"
                 }`}
             >
                 {selected ? <CheckSquare size={12} fill="currentColor" /> : <Square size={12} />}

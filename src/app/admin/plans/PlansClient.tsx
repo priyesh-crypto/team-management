@@ -89,7 +89,7 @@ export function PlansClient({
         <div className="p-10 max-w-7xl">
             <div className="flex items-start justify-between mb-8">
                 <div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0051e6] mb-1.5">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-blue mb-1.5">
                         Knotless Admin
                     </div>
                     <h1 className="text-3xl font-black tracking-tight text-[#1d1d1f]">
@@ -315,7 +315,7 @@ function PlanEditor({
                                 type="checkbox"
                                 checked={Boolean(plan.features?.[k])}
                                 onChange={(e) => setFeature(k, e.target.checked)}
-                                className="w-4 h-4 rounded accent-[#0051e6]"
+                                className="w-4 h-4 rounded accent-brand-blue"
                             />
                             <span className="text-xs font-bold text-[#1d1d1f]">
                                 {FEATURE_LABELS[k]}
@@ -330,7 +330,7 @@ function PlanEditor({
                     type="checkbox"
                     checked={plan.is_active}
                     onChange={(e) => set("is_active", e.target.checked)}
-                    className="w-4 h-4 rounded accent-[#0051e6]"
+                    className="w-4 h-4 rounded accent-brand-blue"
                 />
                 <span className="text-xs font-bold text-[#1d1d1f]">
                     Active (visible on pricing page)
@@ -395,7 +395,7 @@ function RegionalPricing({ planId, prices }: { planId: string; prices: PlanPrice
                 <SectionLabel>Regional pricing ({prices.length})</SectionLabel>
                 <button
                     onClick={() => setAdding((v) => !v)}
-                    className="text-[10px] font-black uppercase tracking-widest text-[#0051e6] hover:underline"
+                    className="text-[10px] font-black uppercase tracking-widest text-brand-blue hover:underline"
                 >
                     {adding ? "Cancel" : "+ Add region"}
                 </button>

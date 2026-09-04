@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { OrgDetailClient } from "./OrgDetailClient";
 import { getOrgCredits, getFeatureOverrides } from "../../actions-tier1";
+import { getOrgBrandingAsAdmin } from "../../actions-branding";
 
 export default async function OrgDetailPage({
     params,
@@ -19,6 +20,7 @@ export default async function OrgDetailPage({
         { data: actions },
         credits,
         featureOverrides,
+        branding,
     ] = await Promise.all([
         admin.from("organizations").select("*").eq("id", orgId).single(),
         admin.from("plans").select("id, name, price_monthly_cents").order("sort_order"),
@@ -35,6 +37,7 @@ export default async function OrgDetailPage({
             .limit(20),
         getOrgCredits(orgId),
         getFeatureOverrides(orgId),
+        getOrgBrandingAsAdmin(orgId),
     ]);
 
     if (!org) notFound();
@@ -48,6 +51,7 @@ export default async function OrgDetailPage({
             recentActions={actions ?? []}
             credits={credits}
             featureOverrides={featureOverrides}
+            branding={branding}
         />
     );
 }

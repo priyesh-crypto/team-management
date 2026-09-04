@@ -61,7 +61,7 @@ export function EmployeeHeader({
                         placeholder="Search..." 
                         value={searchQuery} 
                         onChange={(e) => setSearchQuery(e.target.value)} 
-                        className="pl-10 pr-4 py-2 bg-[#f5f5f7] border-none rounded-2xl text-[11px] font-bold text-[#1d1d1f] w-40 lg:w-64 focus:ring-2 focus:ring-[#0051e6]/20 transition-all outline-none" 
+                        className="pl-10 pr-4 py-2 bg-[#f5f5f7] border-none rounded-2xl text-[11px] font-bold text-[#1d1d1f] w-40 lg:w-64 focus:ring-2 focus:ring-brand-blue/20 transition-all outline-none" 
                     />
                 </div>
                 <div className="relative" ref={notificationRef}>
@@ -80,7 +80,7 @@ export function EmployeeHeader({
                                             await markAllNotificationsAsRead(userId); 
                                             refreshData(); 
                                         }} 
-                                        className="text-[9px] font-black text-[#0051e6] uppercase tracking-widest hover:underline"
+                                        className="text-[9px] font-black text-brand-blue uppercase tracking-widest hover:underline"
                                     >
                                         Mark All Read
                                     </button>
@@ -108,10 +108,10 @@ export function EmployeeHeader({
                                         <div 
                                             key={n.id} 
                                             onClick={() => handleMarkAsRead(n)} 
-                                            className={`p-4 border-b border-[#f5f5f7] hover:bg-[#f5f5f7] cursor-pointer group transition-colors relative ${!n.is_read ? 'bg-[#0051e6]/5' : ''}`}
+                                            className={`p-4 border-b border-[#f5f5f7] hover:bg-[#f5f5f7] cursor-pointer group transition-colors relative ${!n.is_read ? 'bg-brand-blue/5' : ''}`}
                                         >
                                             <div className="flex gap-3 pr-8">
-                                                <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.type === 'urgent' ? 'bg-[#ff3b30]' : 'bg-[#0051e6]'} ${n.is_read ? 'opacity-20' : 'animate-pulse'}`} />
+                                                <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.type === 'urgent' ? 'bg-[#ff3b30]' : 'bg-brand-blue'} ${n.is_read ? 'opacity-20' : 'animate-pulse'}`} />
                                                 <div className="flex-1 min-w-0">
                                                     <p className={`text-[11px] leading-snug ${!n.is_read ? 'font-bold text-[#1d1d1f]' : 'text-[#86868b]'}`}>
                                                         {n.message ?? n.title ?? "Notification"}
@@ -121,7 +121,7 @@ export function EmployeeHeader({
                                                             {new Date(n.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                         {n.task_id && (
-                                                            <span className="text-[8px] font-black text-[#0051e6] uppercase tracking-tighter bg-[#0051e6]/5 px-1.5 py-0.5 rounded-md">
+                                                            <span className="text-[8px] font-black text-brand-blue uppercase tracking-tighter bg-brand-blue/5 px-1.5 py-0.5 rounded-md">
                                                                 Task Link
                                                             </span>
                                                         )}
@@ -137,7 +137,7 @@ export function EmployeeHeader({
                                                             e.stopPropagation();
                                                             handleMarkAsRead(n);
                                                         }}
-                                                        className="p-2 hover:bg-white rounded-full shadow-sm text-[#0051e6] transition-all"
+                                                        className="p-2 hover:bg-white rounded-full shadow-sm text-brand-blue transition-all"
                                                         title="Mark as read"
                                                     >
                                                         <Check size={14} strokeWidth={3} />

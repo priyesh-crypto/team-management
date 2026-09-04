@@ -196,13 +196,13 @@ function NewRuleForm({ onDone }: { onDone: () => void }) {
                     </div>
                 ))}
                 <button type="button" onClick={() => setForm(f => ({ ...f, conditions: [...f.conditions, { field: 'priority', operator: 'eq', value: '' }] }))}
-                    className="text-[10px] font-black text-[#0051e6] uppercase tracking-widest hover:underline flex items-center gap-1">
+                    className="text-[10px] font-black text-brand-blue uppercase tracking-widest hover:underline flex items-center gap-1">
                     <Plus size={10} /> Add condition
                 </button>
             </div>
             <div className="flex gap-2">
                 <button type="submit" disabled={pending}
-                    className="flex-1 px-4 py-2 rounded-xl bg-[#0051e6] text-white text-sm font-black disabled:opacity-50">
+                    className="flex-1 px-4 py-2 rounded-xl bg-brand-blue text-white text-sm font-black disabled:opacity-50">
                     {pending ? "Saving…" : "Create rule"}
                 </button>
                 <button type="button" onClick={onDone} className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-500">Cancel</button>
@@ -275,7 +275,7 @@ export function AutomationsManager({ rules: initialRules }: Props) {
                     </div>
                     <div className="flex items-center gap-2">
                         <button onClick={() => setShowRecipes(s => !s)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0051e6]/10 text-[#0051e6] text-[11px] font-black hover:bg-[#0051e6]/20 transition-colors">
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-blue/10 text-brand-blue text-[11px] font-black hover:bg-brand-blue/20 transition-colors">
                             <Sparkles size={12} /> {showRecipes ? "Hide recipes" : "Recipe library"}
                         </button>
                         <button onClick={() => setShowForm(true)}
@@ -286,9 +286,9 @@ export function AutomationsManager({ rules: initialRules }: Props) {
                 </div>
 
                 {showRecipes && (
-                    <div className="bg-gradient-to-br from-[#0051e6]/5 to-[#ff9500]/5 rounded-2xl border border-slate-200 p-4">
+                    <div className="bg-gradient-to-br from-brand-blue/5 to-[#ff9500]/5 rounded-2xl border border-slate-200 p-4">
                         <div className="flex items-center gap-2 mb-3">
-                            <Wand2 size={14} className="text-[#0051e6]" />
+                            <Wand2 size={14} className="text-brand-blue" />
                             <span className="text-xs font-black text-[#1d1d1f]">One-click Recipes</span>
                             <span className="text-[10px] font-bold text-slate-400">Curated automations, ready to apply</span>
                         </div>
@@ -296,14 +296,14 @@ export function AutomationsManager({ rules: initialRules }: Props) {
                             {RECIPES.map(recipe => {
                                 const installed = installedTriggers.has(`${recipe.rule.trigger_type}::${recipe.rule.action_type}`);
                                 return (
-                                    <div key={recipe.id} className="flex items-start gap-3 p-3 bg-white rounded-xl border border-slate-100 hover:border-[#0051e6]/30 transition-colors">
+                                    <div key={recipe.id} className="flex items-start gap-3 p-3 bg-white rounded-xl border border-slate-100 hover:border-brand-blue/30 transition-colors">
                                         <div className="text-xl leading-none" aria-hidden>{recipe.icon}</div>
                                         <div className="flex-1 min-w-0">
                                             <div className="text-xs font-black text-[#1d1d1f]">{recipe.name}</div>
                                             <div className="text-[10px] font-bold text-slate-400 mt-0.5 line-clamp-2">{recipe.description}</div>
                                         </div>
                                         <button onClick={() => handleApplyRecipe(recipe)} disabled={installed}
-                                            className={`flex-shrink-0 text-[10px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg transition-colors ${installed ? "bg-slate-100 text-slate-400" : "bg-[#0051e6] text-white hover:bg-[#005bb7]"}`}>
+                                            className={`flex-shrink-0 text-[10px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-lg transition-colors ${installed ? "bg-slate-100 text-slate-400" : "bg-brand-blue text-white hover:bg-brand-blue-dark"}`}>
                                             {installed ? "Installed" : "Apply"}
                                         </button>
                                     </div>
@@ -321,7 +321,7 @@ export function AutomationsManager({ rules: initialRules }: Props) {
 
                 {!loading && rules.length === 0 && !showForm && (
                     <div className="text-center py-8 text-sm text-slate-400">
-                        No automation rules yet. Try the <button onClick={() => setShowRecipes(true)} className="text-[#0051e6] font-black hover:underline">Recipe library</button> or create one manually.
+                        No automation rules yet. Try the <button onClick={() => setShowRecipes(true)} className="text-brand-blue font-black hover:underline">Recipe library</button> or create one manually.
                     </div>
                 )}
 
@@ -331,7 +331,7 @@ export function AutomationsManager({ rules: initialRules }: Props) {
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-black text-[#1d1d1f]">{rule.name}</div>
                                 <div className="text-[10px] font-bold text-slate-400 mt-0.5">
-                                    <span className="text-[#0051e6]">{TRIGGER_LABEL[rule.trigger_type] ?? rule.trigger_type}</span>
+                                    <span className="text-brand-blue">{TRIGGER_LABEL[rule.trigger_type] ?? rule.trigger_type}</span>
                                     {" → "}
                                     <span className="text-[#ff9500]">{ACTION_LABEL[rule.action_type] ?? rule.action_type}</span>
                                     {rule.run_count > 0 && ` · ran ${rule.run_count}×`}

@@ -1,21 +1,69 @@
 @import "tailwindcss" source("../../src");
 
-@theme {
+/* ==========================================================================
+   Design tokens.
+
+   The brand tokens below are DEFAULTS ONLY. They are re-declared on :root at
+   runtime by <BrandingStyle> (see src/components/branding/BrandingStyle.tsx)
+   using the active org's `org_branding` row, so every `*-brand-blue` /
+   `*-brand-accent` utility in the app re-skins per tenant with no rebuild.
+
+   Because of that, NEVER hardcode the brand hex in a class — write
+   `text-brand-blue`, not `text-[#0051e6]`, or per-org theming won't reach it.
+
+   Semantic status colors (urgent / high / low, success green) are deliberately
+   NOT themed — they carry meaning, so an org's accent color must not repaint
+   "Completed" or "Overdue".
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   The live brand values — the ONLY thing <BrandingStyle> rewrites per tenant.
+
+   These hold SPACE-SEPARATED RGB CHANNELS ("0 81 230"), not hex, and the
+   `--color-brand-*` theme tokens below wrap them in rgb(). That specific shape
+   is required, not stylistic. Measured against Tailwind 4.2:
+
+     --color-x: #0051e6            ->  bg-x/10 = #0051e61a
+                                       (alpha folded at build time; a runtime
+                                        var override can never reach it)
+     --color-x: var(--src)         ->  bg-x/10 = var(--color-x)
+                                       (themeable, but the /10 is DROPPED —
+                                        subtle tints render as solid slabs)
+     --color-x: rgb(var(--chan))   ->  bg-x/10 = color-mix(in srgb,
+                                         rgb(var(--chan)) 10%, transparent)
+                                       (themeable AND the alpha survives)
+
+   Only the third form does both, which is why the channels are stored split.
+   ~144 brand utilities in this app use an opacity modifier, so getting this
+   wrong is very visible.
+   --------------------------------------------------------------------------- */
+:root {
+  --brand-primary-rgb: 0 81 230;       /* #0051e6 */
+  --brand-primary-dark-rgb: 0 91 183;  /* #005bb7 */
+  --brand-primary-deep-rgb: 0 65 184;  /* #0041b8 */
+  --brand-accent-rgb: 34 190 102;      /* #22be66 */
+}
+
+@theme static {
   --color-background: #f5f5f7;
   --color-foreground: #1d1d1f;
 
   --color-card-bg: #ffffff;
   --color-card-border: #d2d2d7;
 
-  --color-brand-blue: #0051e6;
-  --color-brand-green: #22be66;
-  --brand-gradient: linear-gradient(135deg, #0051e6 0%, #22be66 100%);
+  /* Brand — re-skinned per org at runtime via the channel vars above */
+  --color-brand-blue: rgb(var(--brand-primary-rgb));
+  --color-brand-blue-dark: rgb(var(--brand-primary-dark-rgb));
+  --color-brand-accent: rgb(var(--brand-accent-rgb));
+  --color-brand-green: rgb(var(--brand-accent-rgb));
 
-  --color-primary-500: #0051e6;
-  --color-primary-600: #0041b8;
+  --color-primary-500: rgb(var(--brand-primary-rgb));
+  --color-primary-600: rgb(var(--brand-primary-deep-rgb));
 
   --color-secondary-text: #86868b;
 
+  /* Semantic — deliberately literal, never themed: these carry meaning, so a
+     tenant's accent color must not repaint "Overdue" or "Completed". */
   --color-urgent: #e83f3f;
   --color-high: #ff9500;
   --color-medium: #0051e6;
@@ -23,7 +71,11 @@
 }
 
 @utility brand-gradient {
-  background: var(--brand-gradient);
+  background: linear-gradient(
+    135deg,
+    rgb(var(--brand-primary-rgb)) 0%,
+    rgb(var(--brand-accent-rgb)) 100%
+  );
 }
 
 :root {

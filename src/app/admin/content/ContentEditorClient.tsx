@@ -72,7 +72,7 @@ function Editor({ page }: { page: ContentPage }) {
                             value={body}
                             onChange={e => setBody(e.target.value)}
                             rows={18}
-                            className="w-full px-3 py-2 rounded-md border border-[#e5e5ea] bg-white text-sm font-mono text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0051e6] focus:ring-2 focus:ring-[#0051e6]/10 resize-y"
+                            className="w-full px-3 py-2 rounded-md border border-[#e5e5ea] bg-white text-sm font-mono text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/10 resize-y"
                         />
                     </Field>
                 )}
@@ -95,7 +95,7 @@ export function ContentEditorClient({ pages }: { pages: ContentPage[] }) {
                         onClick={() => setActiveSlug(p.slug)}
                         className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
                             activeSlug === p.slug
-                                ? "bg-[#0051e6] text-white"
+                                ? "bg-brand-blue text-white"
                                 : "bg-[#f5f5f7] text-[#52525b] hover:bg-[#e5e5ea]"
                         }`}
                     >

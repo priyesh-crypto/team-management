@@ -22,7 +22,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function runMigration() {
-    const filePath = path.resolve(process.cwd(), 'update_rls_policy.sql');
+    const filePath = path.resolve(process.cwd(), 'sql-migrations/20260316_134809_update_rls_policy.sql');
     const sql = fs.readFileSync(filePath, 'utf8');
     
     console.log('Executing migration to fix task RLS...');

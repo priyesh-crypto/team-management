@@ -51,7 +51,7 @@ export default async function ReportsPage({
                     Available on the Business plan.{" "}
                     <a
                         href="/dashboard/settings/billing"
-                        className="text-[#0051e6] font-bold hover:underline"
+                        className="text-brand-blue font-bold hover:underline"
                     >
                         Upgrade
                     </a>{" "}

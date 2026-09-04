@@ -5,14 +5,23 @@ import UrlToaster from '@/components/ui/UrlToaster';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { checkActionRateLimit } from '@/utils/rate-limit';
+import { getPreAuthBranding } from '@/lib/branding-server';
+import { BrandingStyle } from '@/components/branding/BrandingStyle';
 
-export default async function Home({ 
-  searchParams: searchParamsPromise 
-}: { 
-  searchParams: Promise<{ error?: string, success?: string, msg?: string }> 
+export default async function Home({
+  searchParams: searchParamsPromise
+}: {
+  searchParams: Promise<{ error?: string, success?: string, msg?: string, org?: string }>
 }) {
   const searchParams = await searchParamsPromise;
   const supabase = await createClient();
+
+  // Pre-auth branding: there's no session yet, so the tenant is resolved from
+  // `?org=<slug>` or the request Host. Unknown/absent -> platform branding.
+  const branding = await getPreAuthBranding({
+    slug: searchParams.org,
+    host: (await headers()).get('host'),
+  });
 
   // 1. Check Auth 
   const { data: { user } } = await supabase.auth.getUser();
@@ -122,10 +131,11 @@ export default async function Home({
   if (!user) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4">
+        <BrandingStyle branding={branding} />
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <Logo className="mb-4 escala-110" />
-            <p className="text-[#52525b] text-sm font-medium">Sign in to your workspace</p>
+            <Logo className="mb-4" branding={branding} />
+            <p className="text-[#52525b] text-sm font-medium">{branding.tagline}</p>
           </div>
 
           <Card className="p-8">
@@ -144,14 +154,14 @@ export default async function Home({
               <Input name="email" type="email" required placeholder="Email Address" className="w-full h-12" />
               <Input name="password" type="password" required placeholder="Password" className="w-full h-12" />
               <div className="flex justify-end">
-                <a href="/auth/password-reset" className="text-xs font-bold text-[#0051e6] hover:underline">Forgot password?</a>
+                <a href="/auth/password-reset" className="text-xs font-bold text-brand-blue hover:underline">Forgot password?</a>
               </div>
-              <Button type="submit" className="w-full h-12 text-md font-bold mt-2 bg-gradient-to-r from-[#0051e6] to-[#22be66] hover:brightness-110 transition-all shadow-md shadow-[#0051e6]/20">Sign In</Button>
+              <Button type="submit" className="w-full h-12 text-md font-bold mt-2 bg-gradient-to-r from-brand-blue to-brand-accent hover:brightness-110 transition-all shadow-md shadow-brand-blue/20">Sign In</Button>
             </form>
 
             <p className="mt-6 text-center text-xs text-[#52525b] font-medium">
               Don&apos;t have an account?{' '}
-              <a href="/signup" className="font-black text-[#0051e6] hover:underline">Create one</a>
+              <a href="/signup" className="font-black text-brand-blue hover:underline">Create one</a>
             </p>
           </Card>
         </div>
@@ -163,19 +173,20 @@ export default async function Home({
   if (!hasOrg) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-[#f5f5f7]">
+        <BrandingStyle branding={branding} />
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <Logo className="mb-4 escala-110" />
+            <Logo className="mb-4" branding={branding} />
             <h1 className="text-2xl font-black text-[#1d1d1f] tracking-tight">Create Your Workspace</h1>
             <p className="text-[#52525b] text-sm font-medium mt-2">Set up your company to start managing tasks</p>
           </div>
-          <Card className="p-8 border-2 border-[#0051e6]/20 shadow-xl shadow-[#0051e6]/10">
+          <Card className="p-8 border-2 border-brand-blue/20 shadow-xl shadow-brand-blue/10">
             <form action={createOrganization} className="space-y-6">
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-[#52525b] mb-3 ml-2">Company Name</label>
                 <Input name="orgName" required placeholder="Acme Corp" className="w-full h-14 text-lg font-bold px-6 rounded-2xl bg-[#f5f5f7] border-none" />
               </div>
-              <Button type="submit" className="w-full h-14 text-lg font-black tracking-wide rounded-2xl mt-4 bg-gradient-to-r from-[#0051e6] to-[#22be66] hover:brightness-110 transition-all shadow-lg shadow-[#0051e6]/30">Launch Workspace</Button>
+              <Button type="submit" className="w-full h-14 text-lg font-black tracking-wide rounded-2xl mt-4 bg-gradient-to-r from-brand-blue to-brand-accent hover:brightness-110 transition-all shadow-lg shadow-brand-blue/30">Launch Workspace</Button>
             </form>
 
             <form action={logout} className="mt-6 text-center">

@@ -330,7 +330,7 @@ export function TaskDetailsView({
             <div className="px-10 pt-10 pb-6 bg-white sticky top-0 z-20">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#0051e6] shadow-sm">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-brand-blue shadow-sm">
                             <LayoutDashboard size={22} strokeWidth={2} />
                         </div>
                         <div>
@@ -394,14 +394,14 @@ export function TaskDetailsView({
                                         <Input type="date" value={editData.deadline} onChange={e => setEditData({...editData, deadline: e.target.value})} className="h-12 rounded-xl bg-slate-50 border-slate-200 px-5 text-sm font-bold focus:bg-white transition-all" />
                                     </div>
                                 </div>
-                                <Button onClick={handleSaveEdit} disabled={isSaving} className="w-full h-12 rounded-xl bg-[#0051e6] hover:bg-[#0077ed] text-white font-bold tracking-widest text-[10px] uppercase">
+                                <Button onClick={handleSaveEdit} disabled={isSaving} className="w-full h-12 rounded-xl bg-brand-blue hover:bg-[#0077ed] text-white font-bold tracking-widest text-[10px] uppercase">
                                     {isSaving ? 'Saving...' : 'Save Changes'}
                                 </Button>
                             </div>
                         ) : (
                             <div className="space-y-6">
                                 <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-3">
-                                    <Info size={14} className="text-[#0051e6]" strokeWidth={2.5} />
+                                    <Info size={14} className="text-brand-blue" strokeWidth={2.5} />
                                     <span>Description</span>
                                 </h3>
                                 <div className="bg-slate-50/50 p-6 rounded-[24px] border border-slate-100">
@@ -416,7 +416,7 @@ export function TaskDetailsView({
                     <section>
                         <div className="flex items-center justify-between mb-8">
                             <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-3">
-                                <Timer size={14} className="text-[#0051e6]" strokeWidth={2.5} />
+                                <Timer size={14} className="text-brand-blue" strokeWidth={2.5} />
                                 <span>Work Logs & Time Tracking</span>
                             </h3>
                             <TimeTrackerButton taskId={task.id} runningEntry={null} totalHours={subtasks.reduce((a, s) => a + (s.hours_spent || 0), 0)} />
@@ -431,7 +431,7 @@ export function TaskDetailsView({
                                     <Input type="date" value={subtaskForm.date} onChange={e => setSubtaskForm({...subtaskForm, date: e.target.value})} className="h-12 bg-white border-slate-200 rounded-xl px-4 text-[13px] font-medium" />
                                 </div>
                                 <div className="flex gap-4">
-                                    <Button onClick={handleAddSubtask} disabled={isAddingSubtask || !subtaskForm.name.trim()} className="w-full h-11 bg-[#0051e6] text-white rounded-2xl font-black text-[9px] uppercase tracking-widest">
+                                    <Button onClick={handleAddSubtask} disabled={isAddingSubtask || !subtaskForm.name.trim()} className="w-full h-11 bg-brand-blue text-white rounded-2xl font-black text-[9px] uppercase tracking-widest">
                                         {isAddingSubtask ? 'Logging...' : 'Upload Work Log'}
                                     </Button>
                                 </div>
@@ -440,7 +440,7 @@ export function TaskDetailsView({
 
                         <div className="space-y-3">
                             {subtasks.sort((a,b) => new Date(b.date_logged || '').getTime() - new Date(a.date_logged || '').getTime()).map((sub) => (
-                                <div key={sub.id} className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between hover:border-[#0051e6] transition-all">
+                                <div key={sub.id} className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center justify-between hover:border-brand-blue transition-all">
                                     <div>
                                         <p className="text-[12px] font-bold text-slate-800">{sub.name}</p>
                                         <p className="text-[9px] text-slate-400 uppercase font-black tracking-widest mt-1">{sub.date_logged} • {sub.hours_spent} hrs</p>

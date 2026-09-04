@@ -42,7 +42,7 @@ export function OverloadAlerts({ tasks, subtasksMap, employees, onRebalance }: P
                 color = 'text-[#ff9500] bg-[#ff9500]/10';
             } else if (score >= 4) {
                 level = 'Moderate';
-                color = 'text-[#0051e6] bg-[#0051e6]/10';
+                color = 'text-brand-blue bg-brand-blue/10';
             }
             
             return { 
@@ -87,7 +87,7 @@ export function OverloadAlerts({ tasks, subtasksMap, employees, onRebalance }: P
                         transition={{ delay: idx * 0.1 }}
                         className="bg-white rounded-[28px] p-5 border border-[#eceef0] shadow-sm hover:shadow-xl hover:shadow-[#0c64ef]/5 transition-all duration-500 relative overflow-hidden group"
                     >
-                        <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-full -mr-12 -mt-12 opacity-10", alert.level === 'Critical' ? 'bg-[#ff3b30]' : 'bg-[#0051e6]')} />
+                        <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-full -mr-12 -mt-12 opacity-10", alert.level === 'Critical' ? 'bg-[#ff3b30]' : 'bg-brand-blue')} />
                         
                         <div className="relative z-10">
                             <div className="flex items-center justify-between mb-4">
@@ -135,7 +135,7 @@ export function OverloadAlerts({ tasks, subtasksMap, employees, onRebalance }: P
 
                             <button 
                                 onClick={() => onRebalance(alert.id, alert.name)}
-                                className="w-full h-10 rounded-xl bg-[#0051e6] text-white text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#005bb7] transition-all hover:shadow-lg hover:shadow-[#0051e6]/20 active:scale-[0.98]"
+                                className="w-full h-10 rounded-xl bg-brand-blue text-white text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-brand-blue-dark transition-all hover:shadow-lg hover:shadow-brand-blue/20 active:scale-[0.98]"
                             >
                                 <Zap size={14} fill="currentColor" />
                                 Smart Rebalance

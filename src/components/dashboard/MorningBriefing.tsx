@@ -25,7 +25,7 @@ export function MorningBriefingWidget({ briefing, loading, onAction }: Props) {
     if (loading) {
         return (
             <div className="bg-white rounded-[32px] p-8 border border-slate-200 shadow-xl flex flex-col items-center justify-center min-h-[300px]">
-                <Loader2 size={32} className="text-[#0051e6] animate-spin mb-4" />
+                <Loader2 size={32} className="text-brand-blue animate-spin mb-4" />
                 <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Generating AI Briefing...</p>
             </div>
         );
@@ -47,7 +47,7 @@ export function MorningBriefingWidget({ briefing, loading, onAction }: Props) {
                 
                 <div className="relative z-10 space-y-4">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-[#0051e6] flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-xl bg-brand-blue flex items-center justify-center">
                             <Sparkles size={16} />
                         </div>
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">Morning Intelligence Brief</span>
@@ -112,7 +112,7 @@ export function MorningBriefingWidget({ briefing, loading, onAction }: Props) {
                         
                         <button 
                             onClick={() => onAction(section.type, section.metadata)}
-                            className="flex items-center gap-2 text-[10px] font-black text-[#0051e6] uppercase tracking-widest hover:gap-3 transition-all"
+                            className="flex items-center gap-2 text-[10px] font-black text-brand-blue uppercase tracking-widest hover:gap-3 transition-all"
                         >
                             Take Action <ChevronRight size={12} />
                         </button>
@@ -124,10 +124,10 @@ export function MorningBriefingWidget({ briefing, loading, onAction }: Props) {
             <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AI Command Suggestions:</p>
                 <div className="flex items-center gap-3">
-                    <button className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest hover:border-[#0051e6] transition-all">
+                    <button className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-[9px] font-black uppercase tracking-widest hover:border-brand-blue transition-all">
                         Reschedule Overdue
                     </button>
-                    <button className="px-4 py-2 rounded-xl bg-[#0051e6] text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-[#0051e6]/20">
+                    <button className="px-4 py-2 rounded-xl bg-brand-blue text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-brand-blue/20">
                         View Team Capacity
                     </button>
                 </div>

@@ -102,7 +102,7 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                 {/* Header */}
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-[#0051e6] text-white flex items-center justify-center shadow-lg shadow-[#0051e6]/20">
+                        <div className="w-12 h-12 rounded-2xl bg-brand-blue text-white flex items-center justify-center shadow-lg shadow-brand-blue/20">
                             <CalendarIcon size={24} />
                         </div>
                         <div>
@@ -157,10 +157,10 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                                 <div 
                                     key={dayKey}
                                     onClick={() => onDateClick(day)}
-                                    className={`min-h-[120px] p-3 border-r border-b border-slate-50 transition-all cursor-pointer group hover:bg-slate-50/50 ${!isSameMonth(day, monthStart) ? 'bg-slate-50/30' : ''} ${isSelected ? 'ring-2 ring-inset ring-[#0051e6] bg-[#0051e6]/5' : ''}`}
+                                    className={`min-h-[120px] p-3 border-r border-b border-slate-50 transition-all cursor-pointer group hover:bg-slate-50/50 ${!isSameMonth(day, monthStart) ? 'bg-slate-50/30' : ''} ${isSelected ? 'ring-2 ring-inset ring-brand-blue bg-brand-blue/5' : ''}`}
                                 >
                                     <div className="flex items-center justify-between mb-3">
-                                        <span className={`text-xs font-black ${isToday(day) ? 'w-7 h-7 bg-[#0051e6] text-white rounded-lg flex items-center justify-center shadow-md' : isSameMonth(day, monthStart) ? 'text-slate-900' : 'text-slate-300'}`}>
+                                        <span className={`text-xs font-black ${isToday(day) ? 'w-7 h-7 bg-brand-blue text-white rounded-lg flex items-center justify-center shadow-md' : isSameMonth(day, monthStart) ? 'text-slate-900' : 'text-slate-300'}`}>
                                             {format(day, 'd')}
                                         </span>
                                         {stats.load > 0 && (
@@ -194,7 +194,7 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
 
                                     {/* Quick Add Button */}
                                     <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center">
-                                        <div className="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center hover:text-[#0051e6] hover:border-[#0051e6] transition-all">
+                                        <div className="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-400 flex items-center justify-center hover:text-brand-blue hover:border-brand-blue transition-all">
                                             <Plus size={14} />
                                         </div>
                                     </div>
@@ -210,7 +210,7 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                 {/* Pending / Unscheduled Tasks */}
                 <div className="bg-white rounded-[32px] border border-slate-200 p-6 shadow-xl shadow-slate-200/50">
                     <div className="flex items-center gap-2 mb-6">
-                        <Sparkles size={18} className="text-[#0051e6]" />
+                        <Sparkles size={18} className="text-brand-blue" />
                         <h3 className="text-xs font-black text-[#1d1d1f] uppercase tracking-widest">Smart Queue</h3>
                     </div>
                     
@@ -227,7 +227,7 @@ export function SmartCalendar({ tasks, employees, onTaskClick, onDateClick, onUp
                                 <div 
                                     key={task.id}
                                     onClick={() => setSelectedTask(task)}
-                                    className={`p-4 rounded-[24px] border transition-all cursor-pointer group ${selectedTask?.id === task.id ? 'bg-[#0051e6] border-[#0051e6] shadow-lg shadow-[#0051e6]/20' : 'bg-slate-50 border-transparent hover:border-slate-200'}`}
+                                    className={`p-4 rounded-[24px] border transition-all cursor-pointer group ${selectedTask?.id === task.id ? 'bg-brand-blue border-brand-blue shadow-lg shadow-brand-blue/20' : 'bg-slate-50 border-transparent hover:border-slate-200'}`}
                                 >
                                     <h4 className={`text-[11px] font-bold mb-1 ${selectedTask?.id === task.id ? 'text-white' : 'text-slate-900'}`}>{task.name}</h4>
                                     <div className="flex items-center gap-3">

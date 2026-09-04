@@ -116,7 +116,7 @@ export default async function OrgsListPage({
                                     <td className="px-5 py-3 text-right">
                                         <Link
                                             href={`/admin/orgs/${o.id}`}
-                                            className="text-sm font-medium text-[#0051e6] hover:underline"
+                                            className="text-sm font-medium text-brand-blue hover:underline"
                                         >
                                             Manage →
                                         </Link>

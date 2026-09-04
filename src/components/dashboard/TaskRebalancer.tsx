@@ -102,10 +102,10 @@ export default function TaskRebalancer({ tasks, employees, onClose, memberId, me
                     <div className="p-8 pb-4 flex items-start justify-between border-b border-[#f0f0f2]">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
-                                <div className="w-8 h-8 rounded-xl bg-[#0051e6]/10 flex items-center justify-center text-[#0051e6]">
+                                <div className="w-8 h-8 rounded-xl bg-brand-blue/10 flex items-center justify-center text-brand-blue">
                                     <Zap size={16} fill="currentColor" />
                                 </div>
-                                <span className="text-[11px] font-black uppercase tracking-widest text-[#0051e6]">AI Smart Rebalancer</span>
+                                <span className="text-[11px] font-black uppercase tracking-widest text-brand-blue">AI Smart Rebalancer</span>
                             </div>
                             <h2 className="text-2xl font-black text-[#1d1d1f] tracking-tight">
                                 Optimize Load for {memberName}
@@ -125,7 +125,7 @@ export default function TaskRebalancer({ tasks, employees, onClose, memberId, me
                             {overloadedTasks.map((task) => (
                                 <div 
                                     key={task.id}
-                                    className={`group p-4 rounded-2xl border transition-all cursor-pointer ${selectedTaskIds.includes(task.id) ? 'border-[#0051e6] bg-[#0051e6]/[0.02] shadow-sm' : 'border-[#e5e5ea] hover:border-[#0051e6]/30'}`}
+                                    className={`group p-4 rounded-2xl border transition-all cursor-pointer ${selectedTaskIds.includes(task.id) ? 'border-brand-blue bg-brand-blue/[0.02] shadow-sm' : 'border-[#e5e5ea] hover:border-brand-blue/30'}`}
                                     onClick={() => {
                                         setSelectedTaskIds(prev => 
                                             prev.includes(task.id) ? prev.filter(id => id !== task.id) : [...prev, task.id]
@@ -134,7 +134,7 @@ export default function TaskRebalancer({ tasks, employees, onClose, memberId, me
                                 >
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${selectedTaskIds.includes(task.id) ? 'bg-[#0051e6] border-[#0051e6] text-white' : 'border-[#d1d1d6] group-hover:border-[#0051e6]'}`}>
+                                            <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${selectedTaskIds.includes(task.id) ? 'bg-brand-blue border-brand-blue text-white' : 'border-[#d1d1d6] group-hover:border-brand-blue'}`}>
                                                 {selectedTaskIds.includes(task.id) && <CheckCircle2 size={12} />}
                                             </div>
                                             <div>
@@ -194,7 +194,7 @@ export default function TaskRebalancer({ tasks, employees, onClose, memberId, me
                             <button 
                                 onClick={handleRebalance}
                                 disabled={selectedTaskIds.length === 0 || isRebalancing}
-                                className={`px-8 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all flex items-center gap-2 ${selectedTaskIds.length > 0 ? 'bg-[#0051e6] hover:shadow-lg hover:translate-y-[-2px]' : 'bg-[#d1d1d6] cursor-not-allowed'}`}
+                                className={`px-8 py-2.5 rounded-xl text-[13px] font-bold text-white transition-all flex items-center gap-2 ${selectedTaskIds.length > 0 ? 'bg-brand-blue hover:shadow-lg hover:translate-y-[-2px]' : 'bg-[#d1d1d6] cursor-not-allowed'}`}
                             >
                                 {isRebalancing ? 'Optimizing...' : 'Apply Optimization'}
                                 <ChevronRight size={16} />

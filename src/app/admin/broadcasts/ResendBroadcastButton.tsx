@@ -25,7 +25,7 @@ export function ResendBroadcastButton({ broadcastId }: { broadcastId: string }) 
                     }
                 });
             }}
-            className="p-2 rounded-md text-[#86868b] hover:text-[#0051e6] hover:bg-[#0051e6]/10 transition-colors"
+            className="p-2 rounded-md text-[#86868b] hover:text-brand-blue hover:bg-brand-blue/10 transition-colors"
             title="Re-deliver"
         >
             <RefreshCw size={14} strokeWidth={2} />
