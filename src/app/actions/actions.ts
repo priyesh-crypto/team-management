@@ -619,11 +619,13 @@ export async function saveTask(taskData: Omit<Task, "id" | "created_at" | "org_i
 }
 
 export async function updateTaskAssignee(taskId: string, newEmployeeId: string) {
+    const { orgId } = await requireOrgContext();
     const supabase = await createClient()
     const { error } = await supabase
         .from('tasks')
         .update({ employee_id: newEmployeeId })
         .eq('id', taskId)
+        .eq('org_id', orgId)
 
     if (error) throw new Error(error.message)
     
@@ -936,6 +938,28 @@ export async function updateEmployeeProfile(userId: string, name: string, role: 
         return { error: "Missing Supabase Service Role Key." };
     }
 
+    const { orgId, role: currentRole } = await requireOrgContext();
+    if (currentRole !== 'owner' && currentRole !== 'admin' && currentRole !== 'manager') {
+        return { error: "Unauthorized: Only managers/admins can edit employee profiles." };
+    }
+
+    const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+    const supabaseAdmin = createAdminClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    // Verify target user is in the same organization before touching Auth/profile data
+    const { data: targetMember } = await supabaseAdmin
+        .from('organization_members')
+        .select('org_id')
+        .eq('user_id', userId)
+        .eq('org_id', orgId)
+        .single();
+
+    if (!targetMember) return { error: "Unauthorized: User not in your organization." };
+
     // 1. Update their Supabase Auth metadata and email using native fetch via Admin API
     const updateData: any = { user_metadata: { name, role } };
     if (email) {
@@ -990,6 +1014,30 @@ export async function updateUserPassword(userId: string, newPassword: string): P
 
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
         return { error: "Missing Supabase Service Role Key." };
+    }
+
+    const { orgId, role: currentRole } = await requireOrgContext();
+    if (currentRole !== 'owner' && currentRole !== 'admin' && currentRole !== 'manager') {
+        return { error: "Unauthorized: Only managers/admins can reset employee passwords." };
+    }
+
+    {
+        const { createClient: createAdminClient } = await import('@supabase/supabase-js')
+        const supabaseAdmin = createAdminClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY,
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        )
+
+        // Verify target user is in the same organization before touching Auth
+        const { data: targetMember } = await supabaseAdmin
+            .from('organization_members')
+            .select('org_id')
+            .eq('user_id', userId)
+            .eq('org_id', orgId)
+            .single();
+
+        if (!targetMember) return { error: "Unauthorized: User not in your organization." };
     }
 
     // Direct fetch instead of dynamic import to avoid Vercel build/runtime issues

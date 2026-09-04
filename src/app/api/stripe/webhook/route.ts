@@ -84,12 +84,17 @@ export async function POST(req: NextRequest) {
                 break;
         }
 
-        await admin.from("stripe_events").insert({
+        const { error: recordError } = await admin.from("stripe_events").insert({
             id: event.id,
             type: event.type,
             org_id: orgId,
             payload: event as unknown as Record<string, unknown>,
         });
+        // A unique-violation here means a concurrent delivery of this same event
+        // already recorded it (and already applied the same state) — not an error.
+        if (recordError && recordError.code !== "23505") {
+            console.error("[stripe/webhook] failed to record processed event", event.id, recordError);
+        }
 
         return NextResponse.json({ received: true });
     } catch (err) {

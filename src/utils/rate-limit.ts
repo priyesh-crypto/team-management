@@ -105,16 +105,28 @@ export async function checkActionRateLimit(
     const limiter = await getDistributedLimiter(action, limit, windowMs);
 
     if (limiter) {
-        // Upstash Redis path — shared across all serverless instances
-        const { success, reset } = await limiter.limit(identifier);
-        if (!success) {
-            const retryAfterSec = Math.ceil((reset - Date.now()) / 1000);
-            return {
-                allowed: false,
-                error: `Too many requests. Please try again in ${retryAfterSec} second${retryAfterSec !== 1 ? "s" : ""}.`,
-            };
+        // Upstash Redis path — shared across all serverless instances.
+        // Fail OPEN (allow the request) on timeout/outage rather than hanging
+        // the function or blocking every action platform-wide.
+        try {
+            const { success, reset } = await Promise.race([
+                limiter.limit(identifier),
+                new Promise<never>((_, reject) =>
+                    setTimeout(() => reject(new Error("rate-limit timeout")), 500)
+                ),
+            ]);
+            if (!success) {
+                const retryAfterSec = Math.ceil((reset - Date.now()) / 1000);
+                return {
+                    allowed: false,
+                    error: `Too many requests. Please try again in ${retryAfterSec} second${retryAfterSec !== 1 ? "s" : ""}.`,
+                };
+            }
+            return { allowed: true };
+        } catch (err) {
+            console.warn(`[rate-limit] Upstash unavailable for action "${action}", failing open:`, err);
+            return { allowed: true };
         }
-        return { allowed: true };
     }
 
     // In-process fallback

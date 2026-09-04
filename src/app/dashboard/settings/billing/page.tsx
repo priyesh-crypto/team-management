@@ -44,7 +44,7 @@ export default async function BillingPage() {
 
     const { data: plans } = await supabase
         .from("plans")
-        .select("*")
+        .select("id, name, price_monthly_cents, seat_limit, project_limit, features, sort_order")
         .eq("is_active", true)
         .order("sort_order");
 
