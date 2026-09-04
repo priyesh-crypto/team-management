@@ -86,9 +86,17 @@ export async function getPreAuthBranding(opts: {
                 .maybeSingle();
             if (byHost) return resolveBranding(byHost);
         }
-    } catch {
-        // Unapplied migration, missing service key, or a network blip — the
-        // auth pages must still render.
+    } catch (err) {
+        // Unapplied migration, missing SUPABASE_SERVICE_ROLE_KEY, or a network
+        // blip. The auth pages must still render, so this degrades to platform
+        // branding — but it is logged, because a silent fallback here is
+        // indistinguishable from "the org has no branding configured" and is
+        // otherwise very hard to diagnose in a deployed environment.
+        console.error(
+            "[branding] pre-auth lookup failed; falling back to platform branding.",
+            "Is SUPABASE_SERVICE_ROLE_KEY set in this environment?",
+            err instanceof Error ? err.message : err
+        );
         return PLATFORM_BRANDING;
     }
 
@@ -103,12 +111,29 @@ function slugify(s: string): string {
         .replace(/^-+|-+$/g, "");
 }
 
-/** Hosts that are us, not a tenant — never worth a lookup. */
+/**
+ * Hosts that are unambiguously us, not a tenant — not worth a lookup.
+ *
+ * Kept deliberately narrow. An earlier version excluded all of `.vercel.app`,
+ * which silently broke the main reason to use custom_domain at all: putting a
+ * client on a `<name>.vercel.app` subdomain before they have a real domain.
+ * A tenant may legitimately own any hostname, so anything not listed here gets
+ * looked up — a single indexed query on a page that already hits the database.
+ *
+ * The canonical platform host is taken from NEXT_PUBLIC_APP_URL so this doesn't
+ * need editing per deployment.
+ */
 function isPlatformHost(host: string): boolean {
-    return (
-        host === "localhost" ||
-        host.startsWith("127.") ||
-        host.endsWith(".vercel.app") ||
-        host.endsWith("knotless.ai")
-    );
+    if (host === "localhost" || host.startsWith("127.") || host === "[::1]") {
+        return true;
+    }
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (appUrl) {
+        try {
+            if (new URL(appUrl).hostname.toLowerCase() === host) return true;
+        } catch {
+            // Malformed NEXT_PUBLIC_APP_URL — fall through and just do the lookup.
+        }
+    }
+    return false;
 }
