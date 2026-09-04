@@ -64,6 +64,9 @@ export default async function ReportsPage({
     const orgId = membership.org_id;
     const resolvedParams = await searchParams;
     const range = Math.min(365, Math.max(7, Number(resolvedParams?.range) || 30));
+    // Async Server Component: runs once per request on the server, not subject to
+    // client render-purity/re-render rules.
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(); // eslint-disable-line react-hooks/purity
 
     const [tasksRes, membersRes, workspacesRes, projectsRes, activityRes] =
         await Promise.all([
@@ -83,10 +86,7 @@ export default async function ReportsPage({
                 .from("activity_logs")
                 .select("type, created_at")
                 .eq("org_id", orgId)
-                .gte(
-                    "created_at",
-                    new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
-                ),
+                .gte("created_at", ninetyDaysAgo),
         ]);
 
     const allTasks = (tasksRes.data ?? []) as any[];

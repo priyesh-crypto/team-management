@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { createClient } from '@/utils/supabase/server';
 import { Card, Button, Input } from '@/components/ui/components';
 import Logo from '@/components/ui/Logo';
@@ -97,7 +98,7 @@ export default async function SignupPage({
 
           <p className="mt-6 text-center text-xs text-[#52525b] font-medium">
             Already have an account?{' '}
-            <a href="/" className="font-black text-[#0051e6] hover:underline">Sign in</a>
+            <Link href="/" className="font-black text-[#0051e6] hover:underline">Sign in</Link>
           </p>
         </Card>
       </div>

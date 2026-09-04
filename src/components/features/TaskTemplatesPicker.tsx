@@ -53,7 +53,7 @@ export function TaskTemplatesPicker({ templates, onSelect, onSaveCurrent }: Prop
 
                         {templates.length === 0 ? (
                             <div className="py-8 text-center text-xs text-slate-400">
-                                No templates yet. Fill out a task form and click "Save current".
+                                No templates yet. Fill out a task form and click &ldquo;Save current&rdquo;.
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-50 max-h-64 overflow-y-auto">

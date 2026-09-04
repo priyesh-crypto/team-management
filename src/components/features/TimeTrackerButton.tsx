@@ -26,10 +26,10 @@ export function TimeTrackerButton({ taskId, runningEntry, totalHours }: Props) {
     const [pending, startTransition] = useTransition();
 
     useEffect(() => {
-        if (!entry) { setElapsed(0); return; }
-        const base = Math.floor((Date.now() - new Date(entry.started_at).getTime()) / 1000);
-        setElapsed(base);
-        const id = setInterval(() => setElapsed(s => s + 1), 1000);
+        if (!entry) return;
+        const tick = () =>
+            setElapsed(Math.floor((Date.now() - new Date(entry.started_at).getTime()) / 1000));
+        const id = setInterval(tick, 1000);
         return () => clearInterval(id);
     }, [entry]);
 

@@ -316,7 +316,7 @@ export function ShareClient({
                                         <Layers size={32} />
                                     </div>
                                     <h4 className="text-lg font-black tracking-tight text-[#1d1d1f]">No tasks visible</h4>
-                                    <p className="text-sm font-medium text-[#86868b] max-w-xs mx-auto mt-2">The team hasn't shared any specific milestones for this project link yet.</p>
+                                    <p className="text-sm font-medium text-[#86868b] max-w-xs mx-auto mt-2">The team hasn&apos;t shared any specific milestones for this project link yet.</p>
                                 </div>
                             )}
                         </div>

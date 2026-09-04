@@ -69,7 +69,7 @@ export async function createRecurringTemplate(input: {
 
     // Compute next_run_at (approximate — cron will reconcile)
     const now = new Date();
-    let next = new Date(now);
+    const next = new Date(now);
     if (input.frequency === "daily") next.setDate(now.getDate() + (input.interval ?? 1));
     else if (input.frequency === "weekly") next.setDate(now.getDate() + 7 * (input.interval ?? 1));
     else next.setMonth(now.getMonth() + (input.interval ?? 1));

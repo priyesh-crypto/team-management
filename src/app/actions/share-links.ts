@@ -114,7 +114,7 @@ export async function resolveShareToken(token: string): Promise<{
 
     let resource: any = null;
     let tasks: any[] = [];
-    let subtasksMap: Record<string, any[]> = {};
+    const subtasksMap: Record<string, any[]> = {};
     let employees: any[] = [];
 
     if (tokenRow.resource_type === "project") {

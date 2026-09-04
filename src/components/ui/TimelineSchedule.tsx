@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useSyncExternalStore } from 'react';
 import { Task, Profile, Priority, Status } from '@/app/actions/actions';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { Card, Button, Badge } from '@/components/ui/components';
@@ -18,6 +18,16 @@ import {
     ArrowRight
 } from 'lucide-react';
 
+// Hydration-safe "has this mounted on the client yet" check, without an
+// effect-driven setState (see https://react.dev/reference/react/useSyncExternalStore).
+function useMounted(): boolean {
+    return useSyncExternalStore(
+        () => () => {},
+        () => true,
+        () => false
+    );
+}
+
 interface TimelineScheduleProps {
     tasks: Task[];
     employees: Profile[];
@@ -30,22 +40,23 @@ interface TimelineScheduleProps {
 export default function TimelineSchedule({ tasks, employees, onTaskClick, onEmployeeClick, refreshData, searchFilter }: TimelineScheduleProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(searchFilter ?? '');
+    const [prevSearchFilter, setPrevSearchFilter] = useState(searchFilter);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [now, setNow] = useState(new Date());
-    const [mounted, setMounted] = useState(false);
+    const mounted = useMounted();
+
+    // Sync searchQuery when the searchFilter prop changes, without an effect
+    // (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
+    if (searchFilter !== prevSearchFilter) {
+        setPrevSearchFilter(searchFilter);
+        if (searchFilter !== undefined) setSearchQuery(searchFilter);
+    }
 
     useEffect(() => {
-        setMounted(true);
         const timer = setInterval(() => setNow(new Date()), 1000); // Update every second
         return () => clearInterval(timer);
     }, []);
-    
-    useEffect(() => {
-        if (searchFilter !== undefined) {
-            setSearchQuery(searchFilter);
-        }
-    }, [searchFilter]);
 
     // Generate days for the timeline
     const timelineData = useMemo(() => {

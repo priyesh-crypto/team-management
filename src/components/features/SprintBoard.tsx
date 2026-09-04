@@ -150,7 +150,7 @@ export function SprintBoard({ orgId, workspaceId, sprints: initialSprints, sprin
                     const { total, done } = sprintVelocity(tasks);
                     const cfg = SPRINT_STATUS[sprint.status as keyof typeof SPRINT_STATUS] ?? SPRINT_STATUS.planning;
                     const expanded = expandedId === sprint.id;
-                    const daysLeft = Math.ceil((new Date(sprint.end_date).getTime() - Date.now()) / 86400000);
+                    const daysLeft = Math.ceil((new Date(sprint.end_date).getTime() - Date.now()) / 86400000); // eslint-disable-line react-hooks/purity -- display-only countdown, not tied to animation/re-render timing
 
                     return (
                         <div key={sprint.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">

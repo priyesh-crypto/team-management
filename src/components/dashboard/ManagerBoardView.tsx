@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Calendar, Clock } from 'lucide-react';
 import { Task, Subtask, Profile } from '@/app/actions/actions';
@@ -10,16 +10,23 @@ import { cn } from '@/lib/utils';
 
 // --- SUB-COMPONENTS ---
 
+// Hydration-safe "has this mounted on the client yet" check, without an
+// effect-driven setState (see https://react.dev/reference/react/useSyncExternalStore).
+function useMounted(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+}
+
 interface MorningBriefingProps {
   userName: string;
   tasks: Task[];
 }
 
 function MorningBriefing({ userName, tasks }: MorningBriefingProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
   const highPriorityTasks = tasks.filter(t => (t.priority === 'Urgent' || t.priority === 'High') && t.status !== 'Completed');
   
   return (
